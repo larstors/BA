@@ -323,6 +323,8 @@ public:
 // ! Following classes are additions by Lars. Note that in the triangular case it is just the one as above with some very slight adjustments
 // ! while the one for the hexagonal lattice has some more drastic changes. 
 
+
+// TODO FIGURE OUT WHERE THE SEGFAULT IS?!?!??!?!?
 template<typename Engine>
 class Triangle_lattice {
 
@@ -361,25 +363,40 @@ class Triangle_lattice {
     auto neighbours(unsigned n) const {
 
         // this is only valid for 2d
+        int L = P.L[0];
+        std::vector<int> nbs(2 * P.L.size() + 2);
 
-        std::vector<unsigned> nbs(2 * P.L.size() + 2);
-        unsigned L1 = P.L[0];
-        unsigned L2 = P.L[1];
+        int x = n % L;
+        int y = (n/L);
 
+        // for diagonals. There surely is a better way than this
+        int xk, yk, xm, ym;
+        int k = n + L + 1;
+        int m = n - L - 1;
 
-        // ! Doublecheck whether these work!
+        xk = k%L;
+        xm = m%L;
 
-        unsigned x = n % L1;
-        unsigned y = (n/L1);
+        if (((k-1)/L - L) >= 0){ 
+          yk = 0;
+        }else{
+          yk = ((k-1)/L);
+        }
+        if ((m+1) < 0){ 
+          ym = L - 1;
+        }else{
+          int l = n - L;
+          if (l < 0) l = -l;
+          ym = (l/L);
+        }
+        nbs[0] = (n + 1) % L + y * L;
+        nbs[1] = (n - 1) % L + y * L;
 
-        nbs[0] = (n + 1) % L1 + y * L1;
-        nbs[1] = (n - 1) % L2 + y * L1;
+        nbs[2] = x + ((y + 1) % L) * L;
+        nbs[3] = x + ((y - 1 + L) % L) * L;
 
-        nbs[2] = x + ((y + 1) % L2) * L1;
-        nbs[3] = x + ((y - 1) % L2) * L1;
-
-        nbs[4] = (n + 1) % L1 + x + ((y + 1) % L2) * L1;
-        nbs[5] = (n - 1) % L1 + x + ((y - 1) % L2) * L1;
+        nbs[4] = xk + yk * L;
+        nbs[5] = xm + ym * L;
 
         return nbs;
     }
@@ -388,19 +405,31 @@ class Triangle_lattice {
     // its neighbours in the forward direction along each axis.
     // We still have periodic boundary conditions
     auto forward_neighbours(unsigned n) const {
-        std::vector<unsigned> nbs(P.L.size() + 1);
-        unsigned L1 = P.L[0];
-        unsigned L2 = P.L[1];
+        // this is only valid for 2d
+        int L = P.L[0];
+        std::vector<int> nbs(P.L.size() + 1);
 
 
-        unsigned x = n % L1;
-        unsigned y = (n/L1);
 
-        nbs[0] = (n + 1) % L1 + y * L1;
+        int x = n % L;
+        int y = (n/L);
 
-        nbs[1] = x + ((y + 1) % L2) * L1;
+        // for diagonals. There surely is a better way than this
+        int xk, yk;
+        int k = n + L + 1;
 
-        nbs[2] = (n + 1) % L1 + x + ((y + 1) % L2) * L1;
+        xk = k%L;
+
+        if (((k-1)/L - L) >= 0){ 
+          yk = 0;
+        }else{
+          yk = ((k-1)/L);
+        }
+        nbs[0] = (n + 1) % L + y * L;
+
+        nbs[1] = x + ((y + 1) % L) * L;
+
+        nbs[2] = xk + yk * L;
 
         return nbs;
     }
@@ -411,10 +440,15 @@ class Triangle_lattice {
         sites[n].id[index] = id;
         sites[n].direction[index] = d;
         sites[n].hoptime[index] = t;
+        
         if (!sites[n].occupied[index]) {
             sites[n].occupied[index] = true;
-            for (const auto& m : neighbours(n)) ++sites[m].neighbours;
+            for (const auto& m : neighbours(n)){
+             ++sites[m].neighbours;
+            }
         }
+        
+        sites[n].present++;
     }
 
     // Schedule a hop event for a particle at site n
@@ -429,7 +463,7 @@ class Triangle_lattice {
                 sites[n].active[index] = false;
             }
             else {
-                // if(std::uniform_real_distribution<double>()(rng)>=std::exp(-P.alpha*(S.time()-sites[n].hoptime))) {
+                  // if(std::uniform_real_distribution<double>()(rng)>=std::exp(-P.alpha*(S.time()-sites[n].hoptime))) {
                 if (tumble(rng) < S.time() - sites[n].hoptime[index]) {
                     // At least one tumble event happened since we last attempted a hop; so randomise the direction
                     sites[n].direction[index] = anyway(rng);
@@ -437,14 +471,13 @@ class Triangle_lattice {
                 }
                 sites[n].hoptime[index] = S.time();
                 // Get the sites adjacent to the departure site
+                
                 auto dnbs = neighbours(n);
                 if (sites[dnbs[sites[n].direction[index]]].present < P.n_max) {
-                  unsigned k = 0;
-                  while (k < P.n_max && sites[dnbs[sites[n].direction[index]]].occupied[k]){
-                    k++;
-                  }
-                  if (k <= P.n_max && !sites[dnbs[sites[n].direction[index]]].occupied[k]){
-                    
+                  auto itr = std::lower_bound(sites[n].occupied.begin(), sites[n].occupied.end(), false);
+                  unsigned k = std::distance(sites[n].occupied.begin(), itr);
+                  if (k <= (P.n_max-1) && !sites[dnbs[sites[n].direction[index]]].occupied[k]){
+                     
                     // Get the id of the vacancy that is being displaced
                     unsigned vid = sites[dnbs[sites[n].direction[index]]].id[k];
                     // std::cout << "Moving from "; decode(n); std::cout << " deactivating" << std::endl;
@@ -453,14 +486,14 @@ class Triangle_lattice {
                     
                     // as it moves from n, we have one less present at n
                     sites[n].present--;
-                    // and it moves to new site, so there is one more present there
-                    sites[dnbs[sites[n].direction[index]]].present++;
-
+                    
                     // Place a particle on the target site; it has the same direction and hoptime as the departing particle
                     // std::cout << "Moving to "; decode(dnbs[sites[n].direction]); std::cout << " placing" << std::endl;
-                    place(dnbs[sites[n].direction[index]], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index], index);
+                    place(dnbs[sites[n].direction[index]], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index], k);
+                    
                     // Move the vacancy id onto the departure site
                     sites[n].id[index] = vid;
+                    
                     // Now go through the neighbours of the departure site, update neighbour count and activate any
                     // that can now move. Note the particle this is at the target site is included in this list
                     // and will be activated accordingly
@@ -470,7 +503,12 @@ class Triangle_lattice {
                           if (sites[m].occupied[i] && !sites[m].active[i]) schedule(m, i);
                         }
                     }
+                    
+                    
+
+                    
                   }
+                
                 }
                 else {
                     // std::cout << "Didn't move from "; decode(n); std::cout << std::endl;
@@ -483,7 +521,6 @@ class Triangle_lattice {
         // std::cout << "Scheduled "; decode(n); std::cout << std::endl;
     }
 
-    // TODO CONTINUE ON FROM HERE
 
     // For testing
     void decode(unsigned n) {
@@ -544,6 +581,7 @@ public:
             drates[2 * d] = drates[2 * d + 1] = d < P.alpha.size() ? P.alpha[d] / tumble.lambda() : 1.0;
         }
         anyway = std::discrete_distribution<unsigned>(drates.begin(), drates.end());
+        
 
         // Place particles on the lattice
         unsigned unplaced = P.N; // Current number of particles remaining to be placed
@@ -567,7 +605,7 @@ public:
             }
         }
         assert(unplaced == 0);
-
+        
         // Activate particles that can move, and schedule a hop accordingly
         for (unsigned n = 0; n < sites.size(); ++n) {
           for (unsigned k = 0; k < P.n_max; ++k){
@@ -604,7 +642,6 @@ public:
     // Element 2n   contains the number of clusters of particles of size n+1
     // Element 2n+1 contains the number of clusters of vacancies of size n+1
     hist_t cluster_distributions() const {
-
         // Lookup table of cluster membership by lattice site
         std::vector<unsigned> memberof(sites.size());
         // Initially, this is just the site id as each site is its own cluster
@@ -1309,6 +1346,7 @@ int main(int argc, char* argv[]) {
       for(unsigned n=0; t < burnin + until; ++n) {
         t = TL.run_until(burnin + n * every);
         // only doing a positional output here
+        
         
         outfile << TriangleParticleWriter(TL, outfile) << endl;
 
