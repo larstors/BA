@@ -334,18 +334,13 @@ class Triangle_lattice {
 
     Parameters P; // A local copy of the model parameters
 
-    static unsigned n_max = P.n_max;
+    static constexpr unsigned n_max = 2; // ! Nicer way of doing this?
     
-    Engine& rng; // Source of noise: this is a reference as there should only be one of these!
-    std::discrete_distribution<unsigned> anyway; // Distribution over tumble directions
-    std::exponential_distribution<double> run, tumble; // Distribution of times between run and tumble events
-    Scheduler S; // Keeps track of the event queue
-
+    
 
     // Data associated with each site; by default all of these are set to zero
     // which represents a vacant site
     struct Site {
-        unsigned n_max = P.n_max;
         std::vector<unsigned> id = std::vector<unsigned>(n_max); // Particle / vacancy id
         std::vector<bool> occupied = std::vector<bool>(n_max); // There is a particle here
         std::vector<bool> active = std::vector<bool>(n_max); // A move event is scheduled
@@ -356,6 +351,10 @@ class Triangle_lattice {
     };
 
     std::vector<Site> sites; // Representation of the sites
+    Engine& rng; // Source of noise: this is a reference as there should only be one of these!
+    std::discrete_distribution<unsigned> anyway; // Distribution over tumble directions
+    std::exponential_distribution<double> run, tumble; // Distribution of times between run and tumble events
+    Scheduler S; // Keeps track of the event queue
 
     // Given an index into sites, return a sequence of indices corresponding to
     // its neighbours. We have periodic boundary conditions
@@ -459,7 +458,7 @@ class Triangle_lattice {
 
                     // Place a particle on the target site; it has the same direction and hoptime as the departing particle
                     // std::cout << "Moving to "; decode(dnbs[sites[n].direction]); std::cout << " placing" << std::endl;
-                    place(dnbs[sites[n].direction[index]], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index]);
+                    place(dnbs[sites[n].direction[index]], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index], index);
                     // Move the vacancy id onto the departure site
                     sites[n].id[index] = vid;
                     // Now go through the neighbours of the departure site, update neighbour count and activate any
@@ -467,7 +466,7 @@ class Triangle_lattice {
                     // and will be activated accordingly
                     for (const auto& m : dnbs) {
                         --sites[m].neighbours;
-                        for (unsigned i; i < P.n_max; i++){
+                        for (unsigned i = 0; i < P.n_max; i++){
                           if (sites[m].occupied[i] && !sites[m].active[i]) schedule(m, i);
                         }
                     }
@@ -622,7 +621,8 @@ public:
             for (const auto& m : forward_neighbours(n)) {
                 unsigned large = memberof[n], small = memberof[m];
                 // Merge clusters at n and m if they both have the same occupation, and are not already part of the same cluster
-                if (sites[n].occupied == sites[m].occupied && small != large) {
+                // TODO check whether the [0] argument actually works. 
+                if (sites[n].occupied[0] == sites[m].occupied[0] && small != large) {
                     // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
                     if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
                     // Update the cluster number for all sites in the smaller one
@@ -639,7 +639,9 @@ public:
 
         hist_t dists(2 * maxsize);
         for (const auto& kv : clusters) {
-            dists[2 * kv.second.size() - 1 - sites[kv.first].occupied]++;
+            for (unsigned i = 0; i < P.n_max; i++){
+              dists[2 * kv.second.size() - 1 - sites[kv.first].occupied[i]]++;
+            }
         }
         return dists;
     }
@@ -652,29 +654,29 @@ class Hexagonal_lattice {
     // For output in different formats
     friend class SnapshotWriter<Engine>;
     friend class VacancyWriter<Engine>;
-    friend class TriangleParticleWriter<Engine>;
+    friend class HexagonalParticleWriter<Engine>;
     friend class ClusterWriter<Engine>;
 
     Parameters P; // A local copy of the model parameters
-    std::vector<Site> sites; // Representation of the sites
-    Engine& rng; // Source of noise: this is a reference as there should only be one of these!
-    std::discrete_distribution<unsigned> anyway;
-    std::exponential_distribution<double> run, tumble; // Distribution of times between run and tumble events
-    Scheduler S; // Keeps track of the event queue
-
+    
 
     // Data associated with each site; by default all of these are set to zero
     // which represents a vacant site
     struct Site {
-        std::vector<unsigned> id(2); // Particle / vacancy id
-        std::vector<bool> occupied(2); // There is a particle here
-        std::vector<bool> active(2); // A move event is scheduled
-        std::vector<direction_t> neighbours(2); // Number of neighbours that are occupied
-        std::vector<direction_t> direction(2); // Direction of last hop attempt
-        std::vector<double> hoptime(2); // Time of last hop attempt
+        std::vector<unsigned> id  = std::vector<unsigned>(2); // Particle / vacancy id
+        std::vector<bool> occupied = std::vector<bool>(2); // There is a particle here
+        std::vector<bool> active = std::vector<bool>(2); // A move event is scheduled
+        std::vector<direction_t> neighbours = std::vector<direction_t>(2); // Number of neighbours that are occupied
+        std::vector<direction_t> direction = std::vector<direction_t>(2); // Direction of last hop attempt
+        std::vector<double> hoptime = std::vector<double>(2); // Time of last hop attempt
     };
 
 
+    std::vector<Site> sites; // Representation of the sites
+    Engine& rng; // Source of noise: this is a reference as there should only be one of these!
+    std::discrete_distribution<unsigned> anyway; // Distribution over tumble directions
+    std::exponential_distribution<double> run, tumble; // Distribution of times between run and tumble events
+    Scheduler S; // Keeps track of the event queue
     // Given an index into sites, return a sequence of indices corresponding to
     // its neighbours. We have periodic boundary conditions
     auto neighbours(unsigned n, unsigned index) const {
@@ -832,7 +834,7 @@ public:
             // Number of remaining sites where partcles could be placed is sites.size()-n, unplaced of which need to be filled
             if (std::uniform_int_distribution<unsigned>(1, sites.size() - n)(rng) <= unplaced) {
                 // Check whether to place it on 0 or on 1
-                if (std::uniform_int_distribution<unsigned>(1, 2) == 1){
+                if (std::uniform_int_distribution<int>(1, 2)(rng) < 2){
                   // place particle at 0
                   // Particles get numbered from 0
                   place(n, P.N - unplaced, anyway(rng), 0.0, 0);
@@ -931,7 +933,9 @@ public:
 
         hist_t dists(2 * maxsize);
         for (const auto& kv : clusters) {
-            dists[2 * kv.second.size() - 1 - sites[kv.first].occupied]++;
+          for (unsigned i = 0; i < 2; i++){
+            dists[2 * kv.second.size() - 1 - sites[kv.first].occupied[i]]++;
+          }
         }
         return dists;
     }
@@ -1010,13 +1014,16 @@ class TriangleParticleWriter {
 public:
   TriangleParticleWriter(const Triangle_lattice<Engine>& L, ofstream& outfile) : L(L) { }
 
-  // Output pairs (v, n) indicating the particle id and the site on which it is found
+  // Output pairs (v, n, p) indicating the particle id and the site on which it is found. p is the number of particles
+  // present on site n
 friend std::ostream& operator << (std::ostream& out, const TriangleParticleWriter& PW) {
 
     const auto& sites = PW.L.sites; // Save typing
 
     for(unsigned n=0; n<sites.size(); ++n) {
-      if(sites[n].occupied) out << sites[n].id << " " << n << " ";
+      for (unsigned i = 0; i < sites[n].occupied.size(); i++){
+        if(sites[n].occupied[i]) out << sites[n].id[i] << " " << n << " " << sites[n].present;
+      }
     }
 
     return out;
@@ -1027,17 +1034,27 @@ friend std::ostream& operator << (std::ostream& out, const TriangleParticleWrite
 template<typename Engine>
 class HexagonalParticleWriter {
   const Hexagonal_lattice<Engine>& L;
-  Parameters P;
+  //Parameters P;
 public:
-  HexagonalParticleWriter(const Hexagonal_lattice<Engine>& L, ofstream& outfile, const Parameters& P) : L(L) { }
+  HexagonalParticleWriter(const Hexagonal_lattice<Engine>& L, ofstream& outfile) : L(L) { }
 
-  // Output tuple (id, x, y) indicating the particle id, x- and y-coordinate of that particle
-  // doing the calculation here to save time 
-  // TODO add another output of the form (v, n, i) if needed
+  // Output is (v, n, j) as above with j being the binary site argument
 friend std::ostream& operator << (std::ostream& out, const HexagonalParticleWriter& HPW) {
 
-    P(P);
     const auto& sites = HPW.L.sites; // Save typing
+
+    for(unsigned n=0; n<sites.size(); ++n) {
+      for (unsigned j = 0; j < 2; j++){
+        if(sites[n].occupied[j]) out << sites[n].id[j] << " " << n << " " << j << " ";    
+      }
+    }
+
+    return out;
+  }
+  /*
+    const auto& sites = HPW.L.sites; // Save typing
+
+    unsigned L = P.L[0];
 
     double c30 = std::cos(pi/6.0);
     double s30 = std::sin(pi/6.0);
@@ -1049,8 +1066,8 @@ friend std::ostream& operator << (std::ostream& out, const HexagonalParticleWrit
         if(sites[n].occupied[i]){
         // calculating position for plotting
         // Using algorithm/code provided by Filipe Cunha Thewes
-        y = n/P.L[0]; //assuming quadratic lattice, i.e. L[0] = L[1]
-        x = 2 * (n%L) + i - n/P.L[0]
+        unsigned y = n/P.L[0]; //assuming quadratic lattice, i.e. L[0] = L[1]
+        unsigned x = 2 * (n%P.L[0]) + i - n/P.L[0];
 
         x++;
         xf = x * c30;
@@ -1071,7 +1088,7 @@ friend std::ostream& operator << (std::ostream& out, const HexagonalParticleWrit
 
     return out;
   }
-
+  */
 };
 
 template<typename Engine>
@@ -1346,7 +1363,7 @@ int main(int argc, char* argv[]) {
           t = HL.run_until(burnin + n * every);
           hist_t sumhist = HL.cluster_distributions();
           for(unsigned m=1; m<localaverage; ++m) {
-            t = TL.run_until(burnin + n*every + m*localinterval);
+            t = HL.run_until(burnin + n*every + m*localinterval);
             hist_t hist = HL.cluster_distributions();
             // Add hist to sumhist taking into account they may have different lengths
             if(hist.size() > sumhist.size()) {
