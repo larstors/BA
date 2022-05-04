@@ -33,8 +33,8 @@ class AnimatedScatter(object):
         # Setup the figure and axes
         self.fig, self.ax = plt.subplots(figsize=(20, 20))
         # Then setup FuncAnimation.
-        self.ani = animation.FuncAnimation(self.fig, self.update, interval=5, 
-                                          init_func=self.setup_plot, blit=True)
+        #self.ani = animation.FuncAnimation(self.fig, self.update, interval=5, 
+        #                                  init_func=self.setup_plot, blit=True)
         
     
     def hex_cor(self, n, j):
@@ -98,6 +98,7 @@ class AnimatedScatter(object):
 
 if __name__ == '__main__':
     a = AnimatedScatter()
-    a.ani.save('HexagonalScatter.gif', fps=5)
-
+    #a.ani.save('HexagonalScatter.gif', fps=5)
+    a.update(10)
+    plt.show()
 
