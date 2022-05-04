@@ -75,8 +75,9 @@ class AnimatedScatter(object):
     def setup_plot(self):
         """Initial drawing of the scatter plot."""
         s = 1.8 * 100 / L[0]
-        kos = self.data[0][1::2]
-        self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c="k", s=s, vmin=0, vmax=1, marker="s", edgecolor="k")
+        kos = self.data[0][1::3]
+        weight = self.data[0][2::3]
+        self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=1, marker="s", edgecolor="k")
         self.ax.axis([-0.5*L[0], L[0],-5, L[1]])
         self.ax.triplot(self.triang, 'r-', alpha=0.6, linewidth=0.2)
         return self.scat,
@@ -84,10 +85,11 @@ class AnimatedScatter(object):
 
     def update(self, i):
         """Update the scatter plot."""
-        kos = self.data[i][1::2]
+        kos = self.data[i][1::3]
         self.ax.cla()
         s = 1.8 * 100 / L[0]
-        self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c="k", s=s, vmin=0, vmax=1, marker="s", edgecolor="k")
+        weight = self.data[i][2::3]
+        self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=1, marker="s", edgecolor="k")
         self.ax.axis([-0.5*L[0], L[0],-5, L[1]])
         self.ax.triplot(self.triang, 'r-', alpha=0.6, linewidth=0.2)
         # We need to return the updated artist for FuncAnimation to draw..

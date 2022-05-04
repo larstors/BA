@@ -447,8 +447,9 @@ class Triangle_lattice {
              ++sites[m].neighbours;
             }
         }
-        
         sites[n].present++;
+        
+
     }
 
     // Schedule a hop event for a particle at site n
@@ -486,6 +487,9 @@ class Triangle_lattice {
                     
                     // as it moves from n, we have one less present at n
                     sites[n].present--;
+                    
+
+                    std::cout << "test" << endl;
                     
                     // Place a particle on the target site; it has the same direction and hoptime as the departing particle
                     // std::cout << "Moving to "; decode(dnbs[sites[n].direction]); std::cout << " placing" << std::endl;
@@ -721,8 +725,8 @@ class Hexagonal_lattice {
         // this is only valid for 2d
 
         std::vector<unsigned> nbs(3);
-        unsigned L1 = P.L[0];
-        unsigned L2 = P.L[1];
+        int L1 = P.L[0];
+        int L2 = P.L[1];
 
         unsigned x = n % L1;
         unsigned y = (n/L1);
@@ -731,7 +735,7 @@ class Hexagonal_lattice {
 
           nbs[0] = n;                         // same site
           nbs[1] = (n + 1) % L1 + y * L1;     // right
-          nbs[2] = x + ((y - 1) % L2) * L1;   // down
+          nbs[2] = x + ((y - 1 + L1) % L2) * L1;   // down
 
         } else{
           
@@ -1059,7 +1063,7 @@ friend std::ostream& operator << (std::ostream& out, const TriangleParticleWrite
 
     for(unsigned n=0; n<sites.size(); ++n) {
       for (unsigned i = 0; i < sites[n].occupied.size(); i++){
-        if(sites[n].occupied[i]) out << sites[n].id[i] << " " << n << " " << sites[n].present;
+        if(sites[n].occupied[i]) out << sites[n].id[i] << " " << n << " " << sites[n].present << " ";
       }
     }
 
@@ -1345,10 +1349,10 @@ int main(int argc, char* argv[]) {
 
       for(unsigned n=0; t < burnin + until; ++n) {
         t = TL.run_until(burnin + n * every);
+        std::cout << "loop" << std::endl;
         // only doing a positional output here
-        
-        
         outfile << TriangleParticleWriter(TL, outfile) << endl;
+
 
       }
 

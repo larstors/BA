@@ -163,7 +163,7 @@ class AnimatedScatter(object):
 
 if __name__ == '__main__':
     a = AnimatedScatter()
-    a.ani.save('HexagonalScatter.gif', fps=5)
+    a.ani.save('HexagonalScatter.gif', fps=2)
     
 
 
