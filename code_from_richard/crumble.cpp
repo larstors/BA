@@ -333,7 +333,9 @@ class Triangle_lattice {
     friend class ClusterWriter<Engine>;
 
     Parameters P; // A local copy of the model parameters
-    std::vector<Site> sites; // Representation of the sites
+
+    static unsigned n_max = P.n_max;
+    
     Engine& rng; // Source of noise: this is a reference as there should only be one of these!
     std::discrete_distribution<unsigned> anyway; // Distribution over tumble directions
     std::exponential_distribution<double> run, tumble; // Distribution of times between run and tumble events
@@ -343,16 +345,18 @@ class Triangle_lattice {
     // Data associated with each site; by default all of these are set to zero
     // which represents a vacant site
     struct Site {
-        std::vector<unsigned> id(P.n_max); // Particle / vacancy id
-        std::vector<bool> occupied(P.n_max); // There is a particle here
-        std::vector<bool> active(P.n_max); // A move event is scheduled
-        direction_t neighbours(P.n_max); // Number of neighbours that are occupied
-        std::vector<direction_t> direction(P.n_max); // Direction of last hop attempt
-        std::vector<double> hoptime(P.n_max); // Time of last hop attempt
+        unsigned n_max = P.n_max;
+        std::vector<unsigned> id = std::vector<unsigned>(n_max); // Particle / vacancy id
+        std::vector<bool> occupied = std::vector<bool>(n_max); // There is a particle here
+        std::vector<bool> active = std::vector<bool>(n_max); // A move event is scheduled
+        direction_t neighbours; // Number of neighbours that are occupied
+        std::vector<direction_t> direction = std::vector<direction_t>(n_max); // Direction of last hop attempt
+        std::vector<double> hoptime = std::vector<double>(n_max); // Time of last hop attempt
         unsigned present; // Number of particles present at site. Has to be <= n_max
     };
 
-    
+    std::vector<Site> sites; // Representation of the sites
+
     // Given an index into sites, return a sequence of indices corresponding to
     // its neighbours. We have periodic boundary conditions
     auto neighbours(unsigned n) const {
@@ -447,6 +451,12 @@ class Triangle_lattice {
                     // std::cout << "Moving from "; decode(n); std::cout << " deactivating" << std::endl;
                     // Deactive the departure site; also mark it empty
                     sites[n].occupied[index] = sites[n].active[index] = false;
+                    
+                    // as it moves from n, we have one less present at n
+                    sites[n].present--;
+                    // and it moves to new site, so there is one more present there
+                    sites[dnbs[sites[n].direction[index]]].present++;
+
                     // Place a particle on the target site; it has the same direction and hoptime as the departing particle
                     // std::cout << "Moving to "; decode(dnbs[sites[n].direction]); std::cout << " placing" << std::endl;
                     place(dnbs[sites[n].direction[index]], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index]);
@@ -491,25 +501,30 @@ class Triangle_lattice {
         unsigned active = 0, occupied = 0;
         std::set<unsigned> ids;
         for (unsigned n = 0; n < sites.size(); ++n) {
+          for (unsigned k = 0; k < P.n_max; k++){
             // Check each site has a unique id
-            if (ids.count(sites[n].id)) return false;
-            ids.insert(sites[n].id);
+            if (ids.count(sites[n].id[k])) return false;
+            ids.insert(sites[n].id[k]);
             // Check that empty sites are also inactive
-            if (!sites[n].occupied) {
-                if (sites[n].active) return false;
+            if (!sites[n].occupied[k]) {
+                if (sites[n].active[k]) return false;
                 // Nothing left to do if empty
                 continue;
             }
             // Check that the neighbour count is correct
             ++occupied;
+            // ! Can we move this out one loop?
             unsigned nbs = 0;
             for (const auto& m : neighbours(n)) {
-                if (sites[m].occupied) ++nbs;
+              for (unsigned i = 0; i < P.n_max; i++){
+                if (sites[m].occupied[i]) ++nbs;
+              }
             }
             if (nbs != sites[n].neighbours) return false;
             // Check that mobile particles are active
-            if (nbs < 2 * P.L.size() && !sites[n].active) return false;
-            if (sites[n].active) ++active;
+            if (nbs < 6*P.n_max && !sites[n].active[k]) return false;
+            if (sites[n].active[k]) ++active;
+          }
         }
         // Check we've not lost any particles
         return occupied == P.N && active == S.pending();
@@ -525,8 +540,8 @@ public:
         tumble(std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size()) // Tumble time generator: set to the average of the given tumble rates
     {
         // Set up the tumble direction distribution
-        std::vector<double> drates(2 * P.L.size());
-        for (unsigned d = 0; d < P.L.size(); ++d) {
+        std::vector<double> drates(2 * P.L.size() + 2);
+        for (unsigned d = 0; d < 3; ++d) {
             drates[2 * d] = drates[2 * d + 1] = d < P.alpha.size() ? P.alpha[d] / tumble.lambda() : 1.0;
         }
         anyway = std::discrete_distribution<unsigned>(drates.begin(), drates.end());
@@ -536,20 +551,29 @@ public:
         for (unsigned n = 0; n < sites.size(); ++n) {
             // Number of remaining sites where partcles could be placed is sites.size()-n, unplaced of which need to be filled
             if (std::uniform_int_distribution<unsigned>(1, sites.size() - n)(rng) <= unplaced) {
-                // Particles get numbered from 0
-                place(n, P.N - unplaced, anyway(rng), 0.0);
+                // For ease we only place one particle per site in the initial configuration
+                place(n, P.N - unplaced, anyway(rng), 0.0, 0);
                 --unplaced;
+                // TODO better way of doing this? We need (n_max - 1)*L**2 more id's for vacancies
+                for (unsigned k = 1; k < P.n_max; k++){
+                  sites[n].id[k] = n + k * P.L[0] * P.L[1];
+                }
             }
+            // vacancies
             else {
-                // Vacancies get numbered from N
-                sites[n].id = unplaced + n;
+              for (unsigned k = 0; k < P.n_max; k++){
+                if (k == 0) sites[n].id[k] = unplaced + n;
+                else sites[n].id[k] = n + k * P.L[0] * P.L[1];
+              }
             }
         }
         assert(unplaced == 0);
 
         // Activate particles that can move, and schedule a hop accordingly
         for (unsigned n = 0; n < sites.size(); ++n) {
-            if (sites[n].occupied && sites[n].neighbours < 2 * P.L.size()) schedule(n);
+          for (unsigned k = 0; k < P.n_max; ++k){
+            if (sites[n].occupied[k] && sites[n].neighbours < 3 * P.n_max) schedule(n, k);
+          }
         }
         assert(consistent());
     }
@@ -565,13 +589,15 @@ public:
     // (This is needed if you want "realistic" snapshots, rather than the state at a mixture of times)
     void realise_directions() {
         for (auto& site : sites) {
-            if (!site.occupied) continue;
-            if (tumble(rng) < S.time() - site.hoptime) {
+          for (unsigned k = 0; k < P.n_max; k++){
+            if (!site.occupied[k]) continue;
+            if (tumble(rng) < S.time() - site.hoptime[k]) {
                 // At least one tumble event happened since we last attempted a hop; so randomise the direction
-                site.direction = anyway(rng);
+                site.direction[k] = anyway(rng);
             }
             // Advance the hop time so we don't generate temporal paradox
-            site.hoptime = S.time();
+            site.hoptime[k] = S.time();
+          }
         }
     }
 
@@ -1074,6 +1100,7 @@ int main(int argc, char* argv[]) {
   app.add_option("-L,--lengths",    P.L,      "Lattice lengths");
   app.add_option("-N,--particles",  P.N,      "Number of particles");
   app.add_option("-t,--tumble",     P.alpha,  "Tumble rate");
+  app.add_option("-n,--occupation",     P.n_max,  "Max occupation of a site");
 
   // Output parameters
   std::string output = "";
