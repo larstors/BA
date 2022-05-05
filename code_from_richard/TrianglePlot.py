@@ -34,8 +34,8 @@ class AnimatedScatter(object):
         # Setup the figure and axes
         self.fig, self.ax = plt.subplots(figsize=(20, 20))
         # Then setup FuncAnimation.
-        self.ani = animation.FuncAnimation(self.fig, self.update, interval=5, 
-                                          init_func=self.setup_plot, blit=True)
+        #self.ani = animation.FuncAnimation(self.fig, self.update, interval=5, 
+        #                                  init_func=self.setup_plot, blit=True)
         
 
     def conv(self, n):
@@ -77,7 +77,7 @@ class AnimatedScatter(object):
         s = 1.8 * 100 / L[0]
         kos = self.data[0][1::3]
         weight = self.data[0][2::3]
-        self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=1, marker="s", edgecolor="k")
+        self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=2, marker="s")
         self.ax.axis([-0.5*L[0], L[0],-5, L[1]])
         self.ax.triplot(self.triang, 'r-', alpha=0.6, linewidth=0.2)
         return self.scat,
@@ -89,7 +89,7 @@ class AnimatedScatter(object):
         self.ax.cla()
         s = 1.8 * 100 / L[0]
         weight = self.data[i][2::3]
-        self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=1, marker="s", edgecolor="k")
+        self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=2, marker="s")
         self.ax.axis([-0.5*L[0], L[0],-5, L[1]])
         self.ax.triplot(self.triang, 'r-', alpha=0.6, linewidth=0.2)
         # We need to return the updated artist for FuncAnimation to draw..
@@ -99,34 +99,9 @@ class AnimatedScatter(object):
 
 if __name__ == '__main__':
     a = AnimatedScatter()
-    a.ani.save('scatter.gif', fps=5)
+    #a.ani.save('scatter.gif', fps=5)
+    
+    a.update(1000)
+    plt.show()
 
 
-
-"""
-# creating figure
-fig = plt.figure()
-ax = plt.axes(xlim=(-50, 105), ylim=(-5, 100))
-line, = ax.plot([], [])
-
-
-# animation function that will be called sequentially
-def animate(i):
-"""
-"""camera = Camera(plt.figure())
-for i in range(len(data)):
-    #positions 
-    kos = data[i][1::2]
-    #plot them
-    plt.scatter(x=conv(kos)[0], y=conv(kos)[1], s=1.8, marker="s", c="k")
-    #snapshot for movie
-    camera.snap()
-anim = camera.animate(blit=True)
-anim.save('scatter.gif')
-"""
-
-"""
-k = data[0]
-
-
-plt.savefig("triangle_plot_test.pdf", dpi=400)"""

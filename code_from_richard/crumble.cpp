@@ -224,7 +224,7 @@ public:
     sites(std::accumulate(P.L.begin(), P.L.end(), 1, std::multiplies<unsigned>())), // Initialise lattice with empty sites
     rng(rng), // NB: this takes a reference
     tumble(std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0)/P.alpha.size()) // Tumble time generator: set to the average of the given tumble rates
-  {
+    {
     // Set up the tumble direction distribution
     std::vector<double> drates(2*P.L.size());
     for(unsigned d=0;d < P.L.size(); ++d) {
@@ -324,7 +324,7 @@ public:
 // ! while the one for the hexagonal lattice has some more drastic changes. 
 
 
-// TODO FIGURE OUT WHERE THE SEGFAULT IS?!?!??!?!?
+// TODO FIGURE OUT WHY QUEUE DIES
 template<typename Engine>
 class Triangle_lattice {
 
@@ -349,7 +349,7 @@ class Triangle_lattice {
         direction_t neighbours; // Number of neighbours that are occupied
         std::vector<direction_t> direction = std::vector<direction_t>(n_max); // Direction of last hop attempt
         std::vector<double> hoptime = std::vector<double>(n_max); // Time of last hop attempt
-        unsigned present; // Number of particles present at site. Has to be <= n_max
+        unsigned present = 0; // Number of particles present at site. Has to be <= n_max
     };
 
     std::vector<Site> sites; // Representation of the sites
@@ -448,7 +448,6 @@ class Triangle_lattice {
             }
         }
         sites[n].present++;
-        
 
     }
 
@@ -460,6 +459,7 @@ class Triangle_lattice {
             assert(sites[n].active[index]);
             // If there are no local vacancies, mark this particle as inactive and exit
             if (sites[n].neighbours == 6 * P.n_max) {
+              
                 // std::cout << "Can't move from "; decode(n); std::cout << " deactivating" << std::endl;
                 sites[n].active[index] = false;
             }
@@ -475,10 +475,11 @@ class Triangle_lattice {
                 
                 auto dnbs = neighbours(n);
                 if (sites[dnbs[sites[n].direction[index]]].present < P.n_max) {
-                  auto itr = std::lower_bound(sites[n].occupied.begin(), sites[n].occupied.end(), false);
-                  unsigned k = std::distance(sites[n].occupied.begin(), itr);
-                  if (k <= (P.n_max-1) && !sites[dnbs[sites[n].direction[index]]].occupied[k]){
-                     
+                  auto itr = std::find(sites[dnbs[sites[n].direction[index]]].occupied.begin(), sites[dnbs[sites[n].direction[index]]].occupied.end(), false);
+                  unsigned k = std::distance(sites[dnbs[sites[n].direction[index]]].occupied.begin(), itr);
+                  //std::cout << "k" << k << endl;
+                  if (k < (P.n_max) && !sites[dnbs[sites[n].direction[index]]].occupied[k]){
+                    //std::cout << "here" << endl;
                     // Get the id of the vacancy that is being displaced
                     unsigned vid = sites[dnbs[sites[n].direction[index]]].id[k];
                     // std::cout << "Moving from "; decode(n); std::cout << " deactivating" << std::endl;
@@ -488,8 +489,6 @@ class Triangle_lattice {
                     // as it moves from n, we have one less present at n
                     sites[n].present--;
                     
-
-                    std::cout << "test" << endl;
                     
                     // Place a particle on the target site; it has the same direction and hoptime as the departing particle
                     // std::cout << "Moving to "; decode(dnbs[sites[n].direction]); std::cout << " placing" << std::endl;
@@ -497,6 +496,7 @@ class Triangle_lattice {
                     
                     // Move the vacancy id onto the departure site
                     sites[n].id[index] = vid;
+                    
                     
                     // Now go through the neighbours of the departure site, update neighbour count and activate any
                     // that can now move. Note the particle this is at the target site is included in this list
@@ -508,8 +508,8 @@ class Triangle_lattice {
                         }
                     }
                     
-                    
-
+                    // ! added this line because the particle that just moved has to be queued again, right?
+                    //schedule(dnbs[sites[n].direction[index]], k);
                     
                   }
                 
@@ -523,6 +523,7 @@ class Triangle_lattice {
             });
         sites[n].active[index] = true;
         // std::cout << "Scheduled "; decode(n); std::cout << std::endl;
+         std::cout << S.pending() << endl;
     }
 
 
@@ -577,6 +578,7 @@ public:
         P(P), // NB: this takes a copy
         sites(std::accumulate(P.L.begin(), P.L.end(), 1, std::multiplies<unsigned>())), // Initialise lattice with empty sites
         rng(rng), // NB: this takes a reference
+        run(std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0)/P.alpha.size()),
         tumble(std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size()) // Tumble time generator: set to the average of the given tumble rates
     {
         // Set up the tumble direction distribution
@@ -1349,11 +1351,9 @@ int main(int argc, char* argv[]) {
 
       for(unsigned n=0; t < burnin + until; ++n) {
         t = TL.run_until(burnin + n * every);
-        std::cout << "loop" << std::endl;
         // only doing a positional output here
         outfile << TriangleParticleWriter(TL, outfile) << endl;
-
-
+        std::cout << "time" << t << endl;
       }
 
     }
