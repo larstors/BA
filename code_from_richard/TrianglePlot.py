@@ -16,7 +16,7 @@ import matplotlib.tri as mtri
 
 # TODO: better way of doing this...
 # parameters
-L = [10, 10]
+L = [100, 100]
 alpha = []
 N = 600
 
@@ -34,8 +34,8 @@ class AnimatedScatter(object):
         # Setup the figure and axes
         self.fig, self.ax = plt.subplots(figsize=(20, 20))
         # Then setup FuncAnimation.
-        #self.ani = animation.FuncAnimation(self.fig, self.update, interval=5, 
-        #                                  init_func=self.setup_plot, blit=True)
+        self.ani = animation.FuncAnimation(self.fig, self.update, interval=1, 
+                                          init_func=self.setup_plot, blit=True)
         
 
     def conv(self, n):
@@ -74,7 +74,7 @@ class AnimatedScatter(object):
 
     def setup_plot(self):
         """Initial drawing of the scatter plot."""
-        s = 1.8 * 100 / L[0]
+        s = 1.8 * 10
         kos = self.data[0][1::3]
         weight = self.data[0][2::3]
         self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=2, marker="s")
@@ -87,7 +87,7 @@ class AnimatedScatter(object):
         """Update the scatter plot."""
         kos = self.data[i][1::3]
         self.ax.cla()
-        s = 1.8 * 100 / L[0]
+        s = 1.8 * 10
         weight = self.data[i][2::3]
         self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=2, marker="s")
         self.ax.axis([-0.5*L[0], L[0],-5, L[1]])
@@ -99,9 +99,9 @@ class AnimatedScatter(object):
 
 if __name__ == '__main__':
     a = AnimatedScatter()
-    #a.ani.save('scatter.gif', fps=5)
+    a.ani.save('TriangleScatter.gif', fps=10)
     
-    a.update(1000)
-    plt.show()
+    #a.update(1000)
+    #plt.show()
 
 
