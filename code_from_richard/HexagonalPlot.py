@@ -13,23 +13,30 @@ import scipy
 import matplotlib.animation as animation
 #from celluloid import Camera
 import matplotlib.tri as mtri
+from io import StringIO
 
 # TODO: better way of doing this...
 # parameters
-L = [10, 10]
+l = int(input())
+L = [l, l]
 alpha = []
 N = 600
+n_max = int(input())
 
 
 
-data = np.loadtxt("./hexagonal.txt")
 
 
 
 class AnimatedScatter(object):
     """An animated scatter plot using matplotlib.animations.FuncAnimation."""
     def __init__(self, numpoints=50):
-        self.data = np.loadtxt("./hexagonal.txt")
+        # opening file (note the annoying way to do it because of different number of cols)
+        f = open("./hexagonal.txt")
+        self.data = []
+        for line in f:
+            self.data.append(np.loadtxt(StringIO(line), dtype=int))
+        
         # Setup the figure and axes
         self.fig, self.ax = plt.subplots(figsize=(20, 20))
         # Then setup FuncAnimation.
@@ -115,10 +122,11 @@ class AnimatedScatter(object):
 
     def setup_plot(self):
         """Initial drawing of the scatter plot."""
-        s = 1.8 * 100 / L[0]
-        kos = self.data[0][1::3] # array with n
-        jos = self.data[0][2::3] # array with j
-        self.scat = self.ax.scatter(x=self.hex_cor(kos, jos)[0], y=self.hex_cor(kos, jos)[1], c="k", s=s, vmin=0, vmax=1, marker="s", edgecolor="k")
+        s = 1.8 * 100
+        kos = self.data[0][1::4] # array with n
+        jos = self.data[0][2::4] # array with j
+        weight = self.data[0][3::4]
+        self.scat = self.ax.scatter(x=self.hex_cor(kos, jos)[0], y=self.hex_cor(kos, jos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=2, marker="s")
         #self.ax.axis([-0.5*L[0], L[0],-5, L[1]])
 
         return self.scat,
@@ -144,16 +152,17 @@ class AnimatedScatter(object):
 
     def update(self, i):
         """Update the scatter plot."""
-        kos = self.data[i][1::3] # array with n
-        jos = self.data[i][2::3] # array with j
+        kos = self.data[i][1::4] # array with n
+        jos = self.data[i][2::4] # array with j
 
+        weight = self.data[i][3::4]
 
         self.ax.cla()
-        s = 1.8 * 100 / L[0]
+        s = 1.8 * 100
         
         
 
-        self.scat = self.ax.scatter(x=self.hex_cor(kos, jos)[0], y=self.hex_cor(kos, jos)[1], c="k", s=s, vmin=0, vmax=1, marker="s", edgecolor="k")
+        self.scat = self.ax.scatter(x=self.hex_cor(kos, jos)[0], y=self.hex_cor(kos, jos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=2, marker="s")
         self.grid_plot()
 
         # We need to return the updated artist for FuncAnimation to draw..
