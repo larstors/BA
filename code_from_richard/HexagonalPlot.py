@@ -40,8 +40,8 @@ class AnimatedScatter(object):
         # Setup the figure and axes
         self.fig, self.ax = plt.subplots(figsize=(20, 20))
         # Then setup FuncAnimation.
-        self.ani = animation.FuncAnimation(self.fig, self.update, interval=5, 
-                                          init_func=self.setup_plot, blit=True)
+        #self.ani = animation.FuncAnimation(self.fig, self.update, interval=5, 
+        #                                  init_func=self.setup_plot, blit=True)
         
     
     def hex_cor(self, n, j):
@@ -133,8 +133,6 @@ class AnimatedScatter(object):
 
     def grid_plot(self):
 
-        
-
         xl = []
         yl = []
         xl, yl = self.fill(xl, yl)
@@ -147,8 +145,16 @@ class AnimatedScatter(object):
 
         plt.plot([xl[L[0]-1], xl[2*L[0]-1]], [yl[L[0]-1], yl[2*L[0]-1]], 'r-', alpha=0.6, linewidth=0.2)
         plt.plot([xl[2*L[0]*(L[0]-1)], xl[2*L[0]*L[0] - L[0]]], [yl[2*L[0]*(L[0]-1)], yl[2*L[0]*L[0] - L[0]]], 'r-', alpha=0.6, linewidth=0.2)
-        
-        
+    
+    def ani_particle(self):
+        ani = animation.FuncAnimation(self.fig, self.update, interval=5, 
+                                          init_func=self.setup_plot, blit=True)
+        return ani
+    
+    def ani_direction(self):
+        ani = animation.FuncAnimation(self.fig, self.direction, interval=5, 
+                                          init_func=self.setup_direction, blit=True)
+        return ani
 
     def update(self, i):
         """Update the scatter plot."""
@@ -164,15 +170,52 @@ class AnimatedScatter(object):
 
         self.scat = self.ax.scatter(x=self.hex_cor(kos, jos)[0], y=self.hex_cor(kos, jos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=2, marker="s")
         self.grid_plot()
+        print(np.sum(weight))
 
         # We need to return the updated artist for FuncAnimation to draw..
         # Note that it expects a sequence of artists, thus the trailing comma.
         return self.scat,
 
+    def setup_direction(self):
+        # working with 1 particle as of now
+        self.grid_plot()
+        dir = np.loadtxt("hexdir.txt", delimiter="\t", dtype=int)
+        n = dir[0,0]
+        j = dir[0,1]
+        m = dir[0,2]
+        x, y = self.hex_cor_int(n, j)
+        origin = np.array([[x], [y]])
+        dx, dy = self.hex_cor_int(m, (j+1)%2)
+        V = np.array([[dx-x, dy-y]])
+        plt.quiver(*origin, V[0, 0], V[0, 1])
+        scat = plt.scatter(x=x, y=y, cmap="Greens")
+        return scat,
+
+
+    def direction(self, i):
+        # working with 1 particle as of now
+        self.grid_plot()
+        dir = np.loadtxt("hexdir.txt", delimiter="\t", dtype=int)
+        n = dir[i,0]
+        j = dir[i,1]
+        m = dir[i,2]
+        x, y = self.hex_cor_int(n, j)
+        origin = np.array([[x], [y]])
+        dx, dy = self.hex_cor_int(m, (j+1)%2)
+        V = np.array([[dx-x, dy-y]])
+        plt.quiver(*origin, V[0, 0], V[0, 1])
+        scat = plt.scatter(x=x, y=y, cmap="Greens")
+        return scat,
+
 
 if __name__ == '__main__':
     a = AnimatedScatter()
-    a.ani.save('HexagonalScatter.gif', fps=2)
+    #a.ani.save('HexagonalScatter.gif', fps=2)
+    #a.direction(32)
+    #plt.show()
+    #plt.savefig("hexdir2.pdf", dpi=200)
+    animation = a.ani_direction()
+    animation.save("HexagonalDirection.gif", fps=5)
     
 
 

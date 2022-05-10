@@ -46,6 +46,7 @@ template<typename Engine> class ClusterWriter;
 
 template<typename Engine> class TriangleParticleWriter;
 template<typename Engine> class HexagonalParticleWriter;
+template<typename Engine> class HexDirectionWriter;
 
 template<typename Engine>
 class Lattice {
@@ -321,10 +322,9 @@ public:
 };
 
 // ! Following classes are additions by Lars. Note that in the triangular case it is just the one as above with some very slight adjustments
-// ! while the one for the hexagonal lattice has some more drastic changes. 
+// ! while the one for the hexagonal lattice has more drastic changes. 
 
 
-// TODO FIGURE OUT WHY QUEUE DIES
 template<typename Engine>
 class Triangle_lattice {
 
@@ -668,9 +668,12 @@ public:
             // Loop over neigbours m in one direction only so we visit each bond once
             for (const auto& m : forward_neighbours(n)) {
                 unsigned large = memberof[n], small = memberof[m];
-                // Merge clusters at n and m if they both have the same occupation, and are not already part of the same cluster
-                // TODO check whether the [0] argument actually works. 
-                if (sites[n].occupied[0] == sites[m].occupied[0] && small != large) {
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
                     // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
                     if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
                     // Update the cluster number for all sites in the smaller one
@@ -687,14 +690,64 @@ public:
 
         hist_t dists(2 * maxsize);
         for (const auto& kv : clusters) {
-            for (unsigned i = 0; i < P.n_max; i++){
-              dists[2 * kv.second.size() - 1 - sites[kv.first].occupied[i]]++;
-            }
+            // instead of occupied we check whether there are any particles present
+            if (sites[kv.first].present == 0) dists[2 * kv.second.size() - 1]++;
+            else dists[2 * kv.second.size() - 2]++;
         }
         return dists;
     }
 
+
+    hist_t cluster_distributions_particle_numbers() const {
+        // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof_nr(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof_nr.begin(), memberof_nr.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters_nr;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          if (sites[n].present == 0) clusters_nr[n] = std::list<unsigned>(1, n);
+          else clusters_nr[n] = std::list<unsigned>(sites[n].present, n);
+
+        }
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize_nr = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof_nr[n], small = memberof_nr[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters_nr[large].size() < clusters_nr[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters_nr[small]) memberof_nr[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters_nr[large].splice(clusters_nr[large].end(), clusters_nr[small]);
+                    // Remove the smaller cluster from the map
+                    clusters_nr.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize_nr = std::max(maxsize_nr, clusters_nr[large].size());
+                }
+            }
+        }
+
+        hist_t dists_nr(2 * maxsize_nr);
+        for (const auto& kv : clusters_nr) {
+            // instead of occupied we check whether there are any particles present
+            if (sites[kv.first].present == 0) dists_nr[2 * kv.second.size() - 1]++;
+            else dists_nr[2 * kv.second.size() - 2]++;
+        }
+        return dists_nr;
+    }
+
 };
+
 
 template<typename Engine>
 class Hexagonal_lattice {
@@ -704,6 +757,7 @@ class Hexagonal_lattice {
     friend class VacancyWriter<Engine>;
     friend class HexagonalParticleWriter<Engine>;
     friend class ClusterWriter<Engine>;
+    friend class HexDirectionWriter<Engine>;
 
     Parameters P; // A local copy of the model parameters
     // TODO Really need a better way of doing this
@@ -721,7 +775,7 @@ class Hexagonal_lattice {
         std::vector<direction_t> neighbours = std::vector<direction_t>(2); // Number of neighbours that are occupied
         std::vector<direction_t> direction = std::vector<direction_t>(2 * n_max); // Direction of last hop attempt
         std::vector<double> hoptime = std::vector<double>(2 * n_max); // Time of last hop attempt
-        std::vector<unsigned> present = std::vector<unsigned>(2); // Number of particles present at each site in unit cell
+        std::vector<int> present = std::vector<int>(2); // Number of particles present at each site in unit cell
     };
 
 
@@ -790,6 +844,13 @@ class Hexagonal_lattice {
     // neighbouring sites will be accordingly adjusted
     void place(unsigned n, unsigned id, direction_t d, double t, unsigned index) {
         sites[n].id[index] = id;
+
+        // as direction isn't isotropic anymore, we have to identify the direction that is 
+        // "the most" in the same direction. In the case of a hexagonal grid, two of the directions
+        // are equally likely.
+        int dir = d;
+        if (std::uniform_int_distribution<int>(1, 2)(rng) == 1) d = (dir + 1)%3;
+        else d = (dir + 2)%3;
         sites[n].direction[index] = d;
         sites[n].hoptime[index] = t;
         if (!sites[n].occupied[index]) {
@@ -797,6 +858,7 @@ class Hexagonal_lattice {
             for (const auto& m : neighbours(n, index%2)) ++sites[m].neighbours[(index+1)%2];
         }
         sites[n].present[index%2]++;
+        //if (sites[n].present[index%2] == 0) std::cout << "present at n=" << n << ", j=" << index << "\t" << sites[n].present[index%2] << endl;
     }
 
     // Schedule a hop event for a particle at site n
@@ -810,6 +872,9 @@ class Hexagonal_lattice {
                 // std::cout << "Can't move from "; decode(n); std::cout << " deactivating" << std::endl;
                 sites[n].active[index] = false;
             }
+
+            // TODO figure out why no 0 in present
+
             else {
                 // if(std::uniform_real_distribution<double>()(rng)>=std::exp(-P.alpha*(S.time()-sites[n].hoptime))) {
                 if (tumble(rng) < S.time() - sites[n].hoptime[index]) {
@@ -833,12 +898,16 @@ class Hexagonal_lattice {
                   // std::cout << "Moving from "; decode(n); std::cout << " deactivating" << std::endl;
                   // Deactive the departure site; also mark it empty
                   sites[n].occupied[index] = sites[n].active[index] = false;
+                  //std::cout << "before:\t n\t" << sites[n].present[index] << "\t m\t" << sites[dnbs[sites[n].direction[index]]].present[ind] << endl;
                   // Place a particle on the target site; it has the same direction and hoptime as the departing particle
                   // std::cout << "Moving to "; decode(dnbs[sites[n].direction]); std::cout << " placing" << std::endl;
                   place(dnbs[sites[n].direction[index]], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index], ind);
                   // Move the vacancy id onto the departure site
                   sites[n].id[index] = vid;
-                  sites[n].present[index]--;
+                  sites[n].present[index%2] -= 1;
+                  if (sites[n].present[index%2] == -1) std::cout << "n: " << n << " j: " << index << endl;
+                  //std::cout << "after:\t n\t" << sites[n].present[index] << "\t m\t" << sites[dnbs[sites[n].direction[index]]].present[ind] << endl;
+
                   // Now go through the neighbours of the departure site, update neighbour count and activate any
                   // that can now move. Note the particle this is at the target site is included in this list
                   // and will be activated accordingly
@@ -1035,6 +1104,7 @@ public:
             clusters[2*n + i] = std::list<unsigned>(1, 2*n + i); // Single-element list comprising the lattice site
           }
         }
+
         // Keep track of the size of the largest cluster
         std::size_t maxsize = 1;
 
@@ -1043,8 +1113,13 @@ public:
           for (unsigned i = 0; i < 2; i++){
             for (const auto& m : forward_neighbours(n, i)) {
                 unsigned large = memberof[2*n + i], small = memberof[2*m + (i+1)%2];
-                // Merge clusters at n and m if they both have the same occupation, and are not already part of the same cluster
-                if (sites[n].occupied[i] == sites[m].occupied[(i+1)%2] && small != large) {
+                // If they are in the same cluster we can move on
+                if (small == large) continue;
+                // If one of them is empty but the other isn't we move on
+                else if (sites[n].present[i] == 0 && sites[m].present[(i+1)%2] != 0) continue;
+                else if (sites[n].present[i] != 0 && sites[m].present[(i+1)%2] == 0) continue;
+                // merge clusters
+                else {
                     // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
                     if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
                     // Update the cluster number for all sites in the smaller one
@@ -1063,7 +1138,9 @@ public:
         hist_t dists(2 * maxsize);
         for (const auto& kv : clusters) {
           for (unsigned i = 0; i < 2; i++){
-            dists[2 * kv.second.size() - 1 - sites[kv.first/2].occupied[i]]++;
+            // instead of occupied we check whether there are any particles present
+            if (sites[kv.first/2].present[i] == 0) dists[2 * kv.second.size() - 1]++;
+            else dists[2 * kv.second.size() - 2]++;
           }
         }
         return dists;
@@ -1160,6 +1237,35 @@ public:
 
 };
 
+
+// just a small output to see if the directions are properly implemented
+template<typename Engine>
+class HexDirectionWriter {
+  const Hexagonal_lattice<Engine>& L;
+public:
+  HexDirectionWriter(const Hexagonal_lattice<Engine>& L,  ofstream& outfile) : L(L) { }
+
+  // Output tuple (n, j, d), with n being lattice site, j being index in lattice site and 
+  // d the lattice site where particle is pointing
+
+  friend std::ostream& operator << (std::ostream& out, const HexDirectionWriter& HSW) {
+
+    const auto& sites = HSW.L.sites; // Save typing
+    
+
+    for(unsigned n=0; n<sites.size(); ++n) {
+      
+      for (unsigned j = 0; j < 2 * 2; j++){
+        auto dnbs = HSW.L.neighbours(n, j);
+        if(sites[n].occupied[j]) out <<  n << "\t" << j << "\t" << dnbs[sites[n].direction[j]];    
+      }
+    }
+
+    return out;
+  }
+
+};
+
 template<typename Engine>
 class VacancyWriter {
   const Lattice<Engine>& L;
@@ -1241,7 +1347,7 @@ friend std::ostream& operator << (std::ostream& out, const HexagonalParticleWrit
 
     for(unsigned n=0; n<sites.size(); ++n) {
       for (unsigned j = 0; j < 2; j++){
-        if(sites[n].occupied[j]) out << sites[n].id[j] << "\t" << n << "\t" << j << "\t" << sites[n].present[j] << "\t";    
+        if(sites[n].present[j] > 0) out << sites[n].id[j] << "\t" << n << "\t" << j << "\t" << sites[n].present[j] << "\t";    
       }
     }
 
@@ -1375,6 +1481,7 @@ int main(int argc, char* argv[]) {
       std::cout << "# localaverage = " << localaverage << std::endl;
       std::cout << "# localinterval = " << localinterval << std::endl;
     }
+    std::cout << "# occupation number = " << P.n_max << std::endl;
 
     double t = 0;
 
@@ -1448,6 +1555,7 @@ int main(int argc, char* argv[]) {
       std::cout << "# localaverage = " << localaverage << std::endl;
       std::cout << "# localinterval = " << localinterval << std::endl;
     }
+    std::cout << "# occupation number = " << P.n_max << std::endl;
 
     double t = 0;
 
@@ -1455,27 +1563,47 @@ int main(int argc, char* argv[]) {
       if(localaverage == 0) {
         // We sum the histograms over all measurements
         hist_t sumhist;
+        hist_t sumhist_nr;
         for(unsigned n=0; t < burnin + until; ++n) {
           t = TL.run_until(burnin + n * every);
           hist_t hist = TL.cluster_distributions();
-          // Add hist to sumhist taking into account they may have different lengths
+          hist_t hist_nr = TL.cluster_distributions_particle_numbers();
+          // Only area
           if(hist.size() > sumhist.size()) {
             hist[std::slice(0,sumhist.size(),1)] += sumhist;
             sumhist = std::move(hist);
           } else {
             sumhist[std::slice(0,hist.size(),1)] += hist;
           }
+
+          // with occ number as well
+
+          if(hist_nr.size() > sumhist_nr.size()){
+            hist_nr[std::slice(0, sumhist_nr.size(), 1)] += sumhist_nr;
+            sumhist_nr = std::move(hist_nr);
+          } else {
+            sumhist_nr[std::slice(0, hist_nr.size(), 1)] += hist_nr;
+          }
+
         }
-        for(const auto& k: sumhist) std::cout << k << " ";
-        std::cout << std::endl;
+        // output for each of the distributions 
+        ofstream outfile, outfile_nr;
+        outfile.open("./lars_sim/tridist.txt");
+        for(const auto& k: sumhist) outfile << k << " ";
+        outfile << endl;
+        outfile_nr.open("./lars_sim/tridist_nr.txt");
+        for(const auto& k: sumhist_nr) outfile_nr << k << " ";
+        outfile_nr << endl;
       } else {
         // We perform local averages of the histograms at the given measurement interval
         for(unsigned n=0; t < burnin + until; ++n) {
           t = TL.run_until(burnin + n * every);
           hist_t sumhist = TL.cluster_distributions();
+          hist_t sumhist_nr = TL.cluster_distributions_particle_numbers();
           for(unsigned m=1; m<localaverage; ++m) {
             t = TL.run_until(burnin + n*every + m*localinterval);
             hist_t hist = TL.cluster_distributions();
+            hist_t hist_nr = TL.cluster_distributions_particle_numbers();
             // Add hist to sumhist taking into account they may have different lengths
             if(hist.size() > sumhist.size()) {
               hist[std::slice(0,sumhist.size(),1)] += sumhist;
@@ -1483,9 +1611,20 @@ int main(int argc, char* argv[]) {
             } else {
               sumhist[std::slice(0,hist.size(),1)] += hist;
             }
+            if(hist_nr.size() > sumhist_nr.size()){
+              hist_nr[std::slice(0, sumhist_nr.size(), 1)] += sumhist_nr;
+              sumhist_nr = std::move(hist_nr);
+            } else {
+              sumhist_nr[std::slice(0, hist_nr.size(), 1)] += hist_nr;
+            }
           }
-          for(const auto& k: sumhist) std::cout << k << " ";
-          std::cout << std::endl;
+          ofstream outfile, outfile_nr;
+          outfile.open("./lars_sim/tridist.txt");
+          for(const auto& k: sumhist) outfile << k << " ";
+          outfile << endl;
+          outfile_nr.open("./lars_sim/tridist_nr.txt");
+          for(const auto& k: sumhist_nr) outfile_nr << k << " ";
+          outfile_nr << endl;
         }
       }
     } else {
@@ -1531,6 +1670,7 @@ int main(int argc, char* argv[]) {
       std::cout << "# localaverage = " << localaverage << std::endl;
       std::cout << "# localinterval = " << localinterval << std::endl;
     }
+    std::cout << "# occupation number = " << P.n_max << std::endl;
 
     double t = 0;
 
@@ -1538,27 +1678,46 @@ int main(int argc, char* argv[]) {
       if(localaverage == 0) {
         // We sum the histograms over all measurements
         hist_t sumhist;
+        hist_t sumhist_nr;
         for(unsigned n=0; t < burnin + until; ++n) {
           t = HL.run_until(burnin + n * every);
           hist_t hist = HL.cluster_distributions();
-          // Add hist to sumhist taking into account they may have different lengths
+          hist_t hist_nr = HL.cluster_distribution_particle_number();
+          // Only area
           if(hist.size() > sumhist.size()) {
             hist[std::slice(0,sumhist.size(),1)] += sumhist;
             sumhist = std::move(hist);
           } else {
             sumhist[std::slice(0,hist.size(),1)] += hist;
           }
+
+          // with occ number as well
+
+          if(hist_nr.size() > sumhist_nr.size()){
+            hist_nr[std::slice(0, sumhist_nr.size(), 1)] += sumhist_nr;
+            sumhist_nr = std::move(hist_nr);
+          } else {
+            sumhist_nr[std::slice(0, hist_nr.size(), 1)] += hist_nr;
+          }
+
         }
-        for(const auto& k: sumhist) std::cout << k << " ";
-        std::cout << std::endl;
+        ofstream outfile, outfile_nr;
+        outfile.open("./lars_sim/hexdist.txt");
+        for(const auto& k: sumhist) outfile << k << " ";
+        outfile << endl;
+        outfile_nr.open("./lars_sim/hexdist_nr.txt");
+        for(const auto& k: sumhist_nr) outfile_nr << k << " ";
+        outfile_nr << endl;
       } else {
         // We perform local averages of the histograms at the given measurement interval
         for(unsigned n=0; t < burnin + until; ++n) {
           t = HL.run_until(burnin + n * every);
           hist_t sumhist = HL.cluster_distributions();
+          hist_t sumhist_nr = HL.cluster_distribution_particle_number();
           for(unsigned m=1; m<localaverage; ++m) {
             t = HL.run_until(burnin + n*every + m*localinterval);
             hist_t hist = HL.cluster_distributions();
+            hist_t hist_nr = HL.cluster_distribution_particle_number();
             // Add hist to sumhist taking into account they may have different lengths
             if(hist.size() > sumhist.size()) {
               hist[std::slice(0,sumhist.size(),1)] += sumhist;
@@ -1566,24 +1725,25 @@ int main(int argc, char* argv[]) {
             } else {
               sumhist[std::slice(0,hist.size(),1)] += hist;
             }
+            if(hist_nr.size() > sumhist_nr.size()){
+              hist_nr[std::slice(0, sumhist_nr.size(), 1)] += sumhist_nr;
+              sumhist_nr = std::move(hist_nr);
+            } else {
+              sumhist_nr[std::slice(0, hist_nr.size(), 1)] += hist_nr;
+            }
           }
-          for(const auto& k: sumhist) std::cout << k << " ";
-          std::cout << std::endl;
+          ofstream outfile, outfile_nr;
+          outfile.open("./lars_sim/hexdist.txt");
+          for(const auto& k: sumhist) outfile << k << " ";
+          outfile << endl;
+          outfile_nr.open("./lars_sim/hexdist_nr.txt");
+          for(const auto& k: sumhist_nr) outfile_nr << k << " ";
+          outfile_nr << endl;
         }
       }
-    } else {
+    } else if (output == "particles") {
       ofstream outfile;
       outfile.open("hexagonal.txt");
-      //outfile << "# L = [ ";
-      //for(const auto& L: P.L) outfile << L << " ";
-      //outfile << "]" << endl;
-      //outfile << "# N = " << P.N << endl;
-      //outfile << "# alpha = [ ";
-      //for(const auto& alpha: P.alpha) outfile << alpha << " ";
-      //outfile << "]" << endl;
-      //outfile << "# output = " << output << endl;
-      //outfile << "# initial = " << burnin << endl;
-      //outfile << "# interval = " << every << endl;
 
       for(unsigned n=0; t < burnin + until; ++n) {
         t = HL.run_until(burnin + n * every);
@@ -1591,6 +1751,17 @@ int main(int argc, char* argv[]) {
         
         outfile << HexagonalParticleWriter(HL, outfile) << endl;
 
+      }
+
+    } else if (output == "snapshots"){
+      ofstream outfile;
+      outfile.open("hexdir.txt");
+
+      for(unsigned n=0; t < burnin + until; ++n) {
+        t = HL.run_until(burnin + n * every);
+        // only doing a positional output here
+        HL.realise_directions();
+        outfile << HexDirectionWriter(HL, outfile) << endl;
       }
 
     }
