@@ -57,16 +57,21 @@ class Lattice {
   friend class ParticleWriter<Engine>;
   friend class ClusterWriter<Engine>;
 
-  // Data associated with each site; by default all of these are set to zero
-  // which represents a vacant site
-  struct Site {
-    unsigned id; // Particle / vacancy id
-    bool occupied; // There is a particle here
-    bool active; // A move event is scheduled
-    direction_t neighbours; // Number of neighbours that are occupied
-    direction_t direction; // Direction of last hop attempt
-    double hoptime; // Time of last hop attempt
-  };
+  static constexpr unsigned n_max = 2; // ! Nicer way of doing this?
+    
+    
+
+    // Data associated with each site; by default all of these are set to zero
+    // which represents a vacant site
+    struct Site {
+        std::vector<unsigned> id = std::vector<unsigned>(n_max); // Particle / vacancy id
+        std::vector<bool> occupied = std::vector<bool>(n_max); // There is a particle here
+        std::vector<bool> active = std::vector<bool>(n_max); // A move event is scheduled
+        direction_t neighbours; // Number of neighbours that are occupied
+        std::vector<direction_t> direction = std::vector<direction_t>(n_max); // Direction of last hop attempt
+        std::vector<double> hoptime = std::vector<double>(n_max); // Time of last hop attempt
+        unsigned present = 0; // Number of particles present at site. Has to be <= n_max
+    };
 
   Parameters P; // A local copy of the model parameters
   std::vector<Site> sites; // Representation of the sites
@@ -117,65 +122,86 @@ class Lattice {
 
   // Place a particle with given direction and hop time at site n;
   // neighbouring sites will be accordingly adjusted
-  void place(unsigned n, unsigned id, direction_t d, double t) {
-    sites[n].id = id;
-    sites[n].direction = d;
-    sites[n].hoptime = t;
-    if(!sites[n].occupied) {
-      sites[n].occupied = true;
+  void place(unsigned n, unsigned id, direction_t d, double t, unsigned index) {
+    sites[n].id[index] = id;
+    sites[n].direction[index] = d;
+    sites[n].hoptime[index] = t;
+    if(!sites[n].occupied[index]) {
+      sites[n].occupied[index] = true;
       for(const auto&m: neighbours(n)) ++sites[m].neighbours;
     }
+    sites[n].present++;
   }
 
   // Schedule a hop event for a particle at site n
-  void schedule(unsigned n) {
-    assert(sites[n].occupied);
-    S.schedule(run(rng), [this,n]() {
-      assert(sites[n].occupied);
-      assert(sites[n].active);
+  void schedule(unsigned n, unsigned index) {
+    assert(sites[n].occupied[index]);
+    S.schedule(run(rng), [this,n, index]() {
+      assert(sites[n].occupied[index]);
+      assert(sites[n].active[index]);
       // If there are no local vacancies, mark this particle as inactive and exit
-      if(sites[n].neighbours == 2*P.L.size()) {
+      if(sites[n].neighbours == 2*P.L.size() * P.n_max) {
         // std::cout << "Can't move from "; decode(n); std::cout << " deactivating" << std::endl;
-        sites[n].active = false;
+        sites[n].active[index] = false;
       } else {
         // if(std::uniform_real_distribution<double>()(rng)>=std::exp(-P.alpha*(S.time()-sites[n].hoptime))) {
-        if(tumble(rng) < S.time() - sites[n].hoptime) {
+        if(tumble(rng) < S.time() - sites[n].hoptime[index]) {
           // At least one tumble event happened since we last attempted a hop; so randomise the direction
-          sites[n].direction = anyway(rng);
+          sites[n].direction[index] = anyway(rng);
           //std::cout << "Now moving in direction " << int(sites[n].direction) << " from "; decode(n); std::cout << std::endl;
         }
-        sites[n].hoptime = S.time();
+        sites[n].hoptime[index] = S.time();
         // Get the sites adjacent to the departure site
         auto dnbs = neighbours(n);
-        if(!sites[dnbs[sites[n].direction]].occupied) {
-          assert(!sites[dnbs[sites[n].direction]].active);
-          // Get the id of the vacancy that is being displaced
-          unsigned vid = sites[dnbs[sites[n].direction]].id;
-          // std::cout << "Moving from "; decode(n); std::cout << " deactivating" << std::endl;
-          // Deactive the departure site; also mark it empty
-          sites[n].occupied = sites[n].active = false;
-          // Place a particle on the target site; it has the same direction and hoptime as the departing particle
-          // std::cout << "Moving to "; decode(dnbs[sites[n].direction]); std::cout << " placing" << std::endl;
-          place(dnbs[sites[n].direction], sites[n].id, sites[n].direction, sites[n].hoptime);
-          // Move the vacancy id onto the departure site
-          sites[n].id = vid;
-          // Now go through the neighbours of the departure site, update neighbour count and activate any
-          // that can now move. Note the particle this is at the target site is included in this list
-          // and will be activated accordingly
-          for(const auto& m: dnbs) {
-            --sites[m].neighbours;
-            if(sites[m].occupied && !sites[m].active) schedule(m);
-          }
-        } else {
-          // std::cout << "Didn't move from "; decode(n); std::cout << std::endl;
-          // This site is still active, so schedule another hop
-          schedule(n);
-        }
-      }
-    });
-    sites[n].active = true;
-    // std::cout << "Scheduled "; decode(n); std::cout << std::endl;
-  }
+        if (sites[dnbs[sites[n].direction[index]]].present < P.n_max) {
+                  auto itr = std::find(sites[dnbs[sites[n].direction[index]]].occupied.begin(), sites[dnbs[sites[n].direction[index]]].occupied.end(), false);
+                  unsigned k = std::distance(sites[dnbs[sites[n].direction[index]]].occupied.begin(), itr);
+                  assert(k==2);
+                  if (k < (P.n_max) && !sites[dnbs[sites[n].direction[index]]].occupied[k]){
+                    
+                    //std::cout << "here" << endl;
+                    // Get the id of the vacancy that is being displaced
+                    unsigned vid = sites[dnbs[sites[n].direction[index]]].id[k];
+                    // std::cout << "Moving from "; decode(n); std::cout << " deactivating" << std::endl;
+                    // Deactive the departure site; also mark it empty
+                    sites[n].occupied[index] = sites[n].active[index] = false;
+                    
+                    // as it moves from n, we have one less present at n
+                    sites[n].present--;
+                    assert(sites[n].present >= 0);
+                    
+                    
+                    // Place a particle on the target site; it has the same direction and hoptime as the departing particle
+                    // std::cout << "Moving to "; decode(dnbs[sites[n].direction]); std::cout << " placing" << std::endl;
+                    place(dnbs[sites[n].direction[index]], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index], k);
+                    
+                    // Move the vacancy id onto the departure site
+                    sites[n].id[index] = vid;
+                    
+                    
+                    // Now go through the neighbours of the departure site, update neighbour count and activate any
+                    // that can now move. Note the particle this is at the target site is included in this list
+                    // and will be activated accordingly
+                    for (const auto& m : dnbs) {
+                        --sites[m].neighbours;
+                        for (unsigned i = 0; i < P.n_max; i++){
+                          if (sites[m].occupied[i] && !sites[m].active[i]) schedule(m, i);
+                        }
+                    }
+                    
+                  }
+                
+                }
+                else {
+                    // std::cout << "Didn't move from "; decode(n); std::cout << std::endl;
+                    // This site is still active, so schedule another hop
+                    schedule(n, index);
+                }
+            }
+            });
+        sites[n].active[index] = true;
+        // std::cout << "Scheduled "; decode(n); std::cout << std::endl;
+    }
 
 
   // For testing
@@ -189,33 +215,38 @@ class Lattice {
   }
 
   // Check the lattice state is consistent
-  bool consistent() {
-    unsigned active = 0, occupied = 0;
-    std::set<unsigned> ids;
-    for(unsigned n=0; n<sites.size(); ++n) {
-      // Check each site has a unique id
-      if(ids.count(sites[n].id)) return false;
-      ids.insert(sites[n].id);
-      // Check that empty sites are also inactive
-      if(!sites[n].occupied) {
-        if(sites[n].active) return false;
-        // Nothing left to do if empty
-        continue;
-      }
-      // Check that the neighbour count is correct
-      ++occupied;
-      unsigned nbs = 0;
-      for(const auto& m: neighbours(n)) {
-        if(sites[m].occupied) ++nbs;
-      }
-      if(nbs != sites[n].neighbours) return false;
-      // Check that mobile particles are active
-      if(nbs < 2*P.L.size() && !sites[n].active) return false;
-      if(sites[n].active) ++active;
+    bool consistent() {
+        unsigned active = 0, occupied = 0;
+        std::set<unsigned> ids;
+        for (unsigned n = 0; n < sites.size(); ++n) {
+          for (unsigned k = 0; k < P.n_max; k++){
+            // Check each site has a unique id
+            if (ids.count(sites[n].id[k])) return false;
+            ids.insert(sites[n].id[k]);
+            // Check that empty sites are also inactive
+            if (!sites[n].occupied[k]) {
+                if (sites[n].active[k]) return false;
+                // Nothing left to do if empty
+                continue;
+            }
+            // Check that the neighbour count is correct
+            ++occupied;
+            // ! Can we move this out one loop?
+            unsigned nbs = 0;
+            for (const auto& m : neighbours(n)) {
+              for (unsigned i = 0; i < P.n_max; i++){
+                if (sites[m].occupied[i]) ++nbs;
+              }
+            }
+            if (nbs != sites[n].neighbours) return false;
+            // Check that mobile particles are active
+            if (nbs < 6*P.n_max && !sites[n].active[k]) return false;
+            if (sites[n].active[k]) ++active;
+          }
+        }
+        // Check we've not lost any particles
+        return occupied == P.N && active == S.pending();
     }
-    // Check we've not lost any particles
-    return occupied == P.N && active == S.pending();
-  }
 
 
 public:
@@ -224,6 +255,7 @@ public:
     P(P), // NB: this takes a copy
     sites(std::accumulate(P.L.begin(), P.L.end(), 1, std::multiplies<unsigned>())), // Initialise lattice with empty sites
     rng(rng), // NB: this takes a reference
+    run(1),
     tumble(std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0)/P.alpha.size()) // Tumble time generator: set to the average of the given tumble rates
     {
     // Set up the tumble direction distribution
@@ -234,26 +266,36 @@ public:
     anyway = std::discrete_distribution<unsigned>(drates.begin(), drates.end());
 
     // Place particles on the lattice
-    unsigned unplaced = P.N; // Current number of particles remaining to be placed
-    for(unsigned n=0; n<sites.size(); ++n) {
-      // Number of remaining sites where partcles could be placed is sites.size()-n, unplaced of which need to be filled
-      if(std::uniform_int_distribution<unsigned>(1,sites.size()-n)(rng) <= unplaced) {
-        // Particles get numbered from 0
-        place(n, P.N-unplaced, anyway(rng), 0.0);
-        --unplaced;
-      } else {
-        // Vacancies get numbered from N
-        sites[n].id = unplaced + n;
-      }
+        unsigned unplaced = P.N; // Current number of particles remaining to be placed
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Number of remaining sites where partcles could be placed is sites.size()-n, unplaced of which need to be filled
+            if (std::uniform_int_distribution<unsigned>(1, sites.size() - n)(rng) <= unplaced) {
+                // For ease we only place one particle per site in the initial configuration
+                place(n, P.N - unplaced, anyway(rng), 0.0, 0);
+                --unplaced;
+                // TODO better way of doing this? We need (n_max - 1)*L**2 more id's for vacancies
+                for (unsigned k = 1; k < P.n_max; k++){
+                  sites[n].id[k] = n + k * P.L[0] * P.L[1];
+                }
+            }
+            // vacancies
+            else {
+              for (unsigned k = 0; k < P.n_max; k++){
+                if (k == 0) sites[n].id[k] = unplaced + n;
+                else sites[n].id[k] = n + k * P.L[0] * P.L[1];
+              }
+            }
+        }
+        assert(unplaced == 0);
+        
+        // Activate particles that can move, and schedule a hop accordingly
+        for (unsigned n = 0; n < sites.size(); ++n) {
+          for (unsigned k = 0; k < P.n_max; ++k){
+            if (sites[n].occupied[k] && sites[n].neighbours < 3 * P.n_max) schedule(n, k);
+          }
+        }
+        assert(consistent());
     }
-    assert(unplaced==0);
-
-    // Activate particles that can move, and schedule a hop accordingly
-    for(unsigned n=0; n<sites.size(); ++n) {
-      if(sites[n].occupied && sites[n].neighbours < 2*P.L.size()) schedule(n);
-    }
-    assert(consistent());
-  }
 
   // Iterates the simulation until the given time; returns the actual time run to
   double run_until(double time) {
@@ -265,61 +307,118 @@ public:
   // Sample all particle directions from the distribution that applies at the current instant
   // (This is needed if you want "realistic" snapshots, rather than the state at a mixture of times)
   void realise_directions() {
-    for(auto& site: sites) {
-      if(!site.occupied) continue;
-      if(tumble(rng) < S.time() - site.hoptime) {
-        // At least one tumble event happened since we last attempted a hop; so randomise the direction
-        site.direction = anyway(rng);
-      }
-      // Advance the hop time so we don't generate temporal paradox
-      site.hoptime = S.time();
+        for (auto& site : sites) {
+          for (unsigned k = 0; k < P.n_max; k++){
+            if (!site.occupied[k]) continue;
+            if (tumble(rng) < S.time() - site.hoptime[k]) {
+                // At least one tumble event happened since we last attempted a hop; so randomise the direction
+                site.direction[k] = anyway(rng);
+            }
+            // Advance the hop time so we don't generate temporal paradox
+            site.hoptime[k] = S.time();
+          }
+        }
     }
-  }
 
   // Return cluster size distributions.
-  // Element 2n   contains the number of clusters of particles of size n+1
-  // Element 2n+1 contains the number of clusters of vacancies of size n+1
-  hist_t cluster_distributions() const {
+    // Element 2n   contains the number of clusters of particles of size n+1
+    // Element 2n+1 contains the number of clusters of vacancies of size n+1
+    hist_t cluster_distributions() const {
+        // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n) clusters[n] = std::list<unsigned>(1, n); // Single-element list comprising the lattice site
 
-    // Lookup table of cluster membership by lattice site
-    std::vector<unsigned> memberof(sites.size());
-    // Initially, this is just the site id as each site is its own cluster
-    std::iota(memberof.begin(), memberof.end(), 0);
-    // Create also a map of clusters each containing a list of its members
-    std::map<unsigned, std::list<unsigned>> clusters;
-    for(unsigned n=0; n<sites.size(); ++n) clusters[n] = std::list<unsigned>(1, n); // Single-element list comprising the lattice site
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
 
-    // Keep track of the size of the largest cluster
-    std::size_t maxsize = 1;
-
-    for(unsigned n=0; n<sites.size(); ++n) {
-      // Loop over neigbours m in one direction only so we visit each bond once
-      for(const auto& m: forward_neighbours(n)) {
-        unsigned large = memberof[n], small = memberof[m];
-        // Merge clusters at n and m if they both have the same occupation, and are not already part of the same cluster
-        if(sites[n].occupied == sites[m].occupied && small != large) {
-          // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
-          if(clusters[large].size() < clusters[small].size()) std::swap(large,small);
-          // Update the cluster number for all sites in the smaller one
-          for(const auto& site: clusters[small]) memberof[site] = large;
-          // Add the members of the smaller cluster onto the end of the larger one
-          clusters[large].splice(clusters[large].end(), clusters[small]);
-          // Remove the smaller cluster from the map
-          clusters.erase(small);
-          // Keep track of the largest cluster
-          maxsize = std::max(maxsize, clusters[large].size());
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof[n], small = memberof[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
         }
-      }
+
+        hist_t dists(2 * maxsize);
+        for (const auto& kv : clusters) {
+            // instead of occupied we check whether there are any particles present
+            if (sites[kv.first].present == 0) dists[2 * kv.second.size() - 1]++;
+            else dists[2 * kv.second.size() - 2]++;
+        }
+        return dists;
     }
 
-    hist_t dists(2*maxsize);
-    for(const auto& kv: clusters) {
-      dists[2*kv.second.size()-1-sites[kv.first].occupied]++;
+
+    hist_t cluster_distributions_particle_numbers() const {
+        // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof_nr(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof_nr.begin(), memberof_nr.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters_nr;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          if (sites[n].present == 0) clusters_nr[n] = std::list<unsigned>(1, n);
+          else clusters_nr[n] = std::list<unsigned>(sites[n].present, n);
+
+        }
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize_nr = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof_nr[n], small = memberof_nr[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters_nr[large].size() < clusters_nr[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters_nr[small]) memberof_nr[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters_nr[large].splice(clusters_nr[large].end(), clusters_nr[small]);
+                    // Remove the smaller cluster from the map
+                    clusters_nr.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize_nr = std::max(maxsize_nr, clusters_nr[large].size());
+                }
+            }
+        }
+
+        hist_t dists_nr(2 * maxsize_nr);
+        for (const auto& kv : clusters_nr) {
+            // instead of occupied we check whether there are any particles present
+            if (sites[kv.first].present == 0) dists_nr[2 * kv.second.size() - 1]++;
+            else dists_nr[2 * kv.second.size() - 2]++;
+        }
+        return dists_nr;
     }
-    return dists;
-  }
 
 };
+
 
 // ! Following classes are additions by Lars. Note that in the triangular case it is just the one as above with some very slight adjustments
 // ! while the one for the hexagonal lattice has more drastic changes. 
@@ -513,10 +612,6 @@ class Triangle_lattice {
                           if (sites[m].occupied[i] && !sites[m].active[i]) schedule(m, i);
                         }
                     }
-                    
-                    // ! added this line because the particle that just moved has to be queued again, right?
-                    //schedule(dnbs[sites[n].direction[index]], k);
-                    
                   }
                 
                 }
@@ -873,7 +968,6 @@ class Hexagonal_lattice {
                 sites[n].active[index] = false;
             }
 
-            // TODO figure out why no 0 in present
 
             else {
                 // if(std::uniform_real_distribution<double>()(rng)>=std::exp(-P.alpha*(S.time()-sites[n].hoptime))) {
@@ -1291,16 +1385,17 @@ template<typename Engine>
 class ParticleWriter {
   const Lattice<Engine>& L;
 public:
-  ParticleWriter(const Lattice<Engine>& L) : L(L) { }
+  ParticleWriter(const Lattice<Engine>& L, ofstream& outfile) : L(L) { }
 
-  // Output pairs (v, n) indicating the particle id and the site on which it is found
+  // Output pairs (n, p) indicating site and number of particles present
 
   friend std::ostream& operator << (std::ostream& out, const ParticleWriter& PW) {
 
     const auto& sites = PW.L.sites; // Save typing
 
     for(unsigned n=0; n<sites.size(); ++n) {
-      if(sites[n].occupied) out << sites[n].id << " " << n << " ";
+    
+      if(sites[n].present > 0) out << n << " " << sites[n].present << " ";
     }
 
     return out;
@@ -1322,9 +1417,8 @@ friend std::ostream& operator << (std::ostream& out, const TriangleParticleWrite
     const auto& sites = PW.L.sites; // Save typing
 
     for(unsigned n=0; n<sites.size(); ++n) {
-      for (unsigned i = 0; i < sites[n].occupied.size(); i++){
-        if(sites[n].occupied[i]) out << sites[n].id[i] << " " << n << " " << sites[n].present << " ";
-      }
+      // do I really need id here?
+      if(sites[n].present > 0) out << sites[n].id[0] << " " << n << " " << sites[n].present << " ";
     }
 
     return out;
