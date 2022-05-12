@@ -1310,6 +1310,7 @@ public:
 };
 
 
+// TODO not only 0 component
 template<typename Engine>
 class SnapshotWriter {
   const Lattice<Engine>& L;
@@ -1322,8 +1323,8 @@ public:
   friend std::ostream& operator << (std::ostream& out, const SnapshotWriter& SW) {
 
     for(const auto& site: SW.L.sites) {
-      out << (site.occupied ? unsigned(site.direction+1) : 0);
-      out << " " << site.active << " ";
+      out << (site.occupied[0] ? unsigned(site.direction[0]+1) : 0);
+      out << " " << site.active[0] << " ";
     }
 
     return out;
@@ -1373,7 +1374,7 @@ public:
     const auto& sites = VW.L.sites; // Save typing
 
     for(unsigned n=0; n<sites.size(); ++n) {
-      if(!sites[n].occupied) out << sites[n].id << " " << n << " ";
+      if(!sites[n].occupied[0]) out << sites[n].id[0] << " " << n << " ";
     }
 
     return out;
@@ -1617,9 +1618,11 @@ int main(int argc, char* argv[]) {
         }
       }
     } else {
+      ofstream outfile;
+      outfile.open("square.txt");
       for(unsigned n=0; t < burnin + until; ++n) {
         t = L.run_until(burnin + n * every);
-        if (output == "particles") std::cout << ParticleWriter(L) << std::endl;
+        if (output == "particles") std::cout << ParticleWriter(L, outfile) << std::endl;
         else if(output == "vacancies") std::cout << VacancyWriter(L) << std::endl;
         else {
           // Ensure that all the particle directions are at the simulation time
