@@ -5,6 +5,7 @@ Here I attempt to read and work with the output of the positional output of the 
 
 """
 
+from turtle import color
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
@@ -14,6 +15,10 @@ import matplotlib.animation as animation
 #from celluloid import Camera
 import matplotlib.tri as mtri
 from io import StringIO
+import matplotlib.cm as cm
+
+colormap = cm.inferno
+
 
 # TODO: better way of doing this...
 # parameters
@@ -194,6 +199,7 @@ class AnimatedScatter(object):
 
     def direction(self, i):
         # working with 1 particle as of now
+        plt.clf()
         self.grid_plot()
         dir = np.loadtxt("hexdir.txt", delimiter="\t", dtype=int)
         n = dir[i,0]
@@ -201,21 +207,25 @@ class AnimatedScatter(object):
         m = dir[i,2]
         x, y = self.hex_cor_int(n, j)
         origin = np.array([[x], [y]])
+        origin2 = np.array([[x], [y]])
+        
         dx, dy = self.hex_cor_int(m, (j+1)%2)
         V = np.array([[dx-x, dy-y]])
-        plt.quiver(*origin, V[0, 0], V[0, 1])
-        scat = plt.scatter(x=x, y=y, cmap="Greens")
+        plt.arrow(x, y, V[0, 0], V[0, 1], width=0.1, length_includes_head=True, head_width=0.15, head_length=0.2, color="black")
+        #plt.quiver(*origin, V[0, 0], V[0, 1])
+        #plt.quiver(*origin2, V[0, 0], V[0, 1], color="red")
+        scat = plt.scatter(x=x, y=y, cmap="Greens", s=100)
         return scat,
 
 
 if __name__ == '__main__':
     a = AnimatedScatter()
     #a.ani.save('HexagonalScatter.gif', fps=2)
-    #a.direction(32)
+    #a.direction(0)
     #plt.show()
     #plt.savefig("hexdir2.pdf", dpi=200)
     animation = a.ani_direction()
-    animation.save("HexagonalDirection.gif", fps=5)
+    animation.save("./lars_sim/HexagonalDirection.gif", fps=10)
     
 
 
