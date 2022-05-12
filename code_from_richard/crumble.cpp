@@ -868,11 +868,27 @@ class Hexagonal_lattice {
         std::vector<bool> occupied = std::vector<bool>(2 * n_max); // There is a particle here
         std::vector<bool> active = std::vector<bool>(2 * n_max); // A move event is scheduled
         std::vector<direction_t> neighbours = std::vector<direction_t>(2); // Number of neighbours that are occupied
-        std::vector<direction_t> direction = std::vector<direction_t>(2 * n_max); // Direction of last hop attempt
+        std::vector<direction_t> direction = std::vector<direction_t>(2 * n_max); // Preferred direction of movement
         std::vector<double> hoptime = std::vector<double>(2 * n_max); // Time of last hop attempt
         std::vector<int> present = std::vector<int>(2); // Number of particles present at each site in unit cell
     };
 
+    /*           0        5         2
+                  x       x       x
+                    x  1  x  0  x                            
+                      x   x   x   
+                        x x x                               
+                  2     x x x    5                                
+                        x x x                             
+                      x   x   x                           
+                    x  3  x  4  x                             
+                  x       x       x                       
+                3         4         1         
+    */
+    // explanation of the above: To ensure that particles actually move in a, somewhat, constant direction before a tumble event happens
+    // we divide the directions into 6 regions (as shown above). These regions are numbered, and the directions are chosen accordingly by 
+    // seeing at which index of the lattice site we are at. Note that we have to places at each lattice sites, i.e. even and uneven indices.
+    // the function preference_direction below choses what direction to take based on this. 
 
     std::vector<Site> sites; // Representation of the sites
     Engine& rng; // Source of noise: this is a reference as there should only be one of these!
@@ -881,32 +897,56 @@ class Hexagonal_lattice {
     Scheduler S; // Keeps track of the event queue
     // Given an index into sites, return a sequence of indices corresponding to
     // its neighbours. We have periodic boundary conditions
-    auto neighbours(unsigned n, unsigned index) const {
+
+    auto preference_direction(unsigned index, unsigned n){
+      int dir;
+      
+      if (sites[n].pref_dir[index] == 0){
+          if (index%2==0) dir = 5;
+          else dir = 2;
+      }
+      else if (sites[n].pref_dir[index] == 1){
+          if (index%2==0) dir = 5;
+          else dir = 0;
+      }
+      else if (sites[n].pref_dir[index] == 2){
+          if (index%2==0) dir = 3;
+          else dir = 0;
+      }
+      else if (sites[n].pref_dir[index] == 3){
+          if (index%2==0) dir = 3;
+          else dir = 4;
+      }
+      else if (sites[n].pref_dir[index] == 4){
+          if (index%2==0) dir = 1;
+          else dir = 4;
+      }
+      else if (sites[n].pref_dir[index] == 5){
+          if (index%2==0) dir = 1;
+          else dir = 2;
+      }
+      return dir;
+    }
+
+
+    auto neighbours(unsigned n) const {
 
         // this is only valid for 2d
 
-        std::vector<unsigned> nbs(3);
+        std::vector<unsigned> nbs(6);
         int L1 = P.L[0];
         int L2 = P.L[1];
 
         unsigned x = n % L1;
         unsigned y = (n/L1);
 
-        if (index){
 
-          nbs[0] = n;                         // same site
-          nbs[1] = (n + 1) % L1 + y * L1;     // right
-          nbs[2] = x + ((y - 1 + L1) % L2) * L1;   // down
-
-        } else{
-          
-          nbs[0] = n;                         // same site
-          nbs[1] = (n - 1) % L1 + y * L1;     // left
-          nbs[2] = x + ((y + 1) % L2) * L1;   // up
-          
-
-        }
-
+        nbs[0] = n;                               // same site
+        nbs[1] = n;                               // same site
+        nbs[2] = (n + 1) % L1 + y * L1;           // right
+        nbs[3] = (n - 1) % L1 + y * L1;           // left
+        nbs[4] = x + ((y - 1 + L1) % L2) * L1;    // down
+        nbs[5] = x + ((y + 1) % L2) * L1;         // up
         return nbs;
     }
 
@@ -935,6 +975,10 @@ class Hexagonal_lattice {
         return nbs;
     }
 
+
+
+    
+
     // Place a particle with given direction and hop time at site n;
     // neighbouring sites will be accordingly adjusted
     void place(unsigned n, unsigned id, direction_t d, double t, unsigned index) {
@@ -956,6 +1000,7 @@ class Hexagonal_lattice {
         //if (sites[n].present[index%2] == 0) std::cout << "present at n=" << n << ", j=" << index << "\t" << sites[n].present[index%2] << endl;
     }
 
+
     // Schedule a hop event for a particle at site n
     void schedule(unsigned n, unsigned index) {
         assert(sites[n].occupied[index]);
@@ -976,26 +1021,29 @@ class Hexagonal_lattice {
                 }
                 sites[n].hoptime[index] = S.time();
                 // Get the sites adjacent to the departure site
-                auto dnbs = neighbours(n, index%2);
-                if (sites[dnbs[sites[n].direction[index]]].present[(index + 1)%2] < P.n_max){
+                int dir = preference_direction(n, index);
+
+                auto dnbs = neighbours(n);
+                
+                if (sites[dnbs[dir]].present[(index + 1)%2] < P.n_max){
                   unsigned ind = 0; // index for target space in direction site
                   for (unsigned k = 1 - index%2; k < 2 * P.n_max; k+=2){
-                    if (!sites[dnbs[sites[n].direction[index]]].occupied[k]){
+                    if (!sites[dnbs[dir]].occupied[k]){
                       ind = k;
                       break;
                     }
                   }
 
-                  assert(!sites[dnbs[sites[n].direction[index]]].active[ind]);
+                  assert(!sites[dnbs[dir]].active[ind]);
                   // Get the id of the vacancy that is being displaced
-                  unsigned vid = sites[dnbs[sites[n].direction[index]]].id[ind];
+                  unsigned vid = sites[dnbs[dir]].id[ind];
                   // std::cout << "Moving from "; decode(n); std::cout << " deactivating" << std::endl;
                   // Deactive the departure site; also mark it empty
                   sites[n].occupied[index] = sites[n].active[index] = false;
                   //std::cout << "before:\t n\t" << sites[n].present[index] << "\t m\t" << sites[dnbs[sites[n].direction[index]]].present[ind] << endl;
                   // Place a particle on the target site; it has the same direction and hoptime as the departing particle
                   // std::cout << "Moving to "; decode(dnbs[sites[n].direction]); std::cout << " placing" << std::endl;
-                  place(dnbs[sites[n].direction[index]], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index], ind);
+                  place(dnbs[dir], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index], ind);
                   // Move the vacancy id onto the departure site
                   sites[n].id[index] = vid;
                   sites[n].present[index%2] -= 1;
@@ -1104,10 +1152,12 @@ public:
         // Set up the tumble direction distribution
         std::vector<double> drates(3);
         for (unsigned d = 0; d < 3; ++d) {
-            drates[d] = d < P.alpha.size() ? P.alpha[d] / tumble.lambda() : 1.0;
+            drates[2*d] = drates[2*d + 1] = d < P.alpha.size() ? P.alpha[d] / tumble.lambda() : 1.0;
         }
         anyway = std::discrete_distribution<unsigned>(drates.begin(), drates.end()); 
 
+
+        // TODO make it able to place on all sites, i.e. on 0 and 1 at the same time. Also allow for overplacing, i.e. more particles than sites
         // Place particles on the lattice
         unsigned unplaced = P.N; // Current number of particles remaining to be placed
         for (unsigned n = 0; n < sites.size(); ++n) {
