@@ -5,6 +5,8 @@ Here I attempt to read and work with the output of the positional output of the 
 
 """
 
+
+from turtle import color
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
@@ -13,6 +15,11 @@ import scipy
 import matplotlib.animation as animation
 #from celluloid import Camera
 import matplotlib.tri as mtri
+from io import StringIO
+import matplotlib.cm as cm
+
+colormap = cm.inferno
+
 
 # TODO: better way of doing this...
 # parameters
@@ -22,20 +29,22 @@ N = 600
 
 
 
-data = np.loadtxt("./triangle.txt")
-
 
 
 class AnimatedScatter(object):
     """An animated scatter plot using matplotlib.animations.FuncAnimation."""
     def __init__(self, numpoints=50):
-        self.data = np.loadtxt("./triangle.txt")
+        f = open("./triangle.txt")
+        self.data = []
+        for line in f:
+            self.data.append(np.loadtxt(StringIO(line), dtype=int))
+        
         self.triang = self.trian()
         # Setup the figure and axes
         self.fig, self.ax = plt.subplots(figsize=(20, 20))
         # Then setup FuncAnimation.
-        self.ani = animation.FuncAnimation(self.fig, self.update, interval=1, 
-                                          init_func=self.setup_plot, blit=True)
+        #self.ani = animation.FuncAnimation(self.fig, self.update, interval=1, 
+        #                                  init_func=self.setup_plot, blit=True)
         
 
     def conv(self, n):
@@ -87,7 +96,7 @@ class AnimatedScatter(object):
         """Update the scatter plot."""
         kos = self.data[i][1::3]
         self.ax.cla()
-        s = 1.8 * 10
+        s = 1.8 
         weight = self.data[i][2::3]
         self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=2, marker="s")
         self.ax.axis([-0.5*L[0], L[0],-5, L[1]])
@@ -99,9 +108,10 @@ class AnimatedScatter(object):
 
 if __name__ == '__main__':
     a = AnimatedScatter()
-    a.ani.save('TriangleScatter.gif', fps=10)
+    #a.ani.save('TriangleScatter.gif', fps=10)
     
-    #a.update(1000)
-    #plt.show()
+    a.update(50)
+    plt.show()
+    #plt.savefig("./lars_sim/triang_test.pdf")
 
 

@@ -169,8 +169,9 @@ class AnimatedScatter(object):
         weight = self.data[i][3::4]
 
         self.ax.cla()
-        s = 1.8 * 100
+        s = 1.8 
         
+        print(np.sum(weight))
         
 
         self.scat = self.ax.scatter(x=self.hex_cor(kos, jos)[0], y=self.hex_cor(kos, jos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=2, marker="s")
@@ -222,10 +223,11 @@ if __name__ == '__main__':
     a = AnimatedScatter()
     #a.ani.save('HexagonalScatter.gif', fps=2)
     #a.direction(0)
-    #plt.show()
+    a.update(-1)
+    plt.show()
     #plt.savefig("hexdir2.pdf", dpi=200)
-    animation = a.ani_direction()
-    animation.save("./lars_sim/HexagonalDirection.gif", fps=10)
+    #animation = a.ani_direction()
+    #animation.save("./lars_sim/HexagonalDirection.gif", fps=10)
     
 
 

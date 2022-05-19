@@ -14,6 +14,9 @@
 #include <fstream>
 #include <iostream>
 #include <cmath>
+#include <string> 
+#include <iomanip>
+#include <sstream>
 
 #include "CLI11.hpp"
 #include "Scheduler.hpp"
@@ -48,6 +51,8 @@ template<typename Engine> class TriangleParticleWriter;
 template<typename Engine> class HexagonalParticleWriter;
 template<typename Engine> class HexDirectionWriter;
 
+// ! There will be some changes is this class, mostly the implementation of occupation number
+
 template<typename Engine>
 class Lattice {
 
@@ -57,7 +62,7 @@ class Lattice {
   friend class ParticleWriter<Engine>;
   friend class ClusterWriter<Engine>;
 
-  static constexpr unsigned n_max = 2; // ! Nicer way of doing this?
+  static constexpr unsigned n_max = 1; // ! Nicer way of doing this?
     
     
 
@@ -258,43 +263,39 @@ public:
     run(1),
     tumble(std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0)/P.alpha.size()) // Tumble time generator: set to the average of the given tumble rates
     {
-    // Set up the tumble direction distribution
-    std::vector<double> drates(2*P.L.size());
-    for(unsigned d=0;d < P.L.size(); ++d) {
-       drates[2*d] = drates[2*d+1] = d<P.alpha.size() ? P.alpha[d]/tumble.lambda() : 1.0;
-    }
-    anyway = std::discrete_distribution<unsigned>(drates.begin(), drates.end());
-
-    // Place particles on the lattice
-        unsigned unplaced = P.N; // Current number of particles remaining to be placed
+      // Set up the tumble direction distribution
+      std::vector<double> drates(2*P.L.size());
+      for(unsigned d=0;d < P.L.size(); ++d) {
+         drates[2*d] = drates[2*d+1] = d<P.alpha.size() ? P.alpha[d]/tumble.lambda() : 1.0;
+      }
+      anyway = std::discrete_distribution<unsigned>(drates.begin(), drates.end());
+      // Place particles on the lattice
+      unsigned unplaced = P.N; // Current number of particles remaining to be placed
+      unsigned id_vac = P.N;
+      for (unsigned index = 0; index < P.n_max; index++){
         for (unsigned n = 0; n < sites.size(); ++n) {
             // Number of remaining sites where partcles could be placed is sites.size()-n, unplaced of which need to be filled
             if (std::uniform_int_distribution<unsigned>(1, sites.size() - n)(rng) <= unplaced) {
                 // For ease we only place one particle per site in the initial configuration
-                place(n, P.N - unplaced, anyway(rng), 0.0, 0);
+                place(n, P.N - unplaced, anyway(rng), 0.0, index);
                 --unplaced;
-                // TODO better way of doing this? We need (n_max - 1)*L**2 more id's for vacancies
-                for (unsigned k = 1; k < P.n_max; k++){
-                  sites[n].id[k] = n + k * P.L[0] * P.L[1];
-                }
             }
             // vacancies
             else {
-              for (unsigned k = 0; k < P.n_max; k++){
-                if (k == 0) sites[n].id[k] = unplaced + n;
-                else sites[n].id[k] = n + k * P.L[0] * P.L[1];
-              }
+              sites[n].id[index] = id_vac;
+              id_vac++;
             }
         }
-        assert(unplaced == 0);
+      }
+      assert(unplaced == 0);
         
         // Activate particles that can move, and schedule a hop accordingly
-        for (unsigned n = 0; n < sites.size(); ++n) {
-          for (unsigned k = 0; k < P.n_max; ++k){
-            if (sites[n].occupied[k] && sites[n].neighbours < 3 * P.n_max) schedule(n, k);
-          }
+      for (unsigned n = 0; n < sites.size(); ++n) {
+        for (unsigned k = 0; k < P.n_max; ++k){
+        if (sites[n].occupied[k] && sites[n].neighbours < 3 * P.n_max) schedule(n, k);
         }
-        assert(consistent());
+      }
+      assert(consistent());
     }
 
   // Iterates the simulation until the given time; returns the actual time run to
@@ -369,7 +370,7 @@ public:
     }
 
 
-    hist_t cluster_distributions_particle_numbers() const {
+    hist_t cluster_distribution_particle_number() const {
         // Lookup table of cluster membership by lattice site
         std::vector<unsigned> memberof_nr(sites.size());
         // Initially, this is just the site id as each site is its own cluster
@@ -417,6 +418,67 @@ public:
         return dists_nr;
     }
 
+
+    // Function to determin the size of largest cluster. Note that we will only regard particle clusters here 
+    // (at least so far)
+    size_t max_cluster_size(){
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof_nr(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof_nr.begin(), memberof_nr.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters_nr;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          if (sites[n].present == 0) clusters_nr[n] = std::list<unsigned>(1, n);
+          else clusters_nr[n] = std::list<unsigned>(sites[n].present, n);
+
+        }
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize_nr = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof_nr[n], small = memberof_nr[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters_nr[large].size() < clusters_nr[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters_nr[small]) memberof_nr[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters_nr[large].splice(clusters_nr[large].end(), clusters_nr[small]);
+                    // Remove the smaller cluster from the map
+                    clusters_nr.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize_nr = std::max(maxsize_nr, clusters_nr[large].size());
+                }
+            }
+        }
+
+        std::size_t max_s = 1;
+        for (const auto& kv : clusters_nr) {
+
+            // instead of occupied we check whether there are any particles present
+            if (sites[kv.first].present > 0) {
+              //std::cout << "-------------------" << endl;
+              //std::cout << kv.second.size() << " " << sites[kv.first].present << endl;
+              max_s = std::max(max_s, kv.second.size()); 
+              //std::cout << max_s << endl;
+            
+            }
+            
+        }
+
+        //std::cout << max_s << endl;
+
+        return max_s;
+    }
 };
 
 
@@ -691,24 +753,21 @@ public:
 
         // Place particles on the lattice
         unsigned unplaced = P.N; // Current number of particles remaining to be placed
-        for (unsigned n = 0; n < sites.size(); ++n) {
+        unsigned id_vac = P.N;
+        for (unsigned index = 0; index < P.n_max; index++){
+          for (unsigned n = 0; n < sites.size(); ++n) {
             // Number of remaining sites where partcles could be placed is sites.size()-n, unplaced of which need to be filled
             if (std::uniform_int_distribution<unsigned>(1, sites.size() - n)(rng) <= unplaced) {
                 // For ease we only place one particle per site in the initial configuration
-                place(n, P.N - unplaced, anyway(rng), 0.0, 0);
+                place(n, P.N - unplaced, anyway(rng), 0.0, index);
                 --unplaced;
-                // TODO better way of doing this? We need (n_max - 1)*L**2 more id's for vacancies
-                for (unsigned k = 1; k < P.n_max; k++){
-                  sites[n].id[k] = n + k * P.L[0] * P.L[1];
-                }
             }
             // vacancies
             else {
-              for (unsigned k = 0; k < P.n_max; k++){
-                if (k == 0) sites[n].id[k] = unplaced + n;
-                else sites[n].id[k] = n + k * P.L[0] * P.L[1];
-              }
+              sites[n].id[index] = id_vac;
+              id_vac++;
             }
+          }
         }
         assert(unplaced == 0);
         
@@ -899,6 +958,8 @@ class Hexagonal_lattice {
     // Given an index into sites, return a sequence of indices corresponding to
     // its neighbours. We have periodic boundary conditions
 
+
+    // function to choose direction based on what site and which directional orientation it has
     auto preference_direction(unsigned n, unsigned index, direction_t direction){
       int dir = 0;
       
@@ -1177,52 +1238,33 @@ public:
         anyway = std::discrete_distribution<unsigned>(drates.begin(), drates.end()); 
 
 
-        // TODO make it able to place on all sites, i.e. on 0 and 1 at the same time. Also allow for overplacing, i.e. more particles than sites
         // Place particles on the lattice
         unsigned unplaced = P.N; // Current number of particles remaining to be placed
-        for (unsigned n = 0; n < sites.size(); ++n) {
+        unsigned id_vac = P.N;
+        // the outer loop is to allow for overcrowding of the cells. We have to sites per lattice site, and on each
+        // of these we allow n_max particles. We therefore have to loop over all these as we can place particles 
+        // on all of them
+        for (unsigned index = 0; index < 2 * P.n_max; index++){
+          for (unsigned n = 0; n < sites.size(); ++n) {
             // Number of remaining sites where partcles could be placed is sites.size()-n, unplaced of which need to be filled
             if (std::uniform_int_distribution<unsigned>(1, sites.size() - n)(rng) <= unplaced) {
-                // Check whether to place it on 0 or on 1
-                // for ease, we only place particles on 0 or 1
-                // TODO I guess? look into way to make this "more random"
-                // though I am still unsure whether that is necessary, as the bruning periode
-                // should make it "properly random"
-                if (std::uniform_int_distribution<int>(1, 2)(rng) < 2){
-                  // place particle at 0
-                  // Particles get numbered from 0
-                  direction_t direction = anyway(rng);
-                  int dir = preference_direction(n, 0, direction);
-                  auto dnbs = neighbours_dir(n);
-                  place(n, P.N - unplaced, direction, 0.0, 0, dnbs[dir]);
-                  --unplaced;
-                  // TODO better way of doing this? We need (n_max-1)*L**2 more id's for vacancies
-                  for (unsigned k = 1; k < 2 * P.n_max; k++){
-                    sites[n].id[k] = n + k * P.L[0] * P.L[1];
-                  }
-                } else{
-                  // place particle at 1
-                  // Particles get numbered from 0
-                  direction_t direction = anyway(rng);
-                  int dir = preference_direction(n, 1, direction);
-                  auto dnbs = neighbours_dir(n);
-                  place(n, P.N - unplaced, anyway(rng), 0.0, 1, dnbs[dir]);
-                  --unplaced;
-                  for (unsigned k = 0; k < 2 * P.n_max; k++){
-                    if (k == 1) continue;
-                    else if (k == 0) sites[n].id[k] = n + P.L[0] * P.L[1];
-                    else sites[n].id[k] = n + k * P.L[0] * P.L[1];
-                  }
-                }
-                
+                direction_t direction = anyway(rng);
+                int dir = preference_direction(n, index, direction);
+                auto dnbs = neighbours_dir(n);
+                place(n, P.N - unplaced, direction, 0.0, index, dnbs[dir]);
+                --unplaced;        
             }
             else {
                 // don't need to randomize these, since they are vacancies
-                sites[n].id[0] = unplaced + n;
+                sites[n].id[index] = id_vac;
+                id_vac++;
+                /*
                 for (unsigned k = 1; k < 2 * P.n_max; k++){
                   sites[n].id[k] = n + k * P.L[0] * P.L[1];
                 }
+                */
             }
+          }
         }
         assert(unplaced == 0);
 
@@ -1281,7 +1323,8 @@ public:
         for (unsigned n = 0; n < sites.size(); ++n) {
             // Loop over neigbours m in one direction only so we visit each bond once
           for (unsigned i = 0; i < 2; i++){
-            for (const auto& m : forward_neighbours(n, i)) {
+            // TODO figure out why forward neighbour makes algorithm not work
+            for (const auto& m : neighbours(n, i)) {
                 unsigned large = memberof[2*n + i], small = memberof[2*m + (i+1)%2];
                 // If they are in the same cluster we can move on
                 if (small == large) continue;
@@ -1307,11 +1350,9 @@ public:
 
         hist_t dists(2 * maxsize);
         for (const auto& kv : clusters) {
-          for (unsigned i = 0; i < 2; i++){
             // instead of occupied we check whether there are any particles present
-            if (sites[kv.first/2].present[i] == 0) dists[2 * kv.second.size() - 1]++;
+            if (sites[(kv.first - kv.first%2)/2].present[kv.first%2] == 0) dists[2 * kv.second.size() - 1]++;
             else dists[2 * kv.second.size() - 2]++;
-          }
         }
         return dists;
     }
@@ -1348,7 +1389,8 @@ public:
         for (unsigned n = 0; n < sites.size(); ++n) {
             // Loop over neigbours m in one direction only so we visit each bond once
           for (unsigned i = 0; i < 2; i++){
-            for (const auto& m : forward_neighbours(n, i)) {
+            // TODO figure out why forward neighbour makes algorithm not work
+            for (const auto& m : neighbours(n, i)) {
                 unsigned large = memberof_nr[2*n + i], small = memberof_nr[2*m + (i+1)%2];
                 // If they are in the same cluster we can move on
                 if (small == large) continue;
@@ -1371,14 +1413,13 @@ public:
             }
           }
         }
-
+        
+        
         hist_t dists_nr(2 * maxsize_nr);
         for (const auto& kv : clusters_nr) {
-          for (unsigned i = 0; i < 2; i++){
-            // instead of occupied we check whether there are any particles present
-            if (sites[kv.first/2].present[i] == 0) dists_nr[2 * kv.second.size() - 1]++;
-            else dists_nr[2 * kv.second.size() - 2]++;
-          }
+          // instead of occupied we check whether there are any particles present
+          if (sites[(kv.first - kv.first%2)/2].present[kv.first%2] == 0) dists_nr[2 * kv.second.size() - 1]++;
+          else dists_nr[2 * kv.second.size() - 2]++;
         }
         return dists_nr;
     }
@@ -1612,6 +1653,8 @@ int main(int argc, char* argv[]) {
   if(output[0] == 'p') output = "particles";
   else if(output[0] == 'v') output = "vacancies";
   else if(output[0] == 'c') output = "clusters";
+  else if(output[0] == 'h') output = "heatmap"; // this is for heatmap of clustersizes
+                                                // TODO add similar for motility? moves/planned moves
   else output = "snapshots";
 
   if(lattice_type[0] == 's') lattice_type = "square";
@@ -1629,318 +1672,697 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  // Ouput name 
+  // alpha
+  std::ostringstream alpha;
+  alpha << std::fixed;
+  alpha << std::setprecision(7);
+  alpha << P.alpha[0];
+  std::string alpha_p = alpha.str();
+  // phi
+  std::ostringstream phi;
+  phi << std::fixed;
+  phi << std::setprecision(2);
+  phi << double(P.N)/double(P.L[0] * P.L[1]);
+  std::string phi_p = phi.str();
+  
+  string txt = ".txt";
+  string tumb = "alpha" + alpha_p;
+  string dens = "phi" + phi_p;
+  string size = "L" + std::to_string(P.L[0]);
+  string path = "./lars_sim/tumblerate/";
+  string txtoutput = path+lattice_type+"_"+tumb+"_"+ dens+"_"+size+txt;
+  string txtoutput_nr = path+lattice_type+"_nr"+"_"+tumb+"_"+ dens+"_"+size+txt;
 
-  // Depending on what lattice, the output may be different
-  if (lattice_type == "square"){
-    // Initialise a random number generator and set up the model
-    std::mt19937 rng((std::random_device())());
-    Lattice L(P, rng);
+  if (P.n_max > 1){
+    // Depending on what lattice, the output may be different
+    if (lattice_type == "square"){
+      // Initialise a random number generator and set up the model
+      std::mt19937 rng((std::random_device())());
+      Lattice L(P, rng);
 
-    // Snapshot sequence has a header that sets out the simulation parameters
-    std::cout << "# L = [ ";
-    for(const auto& L: P.L) std::cout << L << " ";
-    std::cout << "]" << std::endl;
-    std::cout << "# N = " << P.N << std::endl;
-    std::cout << "# alpha = [ ";
-    for(const auto& alpha: P.alpha) std::cout << alpha << " ";
-    std::cout << "]" << std::endl;
-    std::cout << "# output = " << output << std::endl;
-    std::cout << "# initial = " << burnin << std::endl;
-    std::cout << "# interval = " << every << std::endl;
-    if(localaverage > 0) {
-      std::cout << "# localaverage = " << localaverage << std::endl;
-      std::cout << "# localinterval = " << localinterval << std::endl;
-    }
-    std::cout << "# occupation number = " << P.n_max << std::endl;
+      // Snapshot sequence has a header that sets out the simulation parameters
+      std::cout << "# L = [ ";
+      for(const auto& L: P.L) std::cout << L << " ";
+      std::cout << "]" << std::endl;
+      std::cout << "# N = " << P.N << std::endl;
+      std::cout << "# alpha = [ ";
+      for(const auto& alpha: P.alpha) std::cout << alpha << " ";
+      std::cout << "]" << std::endl;
+      std::cout << "# output = " << output << std::endl;
+      std::cout << "# initial = " << burnin << std::endl;
+      std::cout << "# interval = " << every << std::endl;
+      if(localaverage > 0) {
+        std::cout << "# localaverage = " << localaverage << std::endl;
+        std::cout << "# localinterval = " << localinterval << std::endl;
+      }
+      std::cout << "# occupation number = " << P.n_max << std::endl;
 
-    double t = 0;
+      double t = 0;
 
-    if(output == "clusters") {
-      if(localaverage == 0) {
-        // We sum the histograms over all measurements
-        hist_t sumhist;
-        for(unsigned n=0; t < burnin + until; ++n) {
-          t = L.run_until(burnin + n * every);
-          hist_t hist = L.cluster_distributions();
-          // Add hist to sumhist taking into account they may have different lengths
-          if(hist.size() > sumhist.size()) {
-            hist[std::slice(0,sumhist.size(),1)] += sumhist;
-            sumhist = std::move(hist);
-          } else {
-            sumhist[std::slice(0,hist.size(),1)] += hist;
-          }
-        }
-        for(const auto& k: sumhist) std::cout << k << " ";
-        std::cout << std::endl;
-      } else {
-        // We perform local averages of the histograms at the given measurement interval
-        for(unsigned n=0; t < burnin + until; ++n) {
-          t = L.run_until(burnin + n * every);
-          hist_t sumhist = L.cluster_distributions();
-          for(unsigned m=1; m<localaverage; ++m) {
-            t = L.run_until(burnin + n*every + m*localinterval);
+
+      if(output == "clusters") {
+        if(localaverage == 0) {
+          hist_t sumhist;
+          hist_t sumhist_nr;
+          // We sum the histograms over all measurements
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = L.run_until(burnin + n * every);
             hist_t hist = L.cluster_distributions();
-            // Add hist to sumhist taking into account they may have different lengths
+            hist_t hist_nr = L.cluster_distribution_particle_number();
+
             if(hist.size() > sumhist.size()) {
               hist[std::slice(0,sumhist.size(),1)] += sumhist;
               sumhist = std::move(hist);
             } else {
               sumhist[std::slice(0,hist.size(),1)] += hist;
             }
+
+            // with occ number as well
+
+            if(hist_nr.size() > sumhist_nr.size()){
+              hist_nr[std::slice(0, sumhist_nr.size(), 1)] += sumhist_nr;
+              sumhist_nr = std::move(hist_nr);
+            } else {
+              sumhist_nr[std::slice(0, hist_nr.size(), 1)] += hist_nr;
+            }
+
           }
-          for(const auto& k: sumhist) std::cout << k << " ";
-          std::cout << std::endl;
-        }
-      }
-    } else {
-      ofstream outfile;
-      outfile.open("square.txt");
-      for(unsigned n=0; t < burnin + until; ++n) {
-        t = L.run_until(burnin + n * every);
-        if (output == "particles") std::cout << ParticleWriter(L, outfile) << std::endl;
-        else if(output == "vacancies") std::cout << VacancyWriter(L) << std::endl;
-        else {
-          // Ensure that all the particle directions are at the simulation time
-          L.realise_directions();
-          std::cout << SnapshotWriter(L) << std::endl;
-        }
-      }
-
-    }
-  } else if(lattice_type == "triangular"){
-    // Initialise a random number generator and set up the model
-    std::mt19937 rng((std::random_device())());
-    Triangle_lattice TL(P, rng);
-
-    // Snapshot sequence has a header that sets out the simulation parameters
-    std::cout << "# L = [ ";
-    for(const auto& L: P.L) std::cout << L << " ";
-    std::cout << "]" << std::endl;
-    std::cout << "# N = " << P.N << std::endl;
-    std::cout << "# alpha = [ ";
-    for(const auto& alpha: P.alpha) std::cout << alpha << " ";
-    std::cout << "]" << std::endl;
-    std::cout << "# output = " << output << std::endl;
-    std::cout << "# initial = " << burnin << std::endl;
-    std::cout << "# interval = " << every << std::endl;
-    if(localaverage > 0) {
-      std::cout << "# localaverage = " << localaverage << std::endl;
-      std::cout << "# localinterval = " << localinterval << std::endl;
-    }
-    std::cout << "# occupation number = " << P.n_max << std::endl;
-
-    double t = 0;
-
-    if(output == "clusters") {
-      if(localaverage == 0) {
-        // We sum the histograms over all measurements
-        hist_t sumhist;
-        hist_t sumhist_nr;
-        for(unsigned n=0; t < burnin + until; ++n) {
-          t = TL.run_until(burnin + n * every);
-          hist_t hist = TL.cluster_distributions();
-          hist_t hist_nr = TL.cluster_distributions_particle_numbers();
-          // Only area
-          if(hist.size() > sumhist.size()) {
-            hist[std::slice(0,sumhist.size(),1)] += sumhist;
-            sumhist = std::move(hist);
-          } else {
-            sumhist[std::slice(0,hist.size(),1)] += hist;
+          ofstream outfile, outfile_nr;
+          outfile.open(txtoutput);
+          for(const auto& k: sumhist) outfile << k << " ";
+          outfile << endl;
+          outfile_nr.open(txtoutput_nr);
+          for(const auto& k: sumhist_nr) outfile_nr << k << " ";
+          outfile_nr << endl;
+        } else {
+          // We perform local averages of the histograms at the given measurement interval
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = L.run_until(burnin + n * every);
+            hist_t sumhist = L.cluster_distributions();
+            hist_t sumhist_nr = L.cluster_distribution_particle_number();
+            for(unsigned m=1; m<localaverage; ++m) {
+              t = L.run_until(burnin + n*every + m*localinterval);
+              hist_t hist = L.cluster_distributions();
+              hist_t hist_nr = L.cluster_distribution_particle_number();
+              // Add hist to sumhist taking into account they may have different lengths
+              if(hist.size() > sumhist.size()) {
+                hist[std::slice(0,sumhist.size(),1)] += sumhist;
+                sumhist = std::move(hist);
+              } else {
+                sumhist[std::slice(0,hist.size(),1)] += hist;
+              }
+              if(hist_nr.size() > sumhist_nr.size()){
+                hist_nr[std::slice(0, sumhist_nr.size(), 1)] += sumhist_nr;
+                sumhist_nr = std::move(hist_nr);
+              } else {
+                sumhist_nr[std::slice(0, hist_nr.size(), 1)] += hist_nr;
+              }
+            }
+            ofstream outfile, outfile_nr;
+            outfile.open(txtoutput);
+            for(const auto& k: sumhist) outfile << k << " ";
+            outfile << endl;
+            outfile_nr.open(txtoutput_nr);
+            for(const auto& k: sumhist_nr) outfile_nr << k << " ";
+            outfile_nr << endl;
           }
-
-          // with occ number as well
-
-          if(hist_nr.size() > sumhist_nr.size()){
-            hist_nr[std::slice(0, sumhist_nr.size(), 1)] += sumhist_nr;
-            sumhist_nr = std::move(hist_nr);
-          } else {
-            sumhist_nr[std::slice(0, hist_nr.size(), 1)] += hist_nr;
+        } 
+      } 
+      else if (output == "heatmap"){
+        ofstream outfile;
+        outfile.open("./lars_sim/heatmap/square_alpha_N.txt");
+        for (double alp = 1e-4; alp <= 1.0; alp+=1e-4){
+          for (unsigned N = 1; N <= P.L[0]*P.L[0]; N += 10){
+            P.N = N;
+            std::cout << P.N << endl;
+            P.alpha[0] = P.alpha[1] = alp;
+            std::size_t maxsize = 1;
+            Lattice L(P, rng);
+            for(unsigned n=0; t < burnin + until; ++n){
+              t = L.run_until(burnin + n * every);
+              maxsize = std::max(maxsize, L.max_cluster_size());
+            }
+            outfile << maxsize << " ";
           }
-
+          outfile << endl;
         }
-        // output for each of the distributions 
-        ofstream outfile, outfile_nr;
-        outfile.open("./lars_sim/tridist.txt");
-        for(const auto& k: sumhist) outfile << k << " ";
-        outfile << endl;
-        outfile_nr.open("./lars_sim/tridist_nr.txt");
-        for(const auto& k: sumhist_nr) outfile_nr << k << " ";
-        outfile_nr << endl;
+
+
+
       } else {
-        // We perform local averages of the histograms at the given measurement interval
+        ofstream outfile;
+        outfile.open("square.txt");
         for(unsigned n=0; t < burnin + until; ++n) {
-          t = TL.run_until(burnin + n * every);
-          hist_t sumhist = TL.cluster_distributions();
-          hist_t sumhist_nr = TL.cluster_distributions_particle_numbers();
-          for(unsigned m=1; m<localaverage; ++m) {
-            t = TL.run_until(burnin + n*every + m*localinterval);
+          t = L.run_until(burnin + n * every);
+          if (output == "particles") std::cout << ParticleWriter(L, outfile) << std::endl;
+          else if(output == "vacancies") std::cout << VacancyWriter(L) << std::endl;
+          else {
+            // Ensure that all the particle directions are at the simulation time
+            L.realise_directions();
+            std::cout << SnapshotWriter(L) << std::endl;
+          }
+        }
+
+      }
+    } else if(lattice_type == "triangular"){
+      // Initialise a random number generator and set up the model
+      std::mt19937 rng((std::random_device())());
+      Triangle_lattice TL(P, rng);
+
+      // Snapshot sequence has a header that sets out the simulation parameters
+      std::cout << "# L = [ ";
+      for(const auto& L: P.L) std::cout << L << " ";
+      std::cout << "]" << std::endl;
+      std::cout << "# N = " << P.N << std::endl;
+      std::cout << "# alpha = [ ";
+      for(const auto& alpha: P.alpha) std::cout << alpha << " ";
+      std::cout << "]" << std::endl;
+      std::cout << "# output = " << output << std::endl;
+      std::cout << "# initial = " << burnin << std::endl;
+      std::cout << "# interval = " << every << std::endl;
+      if(localaverage > 0) {
+        std::cout << "# localaverage = " << localaverage << std::endl;
+        std::cout << "# localinterval = " << localinterval << std::endl;
+      }
+      std::cout << "# occupation number = " << P.n_max << std::endl;
+
+      double t = 0;
+
+      if(output == "clusters") {
+        if(localaverage == 0) {
+          // We sum the histograms over all measurements
+          hist_t sumhist;
+          hist_t sumhist_nr;
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = TL.run_until(burnin + n * every);
             hist_t hist = TL.cluster_distributions();
             hist_t hist_nr = TL.cluster_distributions_particle_numbers();
-            // Add hist to sumhist taking into account they may have different lengths
+            // Only area
             if(hist.size() > sumhist.size()) {
               hist[std::slice(0,sumhist.size(),1)] += sumhist;
               sumhist = std::move(hist);
             } else {
               sumhist[std::slice(0,hist.size(),1)] += hist;
             }
+
+            // with occ number as well
+
             if(hist_nr.size() > sumhist_nr.size()){
               hist_nr[std::slice(0, sumhist_nr.size(), 1)] += sumhist_nr;
               sumhist_nr = std::move(hist_nr);
             } else {
               sumhist_nr[std::slice(0, hist_nr.size(), 1)] += hist_nr;
             }
+
           }
+          // output for each of the distributions 
           ofstream outfile, outfile_nr;
-          outfile.open("./lars_sim/tridist.txt");
+          outfile.open(txtoutput);
           for(const auto& k: sumhist) outfile << k << " ";
           outfile << endl;
-          outfile_nr.open("./lars_sim/tridist_nr.txt");
+          outfile_nr.open(txtoutput_nr);
           for(const auto& k: sumhist_nr) outfile_nr << k << " ";
           outfile_nr << endl;
-        }
-      }
-    } else {
-      ofstream outfile;
-      outfile.open("triangle.txt");
-      //outfile << "# L = [ ";
-      //for(const auto& L: P.L) outfile << L << " ";
-      //outfile << "]" << endl;
-      //outfile << "# N = " << P.N << endl;
-      //outfile << "# alpha = [ ";
-      //for(const auto& alpha: P.alpha) outfile << alpha << " ";
-      //outfile << "]" << endl;
-      //outfile << "# output = " << output << endl;
-      //outfile << "# initial = " << burnin << endl;
-      //outfile << "# interval = " << every << endl;
-
-      for(unsigned n=0; t < burnin + until; ++n) {
-        t = TL.run_until(burnin + n * every);
-        // only doing a positional output here
-        outfile << TriangleParticleWriter(TL, outfile) << endl;
-      }
-
-    }
-
-
-  } else if(lattice_type == "hexagonal"){
-    
-    // Initialise a random number generator and set up the model
-    std::mt19937 rng((std::random_device())());
-    Hexagonal_lattice HL(P, rng);
-
-    // Snapshot sequence has a header that sets out the simulation parameters
-    std::cout << "# L = [ ";
-    for(const auto& L: P.L) std::cout << L << " ";
-    std::cout << "]" << std::endl;
-    std::cout << "# N = " << P.N << std::endl;
-    std::cout << "# alpha = [ ";
-    for(const auto& alpha: P.alpha) std::cout << alpha << " ";
-    std::cout << "]" << std::endl;
-    std::cout << "# output = " << output << std::endl;
-    std::cout << "# initial = " << burnin << std::endl;
-    std::cout << "# interval = " << every << std::endl;
-    if(localaverage > 0) {
-      std::cout << "# localaverage = " << localaverage << std::endl;
-      std::cout << "# localinterval = " << localinterval << std::endl;
-    }
-    std::cout << "# occupation number = " << P.n_max << std::endl;
-
-    double t = 0;
-
-    if(output == "clusters") {
-      if(localaverage == 0) {
-        // We sum the histograms over all measurements
-        hist_t sumhist;
-        hist_t sumhist_nr;
-        for(unsigned n=0; t < burnin + until; ++n) {
-          t = HL.run_until(burnin + n * every);
-          hist_t hist = HL.cluster_distributions();
-          hist_t hist_nr = HL.cluster_distribution_particle_number();
-          // Only area
-          if(hist.size() > sumhist.size()) {
-            hist[std::slice(0,sumhist.size(),1)] += sumhist;
-            sumhist = std::move(hist);
-          } else {
-            sumhist[std::slice(0,hist.size(),1)] += hist;
+        } else {
+          // We perform local averages of the histograms at the given measurement interval
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = TL.run_until(burnin + n * every);
+            hist_t sumhist = TL.cluster_distributions();
+            hist_t sumhist_nr = TL.cluster_distributions_particle_numbers();
+            for(unsigned m=1; m<localaverage; ++m) {
+              t = TL.run_until(burnin + n*every + m*localinterval);
+              hist_t hist = TL.cluster_distributions();
+              hist_t hist_nr = TL.cluster_distributions_particle_numbers();
+              // Add hist to sumhist taking into account they may have different lengths
+              if(hist.size() > sumhist.size()) {
+                hist[std::slice(0,sumhist.size(),1)] += sumhist;
+                sumhist = std::move(hist);
+              } else {
+                sumhist[std::slice(0,hist.size(),1)] += hist;
+              }
+              if(hist_nr.size() > sumhist_nr.size()){
+                hist_nr[std::slice(0, sumhist_nr.size(), 1)] += sumhist_nr;
+                sumhist_nr = std::move(hist_nr);
+              } else {
+                sumhist_nr[std::slice(0, hist_nr.size(), 1)] += hist_nr;
+              }
+            }
+            ofstream outfile, outfile_nr;
+            outfile.open(txtoutput);
+            for(const auto& k: sumhist) outfile << k << " ";
+            outfile << endl;
+            outfile_nr.open(txtoutput_nr);
+            for(const auto& k: sumhist_nr) outfile_nr << k << " ";
+            outfile_nr << endl;
           }
-
-          // with occ number as well
-
-          if(hist_nr.size() > sumhist_nr.size()){
-            hist_nr[std::slice(0, sumhist_nr.size(), 1)] += sumhist_nr;
-            sumhist_nr = std::move(hist_nr);
-          } else {
-            sumhist_nr[std::slice(0, hist_nr.size(), 1)] += hist_nr;
-          }
-
         }
-        ofstream outfile, outfile_nr;
-        outfile.open("./lars_sim/hexdist.txt");
-        for(const auto& k: sumhist) outfile << k << " ";
-        outfile << endl;
-        outfile_nr.open("./lars_sim/hexdist_nr.txt");
-        for(const auto& k: sumhist_nr) outfile_nr << k << " ";
-        outfile_nr << endl;
       } else {
-        // We perform local averages of the histograms at the given measurement interval
+        ofstream outfile;
+        outfile.open("triangle.txt");
+        //outfile << "# L = [ ";
+        //for(const auto& L: P.L) outfile << L << " ";
+        //outfile << "]" << endl;
+        //outfile << "# N = " << P.N << endl;
+        //outfile << "# alpha = [ ";
+        //for(const auto& alpha: P.alpha) outfile << alpha << " ";
+        //outfile << "]" << endl;
+        //outfile << "# output = " << output << endl;
+        //outfile << "# initial = " << burnin << endl;
+        //outfile << "# interval = " << every << endl;
+
         for(unsigned n=0; t < burnin + until; ++n) {
-          t = HL.run_until(burnin + n * every);
-          hist_t sumhist = HL.cluster_distributions();
-          hist_t sumhist_nr = HL.cluster_distribution_particle_number();
-          for(unsigned m=1; m<localaverage; ++m) {
-            t = HL.run_until(burnin + n*every + m*localinterval);
+          t = TL.run_until(burnin + n * every);
+          // only doing a positional output here
+          outfile << TriangleParticleWriter(TL, outfile) << endl;
+        }
+
+      }
+
+
+    } else if(lattice_type == "hexagonal"){
+      
+      // Initialise a random number generator and set up the model
+      std::mt19937 rng((std::random_device())());
+      Hexagonal_lattice HL(P, rng);
+
+      // Snapshot sequence has a header that sets out the simulation parameters
+      std::cout << "# L = [ ";
+      for(const auto& L: P.L) std::cout << L << " ";
+      std::cout << "]" << std::endl;
+      std::cout << "# N = " << P.N << std::endl;
+      std::cout << "# alpha = [ ";
+      for(const auto& alpha: P.alpha) std::cout << alpha << " ";
+      std::cout << "]" << std::endl;
+      std::cout << "# output = " << output << std::endl;
+      std::cout << "# initial = " << burnin << std::endl;
+      std::cout << "# interval = " << every << std::endl;
+      if(localaverage > 0) {
+        std::cout << "# localaverage = " << localaverage << std::endl;
+        std::cout << "# localinterval = " << localinterval << std::endl;
+      }
+      std::cout << "# occupation number = " << P.n_max << std::endl;
+
+      double t = 0;
+
+      if(output == "clusters") {
+        if(localaverage == 0) {
+          hist_t sumhist;
+          hist_t sumhist_nr;
+          // We sum the histograms over all measurements
+          ofstream outfile_part;
+          outfile_part.open("hexagonal.txt");
+
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = HL.run_until(burnin + n * every);
             hist_t hist = HL.cluster_distributions();
             hist_t hist_nr = HL.cluster_distribution_particle_number();
-            // Add hist to sumhist taking into account they may have different lengths
+            // particle output for comparison
+            outfile_part << HexagonalParticleWriter(HL, outfile_part) << endl;
+            // Only area
             if(hist.size() > sumhist.size()) {
               hist[std::slice(0,sumhist.size(),1)] += sumhist;
               sumhist = std::move(hist);
             } else {
               sumhist[std::slice(0,hist.size(),1)] += hist;
             }
+
+            // with occ number as well
+
             if(hist_nr.size() > sumhist_nr.size()){
               hist_nr[std::slice(0, sumhist_nr.size(), 1)] += sumhist_nr;
               sumhist_nr = std::move(hist_nr);
             } else {
               sumhist_nr[std::slice(0, hist_nr.size(), 1)] += hist_nr;
             }
+
           }
           ofstream outfile, outfile_nr;
-          outfile.open("./lars_sim/hexdist.txt");
+          outfile.open(txtoutput);
           for(const auto& k: sumhist) outfile << k << " ";
           outfile << endl;
-          outfile_nr.open("./lars_sim/hexdist_nr.txt");
+          outfile_nr.open(txtoutput_nr);
           for(const auto& k: sumhist_nr) outfile_nr << k << " ";
           outfile_nr << endl;
+        } else {
+          // We perform local averages of the histograms at the given measurement interval
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = HL.run_until(burnin + n * every);
+            hist_t sumhist = HL.cluster_distributions();
+            hist_t sumhist_nr = HL.cluster_distribution_particle_number();
+            for(unsigned m=1; m<localaverage; ++m) {
+              t = HL.run_until(burnin + n*every + m*localinterval);
+              hist_t hist = HL.cluster_distributions();
+              hist_t hist_nr = HL.cluster_distribution_particle_number();
+              // Add hist to sumhist taking into account they may have different lengths
+              if(hist.size() > sumhist.size()) {
+                hist[std::slice(0,sumhist.size(),1)] += sumhist;
+                sumhist = std::move(hist);
+              } else {
+                sumhist[std::slice(0,hist.size(),1)] += hist;
+              }
+              if(hist_nr.size() > sumhist_nr.size()){
+                hist_nr[std::slice(0, sumhist_nr.size(), 1)] += sumhist_nr;
+                sumhist_nr = std::move(hist_nr);
+              } else {
+                sumhist_nr[std::slice(0, hist_nr.size(), 1)] += hist_nr;
+              }
+            }
+            ofstream outfile, outfile_nr;
+            outfile.open(txtoutput);
+            for(const auto& k: sumhist) outfile << k << " ";
+            outfile << endl;
+            outfile_nr.open(txtoutput_nr);
+            for(const auto& k: sumhist_nr) outfile_nr << k << " ";
+            outfile_nr << endl;
+          }
         }
+      } else if (output == "particles") {
+        ofstream outfile;
+        outfile.open("hexagonal.txt");
+
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = HL.run_until(burnin + n * every);
+          // only doing a positional output here
+          
+          outfile << HexagonalParticleWriter(HL, outfile) << endl;
+
+        }
+
+      } else if (output == "snapshots"){
+        ofstream outfile;
+        outfile.open("hexdir.txt");
+
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = HL.run_until(burnin + n * every);
+          // only doing a positional output here
+          HL.realise_directions();
+          outfile << HexDirectionWriter(HL, outfile) << endl;
+        }
+
       }
-    } else if (output == "particles") {
-      ofstream outfile;
-      outfile.open("hexagonal.txt");
 
-      for(unsigned n=0; t < burnin + until; ++n) {
-        t = HL.run_until(burnin + n * every);
-        // only doing a positional output here
-        
-        outfile << HexagonalParticleWriter(HL, outfile) << endl;
 
-      }
-
-    } else if (output == "snapshots"){
-      ofstream outfile;
-      outfile.open("hexdir.txt");
-
-      for(unsigned n=0; t < burnin + until; ++n) {
-        t = HL.run_until(burnin + n * every);
-        // only doing a positional output here
-        HL.realise_directions();
-        outfile << HexDirectionWriter(HL, outfile) << endl;
-      }
 
     }
+  } else{
+    // Depending on what lattice, the output may be different
+    if (lattice_type == "square"){
+      // Initialise a random number generator and set up the model
+      std::mt19937 rng((std::random_device())());
+      Lattice L(P, rng);
+
+      // Snapshot sequence has a header that sets out the simulation parameters
+      std::cout << "# L = [ ";
+      for(const auto& L: P.L) std::cout << L << " ";
+      std::cout << "]" << std::endl;
+      std::cout << "# N = " << P.N << std::endl;
+      std::cout << "# alpha = [ ";
+      for(const auto& alpha: P.alpha) std::cout << alpha << " ";
+      std::cout << "]" << std::endl;
+      std::cout << "# output = " << output << std::endl;
+      std::cout << "# initial = " << burnin << std::endl;
+      std::cout << "# interval = " << every << std::endl;
+      if(localaverage > 0) {
+        std::cout << "# localaverage = " << localaverage << std::endl;
+        std::cout << "# localinterval = " << localinterval << std::endl;
+      }
+      std::cout << "# occupation number = " << P.n_max << std::endl;
+
+      double t = 0;
+
+
+      if(output == "clusters") {
+        if(localaverage == 0) {
+          hist_t sumhist;
+          // We sum the histograms over all measurements
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = L.run_until(burnin + n * every);
+            hist_t hist = L.cluster_distributions();
+
+            if(hist.size() > sumhist.size()) {
+              hist[std::slice(0,sumhist.size(),1)] += sumhist;
+              sumhist = std::move(hist);
+            } else {
+              sumhist[std::slice(0,hist.size(),1)] += hist;
+            }
+
+          }
+          ofstream outfile;
+          outfile.open(txtoutput);
+          for(const auto& k: sumhist) outfile << k << " ";
+          outfile << endl;
+        } else {
+          // We perform local averages of the histograms at the given measurement interval
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = L.run_until(burnin + n * every);
+            hist_t sumhist = L.cluster_distributions();
+            for(unsigned m=1; m<localaverage; ++m) {
+              t = L.run_until(burnin + n*every + m*localinterval);
+              hist_t hist = L.cluster_distributions();
+              // Add hist to sumhist taking into account they may have different lengths
+              if(hist.size() > sumhist.size()) {
+                hist[std::slice(0,sumhist.size(),1)] += sumhist;
+                sumhist = std::move(hist);
+              } else {
+                sumhist[std::slice(0,hist.size(),1)] += hist;
+              }
+            }
+            ofstream outfile, outfile_nr;
+            outfile.open(txtoutput);
+            for(const auto& k: sumhist) outfile << k << " ";
+            outfile << endl;
+          }
+        } 
+      }
+      else if (output == "heatmap"){
+        ofstream outfile;
+        outfile.open("./lars_sim/heatmap/square_alpha_N.txt");
+        for (double alp = 1e-4; alp <= 1.0; alp+=1e-3){
+          for (unsigned N = 3000; N <= P.L[0]*P.L[0]; N += 1000){
+            Parameters P_h;
+            P_h.N = N;
+            P_h.alpha[0] = P.alpha[1] = alp;
+            P_h.L = P.L;
+            P_h.n_max = P.n_max;
+            std::size_t maxsize = 1;
+            Lattice LB(P_h, rng);
+            t = 0;
+            for(unsigned n=0; t < burnin + until; ++n){
+              t = LB.run_until(burnin + n * every);
+              maxsize = std::max(maxsize, LB.max_cluster_size());
+              
+            }
+            outfile << maxsize << " ";
+          }
+          outfile << endl;
+        } 
+      }
+      else {
+        ofstream outfile;
+        outfile.open("square.txt");
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = L.run_until(burnin + n * every);
+          if (output == "particles") std::cout << ParticleWriter(L, outfile) << std::endl;
+          else if(output == "vacancies") std::cout << VacancyWriter(L) << std::endl;
+          else {
+            // Ensure that all the particle directions are at the simulation time
+            L.realise_directions();
+            std::cout << SnapshotWriter(L) << std::endl;
+          }
+        }
+
+      }
+    } else if(lattice_type == "triangular"){
+      // Initialise a random number generator and set up the model
+      std::mt19937 rng((std::random_device())());
+      Triangle_lattice TL(P, rng);
+
+      // Snapshot sequence has a header that sets out the simulation parameters
+      std::cout << "# L = [ ";
+      for(const auto& L: P.L) std::cout << L << " ";
+      std::cout << "]" << std::endl;
+      std::cout << "# N = " << P.N << std::endl;
+      std::cout << "# alpha = [ ";
+      for(const auto& alpha: P.alpha) std::cout << alpha << " ";
+      std::cout << "]" << std::endl;
+      std::cout << "# output = " << output << std::endl;
+      std::cout << "# initial = " << burnin << std::endl;
+      std::cout << "# interval = " << every << std::endl;
+      if(localaverage > 0) {
+        std::cout << "# localaverage = " << localaverage << std::endl;
+        std::cout << "# localinterval = " << localinterval << std::endl;
+      }
+      std::cout << "# occupation number = " << P.n_max << std::endl;
+
+      double t = 0;
+
+      if(output == "clusters") {
+        if(localaverage == 0) {
+          // We sum the histograms over all measurements
+          hist_t sumhist;
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = TL.run_until(burnin + n * every);
+            hist_t hist = TL.cluster_distributions();
+            // Only area
+            if(hist.size() > sumhist.size()) {
+              hist[std::slice(0,sumhist.size(),1)] += sumhist;
+              sumhist = std::move(hist);
+            } else {
+              sumhist[std::slice(0,hist.size(),1)] += hist;
+            }
+
+          }
+          // output for each of the distributions 
+          ofstream outfile;
+          outfile.open(txtoutput);
+          for(const auto& k: sumhist) outfile << k << " ";
+          outfile << endl;
+        } else {
+          // We perform local averages of the histograms at the given measurement interval
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = TL.run_until(burnin + n * every);
+            hist_t sumhist = TL.cluster_distributions();
+            for(unsigned m=1; m<localaverage; ++m) {
+              t = TL.run_until(burnin + n*every + m*localinterval);
+              hist_t hist = TL.cluster_distributions();
+              // Add hist to sumhist taking into account they may have different lengths
+              if(hist.size() > sumhist.size()) {
+                hist[std::slice(0,sumhist.size(),1)] += sumhist;
+                sumhist = std::move(hist);
+              } else {
+                sumhist[std::slice(0,hist.size(),1)] += hist;
+              }
+            }
+            ofstream outfile, outfile_nr;
+            outfile.open(txtoutput);
+            for(const auto& k: sumhist) outfile << k << " ";
+            outfile << endl;
+          }
+        }
+      } else {
+        ofstream outfile;
+        outfile.open("triangle.txt");
+        //outfile << "# L = [ ";
+        //for(const auto& L: P.L) outfile << L << " ";
+        //outfile << "]" << endl;
+        //outfile << "# N = " << P.N << endl;
+        //outfile << "# alpha = [ ";
+        //for(const auto& alpha: P.alpha) outfile << alpha << " ";
+        //outfile << "]" << endl;
+        //outfile << "# output = " << output << endl;
+        //outfile << "# initial = " << burnin << endl;
+        //outfile << "# interval = " << every << endl;
+
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = TL.run_until(burnin + n * every);
+          // only doing a positional output here
+          outfile << TriangleParticleWriter(TL, outfile) << endl;
+        }
+
+      }
+
+
+    } else if(lattice_type == "hexagonal"){
+      
+      // Initialise a random number generator and set up the model
+      std::mt19937 rng((std::random_device())());
+      Hexagonal_lattice HL(P, rng);
+
+      // Snapshot sequence has a header that sets out the simulation parameters
+      std::cout << "# L = [ ";
+      for(const auto& L: P.L) std::cout << L << " ";
+      std::cout << "]" << std::endl;
+      std::cout << "# N = " << P.N << std::endl;
+      std::cout << "# alpha = [ ";
+      for(const auto& alpha: P.alpha) std::cout << alpha << " ";
+      std::cout << "]" << std::endl;
+      std::cout << "# output = " << output << std::endl;
+      std::cout << "# initial = " << burnin << std::endl;
+      std::cout << "# interval = " << every << std::endl;
+      if(localaverage > 0) {
+        std::cout << "# localaverage = " << localaverage << std::endl;
+        std::cout << "# localinterval = " << localinterval << std::endl;
+      }
+      std::cout << "# occupation number = " << P.n_max << std::endl;
+
+      double t = 0;
+
+      if(output == "clusters") {
+        if(localaverage == 0) {
+          hist_t sumhist;
+          // We sum the histograms over all measurements
+          ofstream outfile_part;
+          outfile_part.open("hexagonal.txt");
+
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = HL.run_until(burnin + n * every);
+            hist_t hist = HL.cluster_distributions();
+            // particle output for comparison
+            outfile_part << HexagonalParticleWriter(HL, outfile_part) << endl;
+            // Only area
+            if(hist.size() > sumhist.size()) {
+              hist[std::slice(0,sumhist.size(),1)] += sumhist;
+              sumhist = std::move(hist);
+            } else {
+              sumhist[std::slice(0,hist.size(),1)] += hist;
+            }
+
+          }
+          ofstream outfile;
+          outfile.open(txtoutput);
+          for(const auto& k: sumhist) outfile << k << " ";
+          outfile << endl;
+        } else {
+          // We perform local averages of the histograms at the given measurement interval
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = HL.run_until(burnin + n * every);
+            hist_t sumhist = HL.cluster_distributions();
+            for(unsigned m=1; m<localaverage; ++m) {
+              t = HL.run_until(burnin + n*every + m*localinterval);
+              hist_t hist = HL.cluster_distributions();
+              // Add hist to sumhist taking into account they may have different lengths
+              if(hist.size() > sumhist.size()) {
+                hist[std::slice(0,sumhist.size(),1)] += sumhist;
+                sumhist = std::move(hist);
+              } else {
+                sumhist[std::slice(0,hist.size(),1)] += hist;
+              }
+            }
+            ofstream outfile;
+            outfile.open("./lars_sim/hexdist.txt");
+            for(const auto& k: sumhist) outfile << k << " ";
+            outfile << endl;
+          }
+        }
+      } else if (output == "particles") {
+        ofstream outfile;
+        outfile.open("hexagonal.txt");
+
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = HL.run_until(burnin + n * every);
+          // only doing a positional output here
+          
+          outfile << HexagonalParticleWriter(HL, outfile) << endl;
+
+        }
+
+      } else if (output == "snapshots"){
+        ofstream outfile;
+        outfile.open("hexdir.txt");
+
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = HL.run_until(burnin + n * every);
+          // only doing a positional output here
+          HL.realise_directions();
+          outfile << HexDirectionWriter(HL, outfile) << endl;
+        }
+
+      }
 
 
 
+    }
   }
   // maybe do other lattices as well ?
   return 0;
