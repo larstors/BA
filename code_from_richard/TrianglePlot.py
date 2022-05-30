@@ -23,10 +23,11 @@ colormap = cm.inferno
 
 # TODO: better way of doing this...
 # parameters
-L = [100, 100]
+l = int(input())
+L = [l, l]
 alpha = []
 N = 600
-
+n = int(input())
 
 
 
@@ -34,7 +35,8 @@ N = 600
 class AnimatedScatter(object):
     """An animated scatter plot using matplotlib.animations.FuncAnimation."""
     def __init__(self, numpoints=50):
-        f = open("./triangle.txt")
+        #f = open("./lars_sim/gif/triangle.txt")
+        f = open("./lars_sim/testing/triangle_heat.txt")
         self.data = []
         for line in f:
             self.data.append(np.loadtxt(StringIO(line), dtype=int))
@@ -43,8 +45,8 @@ class AnimatedScatter(object):
         # Setup the figure and axes
         self.fig, self.ax = plt.subplots(figsize=(20, 20))
         # Then setup FuncAnimation.
-        #self.ani = animation.FuncAnimation(self.fig, self.update, interval=1, 
-        #                                  init_func=self.setup_plot, blit=True)
+        self.ani = animation.FuncAnimation(self.fig, self.update, interval=1, 
+                                          init_func=self.setup_plot, blit=False, save_count=300)
         
 
     def conv(self, n):
@@ -83,10 +85,10 @@ class AnimatedScatter(object):
 
     def setup_plot(self):
         """Initial drawing of the scatter plot."""
-        s = 1.8 * 10
+        s = 1.8 * 100
         kos = self.data[0][1::3]
         weight = self.data[0][2::3]
-        self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=2, marker="s")
+        self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=n, marker="s")
         self.ax.axis([-0.5*L[0], L[0],-5, L[1]])
         self.ax.triplot(self.triang, 'r-', alpha=0.6, linewidth=0.2)
         return self.scat,
@@ -96,11 +98,14 @@ class AnimatedScatter(object):
         """Update the scatter plot."""
         kos = self.data[i][1::3]
         self.ax.cla()
-        s = 1.8 
+        s = 1.8*100
         weight = self.data[i][2::3]
-        self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=2, marker="s")
+        title = "%.1f" % (0.1*i)
+        title = "t="+title
+        self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=n, marker="s")
         self.ax.axis([-0.5*L[0], L[0],-5, L[1]])
         self.ax.triplot(self.triang, 'r-', alpha=0.6, linewidth=0.2)
+        self.ax.set_title(title)
         # We need to return the updated artist for FuncAnimation to draw..
         # Note that it expects a sequence of artists, thus the trailing comma.
         return self.scat,
@@ -108,10 +113,10 @@ class AnimatedScatter(object):
 
 if __name__ == '__main__':
     a = AnimatedScatter()
-    #a.ani.save('TriangleScatter.gif', fps=10)
-    
-    a.update(50)
-    plt.show()
+    #a.ani.save('./lars_sim/gif/TriStart_n_2_N_750.gif', fps=10)
+    a.ani.save('./lars_sim/testing/triangle_heat.gif', fps=10)
+    #a.update(50)
+    #plt.show()
     #plt.savefig("./lars_sim/triang_test.pdf")
 
 

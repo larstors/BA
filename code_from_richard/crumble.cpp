@@ -62,7 +62,7 @@ class Lattice {
   friend class ParticleWriter<Engine>;
   friend class ClusterWriter<Engine>;
 
-  static constexpr unsigned n_max = 1; // ! Nicer way of doing this?
+  static constexpr unsigned n_max = 3; // ! Nicer way of doing this?
     
     
 
@@ -292,7 +292,7 @@ public:
         // Activate particles that can move, and schedule a hop accordingly
       for (unsigned n = 0; n < sites.size(); ++n) {
         for (unsigned k = 0; k < P.n_max; ++k){
-        if (sites[n].occupied[k] && sites[n].neighbours < 3 * P.n_max) schedule(n, k);
+        if (sites[n].occupied[k] && sites[n].neighbours < 4 * P.n_max) schedule(n, k);
         }
       }
       assert(consistent());
@@ -419,9 +419,64 @@ public:
     }
 
 
-    // Function to determin the size of largest cluster. Note that we will only regard particle clusters here 
+    // Function to determine the size of largest cluster. Note that we will only regard particle clusters here 
     // (at least so far)
     size_t max_cluster_size(){
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n) clusters[n] = std::list<unsigned>(1, n); // Single-element list comprising the lattice site
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof[n], small = memberof[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+        }
+
+        std::size_t max_s = 1;
+        for (const auto& kv : clusters) {
+
+            // instead of occupied we check whether there are any particles present
+            if (sites[kv.first].present > 0) {
+              //std::cout << "-------------------" << endl;
+              //std::cout << kv.second.size() << " " << sites[kv.first].present << endl;
+              max_s = std::max(max_s, kv.second.size()); 
+              //std::cout << max_s << endl;
+            
+            }
+            
+        }
+
+        //std::cout << max_s << endl;
+
+        return max_s;
+    }
+
+    size_t max_cluster_size_nr(){
       // Lookup table of cluster membership by lattice site
         std::vector<unsigned> memberof_nr(sites.size());
         // Initially, this is just the site id as each site is its own cluster
@@ -479,6 +534,117 @@ public:
 
         return max_s;
     }
+
+    // Function to determine the mean cluster size by simple taking the sum off all clusters (not vacant ones) and dividing by number of clusters. Note that we will only regard particle clusters here 
+    // (at least so far)
+    size_t avg_cluster_size(){
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n) clusters[n] = std::list<unsigned>(1, n); // Single-element list comprising the lattice site
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof[n], small = memberof[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+        }
+
+        // variable for mean and the count of clusters
+        double mean = 0; 
+        double count = 0; 
+        for (const auto& kv : clusters) {
+            // instead of occupied we check whether there are any particles present
+            if (sites[kv.first].present > 0) { 
+              mean += kv.second.size();
+              count += 1;
+            }
+        }
+
+        mean = mean / count;
+
+        return mean;
+    }
+
+    size_t avg_cluster_size_nr(){
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof_nr(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof_nr.begin(), memberof_nr.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters_nr;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          if (sites[n].present == 0) clusters_nr[n] = std::list<unsigned>(1, n);
+          else clusters_nr[n] = std::list<unsigned>(sites[n].present, n);
+
+        }
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize_nr = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof_nr[n], small = memberof_nr[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters_nr[large].size() < clusters_nr[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters_nr[small]) memberof_nr[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters_nr[large].splice(clusters_nr[large].end(), clusters_nr[small]);
+                    // Remove the smaller cluster from the map
+                    clusters_nr.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize_nr = std::max(maxsize_nr, clusters_nr[large].size());
+                }
+            }
+        }
+
+        // variable for mean and the count of clusters
+        double mean = 0; 
+        double count = 0; 
+        for (const auto& kv : clusters_nr) {
+            // instead of occupied we check whether there are any particles present
+            if (sites[kv.first].present > 0) { 
+              mean += kv.second.size();
+              count += 1;
+            }
+        }
+
+        mean = mean / count;
+
+        return mean;
+    }
+
 };
 
 
@@ -497,7 +663,7 @@ class Triangle_lattice {
 
     Parameters P; // A local copy of the model parameters
 
-    static constexpr unsigned n_max = 2; // ! Nicer way of doing this?
+    static constexpr unsigned n_max = 3; // ! Nicer way of doing this?
     
     
 
@@ -642,7 +808,6 @@ class Triangle_lattice {
                 if (sites[dnbs[sites[n].direction[index]]].present < P.n_max) {
                   auto itr = std::find(sites[dnbs[sites[n].direction[index]]].occupied.begin(), sites[dnbs[sites[n].direction[index]]].occupied.end(), false);
                   unsigned k = std::distance(sites[dnbs[sites[n].direction[index]]].occupied.begin(), itr);
-                  assert(k==2);
                   if (k < (P.n_max) && !sites[dnbs[sites[n].direction[index]]].occupied[k]){
                     
                     //std::cout << "here" << endl;
@@ -675,7 +840,6 @@ class Triangle_lattice {
                         }
                     }
                   }
-                
                 }
                 else {
                     // std::cout << "Didn't move from "; decode(n); std::cout << std::endl;
@@ -774,7 +938,7 @@ public:
         // Activate particles that can move, and schedule a hop accordingly
         for (unsigned n = 0; n < sites.size(); ++n) {
           for (unsigned k = 0; k < P.n_max; ++k){
-            if (sites[n].occupied[k] && sites[n].neighbours < 3 * P.n_max) schedule(n, k);
+            if (sites[n].occupied[k] && sites[n].neighbours < 6 * P.n_max) schedule(n, k);
           }
         }
         assert(consistent());
@@ -900,6 +1064,233 @@ public:
         return dists_nr;
     }
 
+    // Function to determine the size of largest cluster. Note that we will only regard particle clusters here 
+    // (at least so far)
+    size_t max_cluster_size(){
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n) clusters[n] = std::list<unsigned>(1, n); // Single-element list comprising the lattice site
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof[n], small = memberof[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+        }
+
+        std::size_t max_s = 1;
+        for (const auto& kv : clusters) {
+
+            // instead of occupied we check whether there are any particles present
+            if (sites[kv.first].present > 0) {
+              //std::cout << "-------------------" << endl;
+              //std::cout << kv.second.size() << " " << sites[kv.first].present << endl;
+              max_s = std::max(max_s, kv.second.size()); 
+              //std::cout << max_s << endl;
+            
+            }
+            
+        }
+
+        //std::cout << max_s << endl;
+
+        return max_s;
+    }
+
+    size_t max_cluster_size_nr(){
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof_nr(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof_nr.begin(), memberof_nr.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters_nr;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          if (sites[n].present == 0) clusters_nr[n] = std::list<unsigned>(1, n);
+          else clusters_nr[n] = std::list<unsigned>(sites[n].present, n);
+
+        }
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize_nr = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof_nr[n], small = memberof_nr[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters_nr[large].size() < clusters_nr[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters_nr[small]) memberof_nr[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters_nr[large].splice(clusters_nr[large].end(), clusters_nr[small]);
+                    // Remove the smaller cluster from the map
+                    clusters_nr.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize_nr = std::max(maxsize_nr, clusters_nr[large].size());
+                }
+            }
+        }
+
+        std::size_t max_s = 1;
+        for (const auto& kv : clusters_nr) {
+
+            // instead of occupied we check whether there are any particles present
+            if (sites[kv.first].present > 0) {
+              //std::cout << "-------------------" << endl;
+              //std::cout << kv.second.size() << " " << sites[kv.first].present << endl;
+              max_s = std::max(max_s, kv.second.size()); 
+              //std::cout << max_s << endl;
+            
+            }
+            
+        }
+
+        //std::cout << max_s << endl;
+
+        return max_s;
+    }
+
+    // Function to determine the mean cluster size by simple taking the sum off all clusters (not vacant ones) and dividing by number of clusters. Note that we will only regard particle clusters here 
+    // (at least so far)
+    size_t avg_cluster_size(){
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n) clusters[n] = std::list<unsigned>(1, n); // Single-element list comprising the lattice site
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof[n], small = memberof[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+        }
+
+        // variable for mean and the count of clusters
+        double mean = 0; 
+        double count = 0; 
+        for (const auto& kv : clusters) {
+            // instead of occupied we check whether there are any particles present
+            if (sites[kv.first].present > 0) { 
+              mean += kv.second.size();
+              count += 1;
+            }
+        }
+
+        mean = mean / count;
+
+        return mean;
+    }
+
+    size_t avg_cluster_size_nr(){
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof_nr(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof_nr.begin(), memberof_nr.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters_nr;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          if (sites[n].present == 0) clusters_nr[n] = std::list<unsigned>(1, n);
+          else clusters_nr[n] = std::list<unsigned>(sites[n].present, n);
+
+        }
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize_nr = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof_nr[n], small = memberof_nr[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters_nr[large].size() < clusters_nr[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters_nr[small]) memberof_nr[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters_nr[large].splice(clusters_nr[large].end(), clusters_nr[small]);
+                    // Remove the smaller cluster from the map
+                    clusters_nr.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize_nr = std::max(maxsize_nr, clusters_nr[large].size());
+                }
+            }
+        }
+
+        // variable for mean and the count of clusters
+        double mean = 0; 
+        double count = 0; 
+        for (const auto& kv : clusters_nr) {
+            // instead of occupied we check whether there are any particles present
+            if (sites[kv.first].present > 0) { 
+              mean += kv.second.size();
+              count += 1;
+            }
+        }
+
+        mean = mean / count;
+
+        return mean;
+    }
+
+
 };
 
 
@@ -915,7 +1306,7 @@ class Hexagonal_lattice {
 
     Parameters P; // A local copy of the model parameters
     // TODO Really need a better way of doing this
-    static constexpr unsigned n_max = 2;
+    static constexpr unsigned n_max = 3;
 
     // Data associated with each site; by default all of these are set to zero
     // which represents a vacant site
@@ -1271,7 +1662,7 @@ public:
         // Activate particles that can move, and schedule a hop accordingly
         for (unsigned n = 0; n < sites.size(); ++n) {
           for (unsigned i = 0; i < 2 * P.n_max; i++){
-            if (sites[n].occupied[i] && sites[n].neighbours[i] < 3) schedule(n, i);
+            if (sites[n].occupied[i] && sites[n].neighbours[i%2] < 3 * P.n_max) schedule(n, i);
           }
         }
         assert(consistent());
@@ -1424,6 +1815,268 @@ public:
         return dists_nr;
     }
 
+
+    
+    size_t max_cluster_size(){
+        
+        // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(2 * sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          for (unsigned i = 0; i < 2; i++){
+            clusters[2*n + i] = std::list<unsigned>(1, 2*n + i); // Single-element list comprising the lattice site
+          }
+        }
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+          for (unsigned i = 0; i < 2; i++){
+            // TODO figure out why forward neighbour makes algorithm not work
+            for (const auto& m : neighbours(n, i)) {
+                unsigned large = memberof[2*n + i], small = memberof[2*m + (i+1)%2];
+                // If they are in the same cluster we can move on
+                if (small == large) continue;
+                // If one of them is empty but the other isn't we move on
+                else if (sites[n].present[i] == 0 && sites[m].present[(i+1)%2] != 0) continue;
+                else if (sites[n].present[i] != 0 && sites[m].present[(i+1)%2] == 0) continue;
+                // merge clusters
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+          }
+        }
+        std::size_t max_s = 1;
+        for (const auto& kv : clusters) {
+
+            // instead of occupied we check whether there are any particles present
+            if (sites[(kv.first - kv.first%2)/2].present[kv.first%2] > 0) {
+              //std::cout << "-------------------" << endl;
+              //std::cout << kv.second.size() << " " << sites[kv.first].present << endl;
+              max_s = std::max(max_s, kv.second.size()); 
+              //std::cout << max_s << endl;
+            
+            }
+            
+        }
+        //std::cout << max_s << endl;
+        return max_s;
+    }
+
+    size_t max_cluster_size_nr(){
+            // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof_nr(2 * sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof_nr.begin(), memberof_nr.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters_nr;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          for (unsigned i = 0; i < 2; i++){
+            if (sites[n].present[i] == 0) clusters_nr[2*n + i] = std::list<unsigned>(1, 2*n + i);
+            else {
+              clusters_nr[2*n + i] = std::list<unsigned>(sites[n].present[i], 2*n+i);
+              /*
+              for (unsigned k = 0; k < sites[n].present[i]; k++){
+                pres[k] = 2*n + i;
+              }
+              clusters_nr[2*n + i] = pres;
+              */
+            }
+          }
+        }
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize_nr = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+          for (unsigned i = 0; i < 2; i++){
+            // TODO figure out why forward neighbour makes algorithm not work
+            for (const auto& m : neighbours(n, i)) {
+                unsigned large = memberof_nr[2*n + i], small = memberof_nr[2*m + (i+1)%2];
+                // If they are in the same cluster we can move on
+                if (small == large) continue;
+                // If one of them is empty but the other isn't we move on
+                else if (sites[n].present[i] == 0 && sites[m].present[(i+1)%2] != 0) continue;
+                else if (sites[n].present[i] != 0 && sites[m].present[(i+1)%2] == 0) continue;
+                // merge clusters
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters_nr[large].size() < clusters_nr[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters_nr[small]) memberof_nr[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters_nr[large].splice(clusters_nr[large].end(), clusters_nr[small]);
+                    // Remove the smaller cluster from the map
+                    clusters_nr.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize_nr = std::max(maxsize_nr, clusters_nr[large].size());
+                }
+            }
+          }
+        }
+        std::size_t max_s = 1;
+        for (const auto& kv : clusters_nr) {
+
+            // instead of occupied we check whether there are any particles present
+            if (sites[(kv.first - kv.first%2)/2].present[kv.first%2] > 0) {
+              //std::cout << "-------------------" << endl;
+              //std::cout << kv.second.size() << " " << sites[kv.first].present << endl;
+              max_s = std::max(max_s, kv.second.size()); 
+              //std::cout << max_s << endl;
+            
+            }
+            
+        }
+
+        //std::cout << max_s << endl;
+
+        return max_s;
+    }
+
+    // Function to determine the mean cluster size by simple taking the sum off all clusters (not vacant ones) and dividing by number of clusters. Note that we will only regard particle clusters here 
+    // (at least so far)
+    size_t avg_cluster_size(){
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(2 * sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          for (unsigned i = 0; i < 2; i++){
+            clusters[2*n + i] = std::list<unsigned>(1, 2*n + i); // Single-element list comprising the lattice site
+          }
+        }
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+          for (unsigned i = 0; i < 2; i++){
+            // TODO figure out why forward neighbour makes algorithm not work
+            for (const auto& m : neighbours(n, i)) {
+                unsigned large = memberof[2*n + i], small = memberof[2*m + (i+1)%2];
+                // If they are in the same cluster we can move on
+                if (small == large) continue;
+                // If one of them is empty but the other isn't we move on
+                else if (sites[n].present[i] == 0 && sites[m].present[(i+1)%2] != 0) continue;
+                else if (sites[n].present[i] != 0 && sites[m].present[(i+1)%2] == 0) continue;
+                // merge clusters
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+          }
+        }
+
+        // variable for mean and the count of clusters
+        double mean = 0; 
+        double count = 0; 
+        for (const auto& kv : clusters) {
+            // instead of occupied we check whether there are any particles present
+            if (sites[(kv.first - kv.first%2)/2].present[kv.first%2] > 0) { 
+              mean += kv.second.size();
+              count += 1;
+            }
+        }
+
+        mean = mean / count;
+
+        return mean;
+    }
+
+    size_t avg_cluster_size_nr(){
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof_nr(2 * sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof_nr.begin(), memberof_nr.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters_nr;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          for (unsigned i = 0; i < 2; i++){
+            if (sites[n].present[i] == 0) clusters_nr[2*n + i] = std::list<unsigned>(1, 2*n + i);
+            else {
+              clusters_nr[2*n + i] = std::list<unsigned>(sites[n].present[i], 2*n+i);
+              /*
+              for (unsigned k = 0; k < sites[n].present[i]; k++){
+                pres[k] = 2*n + i;
+              }
+              clusters_nr[2*n + i] = pres;
+              */
+            }
+          }
+        }
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize_nr = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+          for (unsigned i = 0; i < 2; i++){
+            // TODO figure out why forward neighbour makes algorithm not work
+            for (const auto& m : neighbours(n, i)) {
+                unsigned large = memberof_nr[2*n + i], small = memberof_nr[2*m + (i+1)%2];
+                // If they are in the same cluster we can move on
+                if (small == large) continue;
+                // If one of them is empty but the other isn't we move on
+                else if (sites[n].present[i] == 0 && sites[m].present[(i+1)%2] != 0) continue;
+                else if (sites[n].present[i] != 0 && sites[m].present[(i+1)%2] == 0) continue;
+                // merge clusters
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters_nr[large].size() < clusters_nr[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters_nr[small]) memberof_nr[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters_nr[large].splice(clusters_nr[large].end(), clusters_nr[small]);
+                    // Remove the smaller cluster from the map
+                    clusters_nr.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize_nr = std::max(maxsize_nr, clusters_nr[large].size());
+                }
+            }
+          }
+        }
+
+        // variable for mean and the count of clusters
+        double mean = 0; 
+        double count = 0; 
+        for (const auto& kv : clusters_nr) {
+            // instead of occupied we check whether there are any particles present
+            if (sites[(kv.first - kv.first%2)/2].present[kv.first%2] > 0) { 
+              mean += kv.second.size();
+              count += 1;
+            }
+        }
+
+        mean = mean / count;
+
+        return mean;
+    }
 };
 
 
@@ -1653,6 +2306,7 @@ int main(int argc, char* argv[]) {
   if(output[0] == 'p') output = "particles";
   else if(output[0] == 'v') output = "vacancies";
   else if(output[0] == 'c') output = "clusters";
+  else if(output[0] == 'f') output = "function"; // this output is for testing different features. It is not static, as of now, so one should not uses this  without proper inspection of what it does
   else if(output[0] == 'h') output = "heatmap"; // this is for heatmap of clustersizes
                                                 // TODO add similar for motility? moves/planned moves
   else output = "snapshots";
@@ -1790,29 +2444,52 @@ int main(int argc, char* argv[]) {
         } 
       } 
       else if (output == "heatmap"){
-        ofstream outfile;
-        outfile.open("./lars_sim/heatmap/square_alpha_N.txt");
-        for (double alp = 1e-4; alp <= 1.0; alp+=1e-4){
-          for (unsigned N = 1; N <= P.L[0]*P.L[0]; N += 10){
-            P.N = N;
-            std::cout << P.N << endl;
-            P.alpha[0] = P.alpha[1] = alp;
+        ofstream outfile, outfile_avg, outfile_nr, outfile_avg_nr;
+        outfile.open("./lars_sim/heatmap/square_alpha_N_n_3.txt");
+        outfile_avg.open("./lars_sim/heatmap/square_alpha_N_n_3_avg.txt");
+        outfile_nr.open("./lars_sim/heatmap/square_nr_alpha_N_n_3.txt");
+        outfile_avg_nr.open("./lars_sim/heatmap/square_nr_alpha_N_n_3_avg.txt");
+        for (double alp = 1e-6; alp <= 1.0; alp*=1.3){
+          for (unsigned N = 100 * P.n_max; N <= P.L[0]*P.L[0]*P.n_max; N += 200*P.n_max){
+            Parameters P_h;
+            P_h.N = N;
+            P_h.alpha[0] = P.alpha[1] = alp;
+            P_h.L = P.L;
+            P_h.n_max = P.n_max;
             std::size_t maxsize = 1;
-            Lattice L(P, rng);
+            std::size_t maxsize_nr = 1;
+            Lattice LB(P_h, rng);
+            t = 0;
+            // also taking mean over all used timesteps
+            double mean = 0.0;
+            double mean_nr = 0.0;
+            double count = 0;
             for(unsigned n=0; t < burnin + until; ++n){
-              t = L.run_until(burnin + n * every);
-              maxsize = std::max(maxsize, L.max_cluster_size());
+              t = LB.run_until(burnin + n * every);
+              maxsize = std::max(maxsize, LB.max_cluster_size());
+              maxsize_nr = std::max(maxsize_nr, LB.max_cluster_size_nr());
+              mean += LB.avg_cluster_size();
+              mean_nr += LB.avg_cluster_size_nr();
+              count += 1;
             }
+
+            mean = mean / count;
+            mean_nr = mean_nr / count;
+
             outfile << maxsize << " ";
+            outfile_avg << mean << " ";
+            outfile_nr << maxsize_nr << " ";
+            outfile_avg_nr << mean_nr << " ";
           }
           outfile << endl;
+          outfile_avg << endl;
+          outfile_nr << endl;
+          outfile_avg_nr << endl;
         }
-
-
 
       } else {
         ofstream outfile;
-        outfile.open("square.txt");
+        outfile.open("./lars_sim/gif/square.txt");
         for(unsigned n=0; t < burnin + until; ++n) {
           t = L.run_until(burnin + n * every);
           if (output == "particles") std::cout << ParticleWriter(L, outfile) << std::endl;
@@ -1823,7 +2500,7 @@ int main(int argc, char* argv[]) {
             std::cout << SnapshotWriter(L) << std::endl;
           }
         }
-
+      
       }
     } else if(lattice_type == "triangular"){
       // Initialise a random number generator and set up the model
@@ -1917,9 +2594,76 @@ int main(int argc, char* argv[]) {
             outfile_nr << endl;
           }
         }
-      } else {
+      } 
+      else if (output == "heatmap"){
+        ofstream outfile, outfile_avg, outfile_nr, outfile_avg_nr;
+        outfile.open("./lars_sim/heatmap/tri_alpha_N_n_2.txt");
+        outfile_avg.open("./lars_sim/heatmap/tri_alpha_N_n_2_avg.txt");
+        outfile_nr.open("./lars_sim/heatmap/tri_nr_alpha_N_n_2.txt");
+        outfile_avg_nr.open("./lars_sim/heatmap/tri_nr_alpha_N_n_2_avg.txt");
+        for (double alp = 1e-6; alp <= 1.0; alp*=1.3){
+          for (unsigned N = 100*P.n_max; N <= P.L[0]*P.L[0]*P.n_max; N += 200*P.n_max){
+            Parameters P_h;
+            P_h.N = N;
+            P_h.alpha[0] = P.alpha[1] = P.alpha[2] = alp;
+            P_h.L = P.L;
+            P_h.n_max = P.n_max;
+            std::size_t maxsize = 1;
+            std::size_t maxsize_nr = 1;
+            Triangle_lattice LB(P_h, rng);
+            t = 0;
+
+            // also taking mean over all used timesteps
+            double mean = 0.0;
+            double mean_nr = 0.0;
+            double count = 0;
+            for(unsigned n=0; t < burnin + until; ++n){
+              t = LB.run_until(burnin + n * every);
+              maxsize = std::max(maxsize, LB.max_cluster_size());
+              maxsize_nr = std::max(maxsize_nr, LB.max_cluster_size_nr());
+              mean += LB.avg_cluster_size();
+              mean_nr += LB.avg_cluster_size_nr();
+              count += 1;
+            }
+
+            mean = mean / count;
+            mean_nr = mean_nr / count;
+
+            outfile << maxsize << " ";
+            outfile_avg << mean << " ";
+            outfile_nr << maxsize_nr << " ";
+            outfile_avg_nr << mean_nr << " ";
+          }
+          outfile << endl;
+          outfile_avg << endl;
+          outfile_nr << endl;
+          outfile_avg_nr << endl;
+        }
+      } 
+      else if (output == "function"){
         ofstream outfile;
-        outfile.open("triangle.txt");
+        outfile.open("./lars_sim/testing/triangle_heat.txt");
+        double mean = 0.0;
+        double count = 0.0;
+        double mean_nr = 0.0;
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = TL.run_until(burnin + n * every);
+          if (int(t)%100 == 0){
+              count++;
+              mean = mean + TL.avg_cluster_size();
+              mean_nr = mean_nr + TL.avg_cluster_size_nr();
+          }
+          // only doing a positional output here
+          outfile << TriangleParticleWriter(TL, outfile) << endl;
+
+        }
+        std::cout << "avg by area" << mean/count << endl;
+        std::cout << "avg by number" << mean_nr/count << endl;
+      }
+      else {
+        std::cout << "avg by area" << endl;
+        ofstream outfile;
+        outfile.open("./lars_sim/gif/triangle.txt");
         //outfile << "# L = [ ";
         //for(const auto& L: P.L) outfile << L << " ";
         //outfile << "]" << endl;
@@ -1971,7 +2715,7 @@ int main(int argc, char* argv[]) {
           hist_t sumhist_nr;
           // We sum the histograms over all measurements
           ofstream outfile_part;
-          outfile_part.open("hexagonal.txt");
+          outfile_part.open("./lars_sim/gif/hexagonal.txt");
 
           for(unsigned n=0; t < burnin + until; ++n) {
             t = HL.run_until(burnin + n * every);
@@ -2039,7 +2783,7 @@ int main(int argc, char* argv[]) {
         }
       } else if (output == "particles") {
         ofstream outfile;
-        outfile.open("hexagonal.txt");
+        outfile.open("./lars_sim/gif/hexagonal.txt");
 
         for(unsigned n=0; t < burnin + until; ++n) {
           t = HL.run_until(burnin + n * every);
@@ -2049,9 +2793,56 @@ int main(int argc, char* argv[]) {
 
         }
 
+      } 
+      else if (output == "heatmap"){
+        ofstream outfile, outfile_avg, outfile_nr, outfile_avg_nr;
+        outfile.open("./lars_sim/heatmap/hex_alpha_N_n_2.txt");
+        outfile_avg.open("./lars_sim/heatmap/hex_alpha_N_n_2_avg.txt");
+        outfile_nr.open("./lars_sim/heatmap/hex_nr_alpha_N_n_2.txt");
+        outfile_avg_nr.open("./lars_sim/heatmap/hex_nr_alpha_N_n_2_avg.txt");
+        for (double alp = 1e-6; alp <= 1.0; alp*=1.3){
+          for (unsigned N = 200 * P.n_max; N <= 2*P.L[0]*P.L[0]*P.n_max; N += 400*P.n_max){
+            Parameters P_h;
+            P_h.N = N;
+            P_h.alpha[0] = P.alpha[1] = P.alpha[2] = alp;
+            P_h.L = P.L;
+            P_h.n_max = P.n_max;
+            std::size_t maxsize = 1;
+            std::size_t maxsize_nr = 1;
+            Hexagonal_lattice LB(P_h, rng);
+            t = 0;
+
+            // also taking mean over all used timesteps
+            double mean = 0.0;
+            double mean_nr = 0.0;
+            double count = 0;
+            for(unsigned n=0; t < burnin + until; ++n){
+              t = LB.run_until(burnin + n * every);
+              maxsize = std::max(maxsize, LB.max_cluster_size());
+              maxsize_nr = std::max(maxsize_nr, LB.max_cluster_size_nr());
+              mean += LB.avg_cluster_size();
+              mean_nr += LB.avg_cluster_size_nr();
+              count += 1;
+            }
+
+            mean = mean / count;
+            mean_nr = mean_nr / count;
+
+            outfile << maxsize << " ";
+            outfile_avg << mean << " ";
+            outfile_nr << maxsize_nr << " ";
+            outfile_avg_nr << mean_nr << " ";
+          }
+          outfile << endl;
+          outfile_avg << endl;
+          outfile_nr << endl;
+          outfile_avg_nr << endl;
+        }
+      
+      
       } else if (output == "snapshots"){
         ofstream outfile;
-        outfile.open("hexdir.txt");
+        outfile.open("./lars_sim/gif/hexdir.txt");
 
         for(unsigned n=0; t < burnin + until; ++n) {
           t = HL.run_until(burnin + n * every);
@@ -2136,10 +2927,11 @@ int main(int argc, char* argv[]) {
         } 
       }
       else if (output == "heatmap"){
-        ofstream outfile;
+        ofstream outfile, outfile_avg;
         outfile.open("./lars_sim/heatmap/square_alpha_N.txt");
-        for (double alp = 1e-4; alp <= 1.0; alp+=1e-3){
-          for (unsigned N = 3000; N <= P.L[0]*P.L[0]; N += 1000){
+        outfile_avg.open("./lars_sim/heatmap/square_alpha_N_avg.txt");
+        for (double alp = 1e-6; alp <= 1.0; alp*=1.2){
+          for (unsigned N = 100; N <= P.L[0]*P.L[0]; N += 200){
             Parameters P_h;
             P_h.N = N;
             P_h.alpha[0] = P.alpha[1] = alp;
@@ -2148,19 +2940,29 @@ int main(int argc, char* argv[]) {
             std::size_t maxsize = 1;
             Lattice LB(P_h, rng);
             t = 0;
+
+            // also taking mean over all used timesteps
+            double mean = 0.0;
+            double count = 0;
             for(unsigned n=0; t < burnin + until; ++n){
               t = LB.run_until(burnin + n * every);
               maxsize = std::max(maxsize, LB.max_cluster_size());
-              
+              mean += LB.avg_cluster_size();
+              count += 1;
             }
+
+            mean = mean / count;
+
             outfile << maxsize << " ";
+            outfile_avg << mean << " ";
           }
           outfile << endl;
+          outfile_avg << endl;
         } 
       }
       else {
         ofstream outfile;
-        outfile.open("square.txt");
+        outfile.open("./lars_sim/gif/square.txt");
         for(unsigned n=0; t < burnin + until; ++n) {
           t = L.run_until(burnin + n * every);
           if (output == "particles") std::cout << ParticleWriter(L, outfile) << std::endl;
@@ -2240,9 +3042,43 @@ int main(int argc, char* argv[]) {
             outfile << endl;
           }
         }
-      } else {
+      } 
+      else if (output == "heatmap"){
+        ofstream outfile, outfile_avg;
+        outfile.open("./lars_sim/heatmap/tri_alpha_N.txt");
+        outfile_avg.open("./lars_sim/heatmap/tri_alpha_N_avg.txt");
+        for (double alp = 1e-6; alp <= 1.0; alp*=1.2){
+          for (unsigned N = 100; N <= P.L[0]*P.L[0]; N += 200){
+            Parameters P_h;
+            P_h.N = N;
+            P_h.alpha[0] = P.alpha[1] = P.alpha[2] = alp;
+            P_h.L = P.L;
+            P_h.n_max = P.n_max;
+            std::size_t maxsize = 1;
+            Triangle_lattice LB(P_h, rng);
+            t = 0;
+
+            // also taking mean over all used timesteps
+            double mean = 0.0;
+            double count = 0;
+            for(unsigned n=0; t < burnin + until; ++n){
+              t = LB.run_until(burnin + n * every);
+              maxsize = std::max(maxsize, LB.max_cluster_size());
+              mean += LB.avg_cluster_size();
+              count += 1;
+            }
+
+            mean = mean / count;
+
+            outfile << maxsize << " ";
+            outfile_avg << mean << " ";
+          }
+          outfile << endl;
+          outfile_avg << endl;
+        } 
+      }else {
         ofstream outfile;
-        outfile.open("triangle.txt");
+        outfile.open("./lars_sim/gif/triangle.txt");
         //outfile << "# L = [ ";
         //for(const auto& L: P.L) outfile << L << " ";
         //outfile << "]" << endl;
@@ -2293,7 +3129,7 @@ int main(int argc, char* argv[]) {
           hist_t sumhist;
           // We sum the histograms over all measurements
           ofstream outfile_part;
-          outfile_part.open("hexagonal.txt");
+          outfile_part.open("./lars_sim/gif/hexagonal.txt");
 
           for(unsigned n=0; t < burnin + until; ++n) {
             t = HL.run_until(burnin + n * every);
@@ -2335,9 +3171,44 @@ int main(int argc, char* argv[]) {
             outfile << endl;
           }
         }
-      } else if (output == "particles") {
+      } 
+      else if (output == "heatmap"){
+        ofstream outfile, outfile_avg;
+        outfile.open("./lars_sim/heatmap/hex_alpha_N.txt");
+        outfile_avg.open("./lars_sim/heatmap/hex_alpha_N_avg.txt");
+        for (double alp = 1e-6; alp <= 1.0; alp*=1.2){
+          for (unsigned N = 200; N <= 2*P.L[0]*P.L[0]; N += 400){
+            Parameters P_h;
+            P_h.N = N;
+            P_h.alpha[0] = P.alpha[1] = P.alpha[2] = alp;
+            P_h.L = P.L;
+            P_h.n_max = P.n_max;
+            std::size_t maxsize = 1;
+            Hexagonal_lattice LB(P_h, rng);
+            t = 0;
+
+            // also taking mean over all used timesteps
+            double mean = 0.0;
+            double count = 0;
+            for(unsigned n=0; t < burnin + until; ++n){
+              t = LB.run_until(burnin + n * every);
+              maxsize = std::max(maxsize, LB.max_cluster_size());
+              mean += LB.avg_cluster_size();
+              count += 1;
+            }
+
+            mean = mean / count;
+
+            outfile << maxsize << " ";
+            outfile_avg << mean << " ";
+          }
+          outfile << endl;
+          outfile_avg << endl;
+        }
+      
+      }else if (output == "particles") {
         ofstream outfile;
-        outfile.open("hexagonal.txt");
+        outfile.open("./lars_sim/gif/hexagonal.txt");
 
         for(unsigned n=0; t < burnin + until; ++n) {
           t = HL.run_until(burnin + n * every);

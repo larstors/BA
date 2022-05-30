@@ -3,15 +3,19 @@ import numpy as np
 import scipy.optimize as opt
 import time
 import random as rn
-
-
+import matplotlib.colors as colors
+import matplotlib.cbook as cbook
+from matplotlib import cm
+import matplotlib.patches as mpl_patches
+from matplotlib import rcParams
 
 class distribution:
     def __init__(self):
-        self.data_tri = np.genfromtxt("tridist.txt", delimiter=" ")
-        self.data_tri_nr = np.genfromtxt("tridist_nr.txt", delimiter=" ")
-        self.data_hex = np.genfromtxt("hexdist.txt", delimiter=" ")
-        self.data_hex_nr = np.genfromtxt("hexdist_nr.txt", delimiter=" ")
+        #self.data_tri = np.genfromtxt("tridist.txt", delimiter=" ")
+        #self.data_tri_nr = np.genfromtxt("tridist_nr.txt", delimiter=" ")
+        #self.data_hex = np.genfromtxt("hexdist.txt", delimiter=" ")
+        #self.data_hex_nr = np.genfromtxt("hexdist_nr.txt", delimiter=" ")
+        self.work = True
     
     def fit(self, x, b, c):
         N = -b * np.log(x) - c*x
@@ -617,7 +621,7 @@ class distribution:
 
     def plot_alpha(self):
         # square
-        if False:
+        if True:
             data_alpha_00001 = np.genfromtxt("./tumblerate/square_alpha0.0001000_phi0.50_L100.txt", delimiter=" ")[0::2]
             data_alpha_0001 = np.genfromtxt("./tumblerate/square_alpha0.0010000_phi0.50_L100.txt", delimiter=" ")[0::2]
             data_alpha_001 = np.genfromtxt("./tumblerate/square_alpha0.0100000_phi0.50_L100.txt", delimiter=" ")[0::2]
@@ -666,26 +670,28 @@ class distribution:
 
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
-            plt.loglog(x_0001 + 1, np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
-            plt.loglog(x_001 + 1, np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
+            plt.loglog(x_0001 + 1, 1-np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
+            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
+            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
+            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.axis([1, 1e4, 1e-7, 1])
             plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $C(k)$")
+            plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/square_alpha.pdf", dpi=200)
             
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
+            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
+            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.axis([1, 1e4, 1e-7, 1])
             plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $C(k)$")
+            plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/square_alpha_high.pdf", dpi=200)
@@ -767,26 +773,28 @@ class distribution:
 
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
-            plt.loglog(x_0001 + 1, np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
-            plt.loglog(x_001 + 1, np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
+            plt.loglog(x_0001 + 1, 1-np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
+            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
+            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
+            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.axis([1, 2e2, 1e-7, 1])
             plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $C(k)$")
+            plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/square_alpha_phi_low.pdf", dpi=200)
 
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
+            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
+            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.axis([1, 2e2, 1e-7, 1])
             plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $C(k)$")
+            plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/square_alpha_high_phi_low.pdf", dpi=200)
@@ -818,7 +826,7 @@ class distribution:
             plt.savefig("./plots/square_alpha_high_phi_low_pdf.pdf", dpi=200)
 
         # hexagonal
-        if False:
+        if True:
             data_alpha_00001 = np.genfromtxt("./tumblerate/hexagonal_alpha0.0001000_phi1.00_L100.txt", delimiter=" ")[0::2]
             data_alpha_0001 = np.genfromtxt("./tumblerate/hexagonal_alpha0.0010000_phi1.00_L100.txt", delimiter=" ")[0::2]
             data_alpha_001 = np.genfromtxt("./tumblerate/hexagonal_alpha0.0100000_phi1.00_L100.txt", delimiter=" ")[0::2]
@@ -867,26 +875,26 @@ class distribution:
 
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
-            plt.loglog(x_0001 + 1, np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
-            plt.loglog(x_001 + 1, np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
+            plt.loglog(x_0001 + 1, 1-np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
+            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
+            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
+            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
             plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $C(k)$")
+            plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/hex_alpha.pdf", dpi=200)
             
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
+            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
+            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
             plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $C(k)$")
+            plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/hex_alpha_high.pdf", dpi=200)
@@ -968,26 +976,26 @@ class distribution:
 
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
-            plt.loglog(x_0001 + 1, np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
-            plt.loglog(x_001 + 1, np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
+            plt.loglog(x_0001 + 1, 1-np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
+            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
+            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
+            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
             plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $C(k)$")
+            plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/hex_alpha_phi_low.pdf", dpi=200)
 
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
+            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
+            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
             plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $C(k)$")
+            plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/hex_alpha_high_phi_low.pdf", dpi=200)
@@ -1019,7 +1027,7 @@ class distribution:
             plt.savefig("./plots/hex_alpha_high_phi_low_pdf.pdf", dpi=200)
 
         # triangular
-        if True:
+        if False:
             data_alpha_00001 = np.genfromtxt("./tumblerate/triangular_alpha0.0001000_phi0.50_L100.txt", delimiter=" ")[0::2]
             data_alpha_0001 = np.genfromtxt("./tumblerate/triangular_alpha0.0010000_phi0.50_L100.txt", delimiter=" ")[0::2]
             data_alpha_001 = np.genfromtxt("./tumblerate/triangular_alpha0.0100000_phi0.50_L100.txt", delimiter=" ")[0::2]
@@ -1068,26 +1076,26 @@ class distribution:
 
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
-            plt.loglog(x_0001 + 1, np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
-            plt.loglog(x_001 + 1, np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
+            plt.loglog(x_0001 + 1, 1-np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
+            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
+            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
+            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
             plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $C(k)$")
+            plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/tri_alpha.pdf", dpi=200)
             
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
+            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
+            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
             plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $C(k)$")
+            plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/tri_alpha_high.pdf", dpi=200)
@@ -1169,26 +1177,26 @@ class distribution:
 
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
-            plt.loglog(x_0001 + 1, np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
-            plt.loglog(x_001 + 1, np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
+            plt.loglog(x_0001 + 1, 1-np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
+            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
+            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
+            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
             plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $C(k)$")
+            plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/tri_alpha_phi_low.pdf", dpi=200)
 
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
+            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
+            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
             plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $C(k)$")
+            plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/tri_alpha_high_phi_low.pdf", dpi=200)
@@ -1219,9 +1227,638 @@ class distribution:
             plt.grid()
             plt.savefig("./plots/tri_alpha_high_phi_low_pdf.pdf", dpi=200)
 
+    def plot_heat(self):
+        # n_max=1
+        if False:
+            # Square
+            if True:
+                data = np.genfromtxt("./heatmap/square_alpha_N.txt", delimiter=" ")
+                x = np.array([i for i in range(100, 10000, 200)])/10000
+                
+                y = np.zeros(len(data[:, 0]))
+                y[0] = 1e-6
+                for i in range(1, len(data[:, 0])):
+                    y[i] = y[i-1]*1.2
+
+                X, Y = np.meshgrid(x, y)
+
+                fig, ax = plt.subplots()
+
+                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
+                ax.set_xlabel(r"Density $\rho$")
+                ax.set_ylabel(r"Tumble rate $\alpha$")
+                ax.set_yscale("log")
+                cbar = fig.colorbar(C, ax=ax)
+                cbar.ax.set_ylabel("Max cluster size")
+                plt.savefig("heat.pdf", dpi=200)
+                
+                for i in range(len(y)):
+                    data[i, :] = data[i, :] / (x[:]*10000)
+                
+                
+                fig, ax = plt.subplots()
+
+
+                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
+                ax.set_xlabel(r"Density $\rho$")
+                ax.set_ylabel(r"Tumble rate $\alpha$")
+                ax.set_yscale("log")
+                cbar = fig.colorbar(C, ax=ax)
+                cbar.ax.set_ylabel("Rel. max cluster size")
+                plt.savefig("heat_rel.pdf", dpi=200)
+
+
+                # Mean cluster size
+
+
+                data = np.genfromtxt("./heatmap/square_alpha_N_avg.txt", delimiter=" ")
+                x = np.array([i for i in range(100, 10000, 200)])/10000
+                
+                y = np.zeros(len(data[:, 0]))
+                y[0] = 1e-6
+                for i in range(1, len(data[:, 0])):
+                    y[i] = y[i-1]*1.2
+
+                X, Y = np.meshgrid(x, y)
+
+                fig, ax = plt.subplots()
+
+                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
+                ax.set_xlabel(r"Density $\rho$")
+                ax.set_ylabel(r"Tumble rate $\alpha$")
+                ax.set_yscale("log")
+                cbar = fig.colorbar(C, ax=ax)
+                cbar.ax.set_ylabel("Mean cluster size")
+                plt.savefig("heat_avg.pdf", dpi=200)
+                
+                for i in range(len(y)):
+                    data[i, :] = data[i, :] / (x[:]*10000)
+                
+                fig, ax = plt.subplots()
+
+                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
+                ax.set_xlabel(r"Density $\rho$")
+                ax.set_ylabel(r"Tumble rate $\alpha$")
+                ax.set_yscale("log")
+                cbar = fig.colorbar(C, ax=ax)
+                cbar.ax.set_ylabel("Rel. mean cluster size")
+                plt.savefig("heat_avg_rel.pdf", dpi=200)
+
+            # Triangle
+            if True:
+                data = np.genfromtxt("./heatmap/tri_alpha_N.txt", delimiter=" ")
+
+                x = np.array([i for i in range(100, 10000, 200)])/10000
+                
+                y = np.zeros(len(data[:, 0]))
+                y[0] = 1e-6
+                for i in range(1, len(data[:, 0])):
+                    y[i] = y[i-1]*1.2
+
+                X, Y = np.meshgrid(x, y)
+
+                fig, ax = plt.subplots()
+
+                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
+                ax.set_xlabel(r"Density $\rho$")
+                ax.set_ylabel(r"Tumble rate $\alpha$")
+                ax.set_yscale("log")
+                cbar = fig.colorbar(C, ax=ax)
+                cbar.ax.set_ylabel("Max cluster size")
+                plt.savefig("tri_heat.pdf", dpi=200)
+
+                for i in range(len(y)):
+                    data[i, :] = data[i, :] / (x[:]*10000)
+                
+                fig, ax = plt.subplots()
+
+                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
+                ax.set_xlabel(r"Density $\rho$")
+                ax.set_ylabel(r"Tumble rate $\alpha$")
+                ax.set_yscale("log")
+                cbar = fig.colorbar(C, ax=ax)
+                cbar.ax.set_ylabel("Rel. max cluster size")
+                plt.savefig("tri_heat_rel.pdf", dpi=200)
+
+
+                # Mean cluster size
+
+
+                data = np.genfromtxt("./heatmap/tri_alpha_N_avg.txt", delimiter=" ")
+                x = np.array([i for i in range(100, 10000, 200)])/10000
+                
+                y = np.zeros(len(data[:, 0]))
+                y[0] = 1e-6
+                for i in range(1, len(data[:, 0])):
+                    y[i] = y[i-1]*1.2
+
+                X, Y = np.meshgrid(x, y)
+
+                fig, ax = plt.subplots()
+
+                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
+                ax.set_xlabel(r"Density $\rho$")
+                ax.set_ylabel(r"Tumble rate $\alpha$")
+                ax.set_yscale("log")
+                cbar = fig.colorbar(C, ax=ax)
+                cbar.ax.set_ylabel("Mean cluster size")
+                plt.savefig("tri_heat_avg.pdf", dpi=200)
+
+                for i in range(len(y)):
+                    data[i, :] = data[i, :] / (x[:]*10000)
+                
+                fig, ax = plt.subplots()
+
+                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
+                ax.set_xlabel(r"Density $\rho$")
+                ax.set_ylabel(r"Tumble rate $\alpha$")
+                ax.set_yscale("log")
+                cbar = fig.colorbar(C, ax=ax)
+                cbar.ax.set_ylabel("Rel. mean cluster size")
+                plt.savefig("tri_heat_avg_rel.pdf", dpi=200)
+
+            # Hexagonal
+            if True:
+                data = np.genfromtxt("./heatmap/hex_alpha_N.txt", delimiter=" ")
+
+                x = np.array([i for i in range(200, 20000, 400)])/20000
+                
+                y = np.zeros(len(data[:, 0]))
+                y[0] = 1e-6
+                for i in range(1, len(data[:, 0])):
+                    y[i] = y[i-1]*1.2
+
+                X, Y = np.meshgrid(x, y)
+
+                fig, ax = plt.subplots()
+
+                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
+                ax.set_xlabel(r"Density $\rho$")
+                ax.set_ylabel(r"Tumble rate $\alpha$")
+                ax.set_yscale("log")
+                cbar = fig.colorbar(C, ax=ax)
+                cbar.ax.set_ylabel("Max cluster size")
+                plt.savefig("hex_heat.pdf", dpi=200)
+
+                for i in range(len(y)):
+                    data[i, :] = data[i, :] / (x[:]*20000)
+                
+                fig, ax = plt.subplots()
+
+                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
+                ax.set_xlabel(r"Density $\rho$")
+                ax.set_ylabel(r"Tumble rate $\alpha$")
+                ax.set_yscale("log")
+                cbar = fig.colorbar(C, ax=ax)
+                cbar.ax.set_ylabel("Rel. max cluster size")
+                plt.savefig("hex_heat_rel.pdf", dpi=200)
+
+
+                # Mean cluster size
+
+
+                data = np.genfromtxt("./heatmap/hex_alpha_N_avg.txt", delimiter=" ")
+                x = np.array([i for i in range(200, 20000, 400)])/20000
+                
+                y = np.zeros(len(data[:, 0]))
+                y[0] = 1e-6
+                for i in range(1, len(data[:, 0])):
+                    y[i] = y[i-1]*1.2
+
+                X, Y = np.meshgrid(x, y)
+
+                fig, ax = plt.subplots()
+
+                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
+                ax.set_xlabel(r"Density $\rho$")
+                ax.set_ylabel(r"Tumble rate $\alpha$")
+                ax.set_yscale("log")
+                cbar = fig.colorbar(C, ax=ax)
+                cbar.ax.set_ylabel("Mean cluster size")
+                plt.savefig("hex_heat_avg.pdf", dpi=200)
+
+                for i in range(len(y)):
+                    data[i, :] = data[i, :] / (x[:]*20000)
+                
+                fig, ax = plt.subplots()
+
+                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
+                ax.set_xlabel(r"Density $\rho$")
+                ax.set_ylabel(r"Tumble rate $\alpha$")
+                ax.set_yscale("log")
+                cbar = fig.colorbar(C, ax=ax)
+                cbar.ax.set_ylabel("Rel. mean cluster size")
+                plt.savefig("hex_heat_avg_rel.pdf", dpi=200)
+
+        # n_max = 2
+        if True:
+            data_square = np.genfromtxt("./heatmap/square_alpha_N_n_2.txt", delimiter=" ")
+            data_square_nr = np.genfromtxt("./heatmap/square_nr_alpha_N_n_2.txt", delimiter=" ")
+            data_tri = np.genfromtxt("./heatmap/tri_alpha_N_n_2.txt", delimiter=" ")
+            data_tri_nr = np.genfromtxt("./heatmap/tri_nr_alpha_N_n_2.txt", delimiter=" ")
+            data_hex = np.genfromtxt("./heatmap/hex_alpha_N_n_2.txt", delimiter=" ")
+            data_hex_nr = np.genfromtxt("./heatmap/hex_nr_alpha_N_n_2.txt", delimiter=" ")
+            x = np.array([i for i in range(200, 20000, 400)])/20000
+            
+            
+            y = np.zeros(len(data_square[:, 0]))
+            y[0] = 1e-6
+            for i in range(1, len(data_square[:, 0])):
+                y[i] = y[i-1]*1.3
+
+            X, Y = np.meshgrid(x, y)
+
+            fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12, 9), sharey=True, sharex=True)
+            plt.tight_layout()
+
+            for i in range(len(y)):
+                data_square[i, :] = data_square[i, :] / (x[:]*20000)
+                data_square_nr[i, :] = data_square_nr[i, :] / (x[:]*20000)
+                data_tri[i, :] = data_tri[i, :] / (x[:]*20000)
+                data_tri_nr[i, :] = data_tri_nr[i, :] / (x[:]*20000)
+                data_hex[i, :] = data_hex[i, :] / (x[:]*40000)
+                data_hex_nr[i, :] = data_hex_nr[i, :] / (x[:]*40000)
+            
+            
+            
+
+
+            C = ax[0, 0].pcolormesh(X, Y, data_square, norm=colors.LogNorm(vmin=data_square.min(), vmax=data_square.max()), cmap="viridis")
+            C = ax[1, 0].pcolormesh(X, Y, data_square_nr, norm=colors.LogNorm(vmin=data_square_nr.min(), vmax=data_square_nr.max()), cmap="viridis")
+            C = ax[0, 1].pcolormesh(X, Y, data_tri, norm=colors.LogNorm(vmin=data_tri.min(), vmax=data_tri.max()), cmap="viridis")
+            C = ax[1, 1].pcolormesh(X, Y, data_tri_nr, norm=colors.LogNorm(vmin=data_tri_nr.min(), vmax=data_tri_nr.max()), cmap="viridis")
+            C = ax[0, 2].pcolormesh(X, Y, data_hex, norm=colors.LogNorm(vmin=data_hex.min(), vmax=data_hex.max()), cmap="viridis")
+            C = ax[1, 2].pcolormesh(X, Y, data_hex_nr, norm=colors.LogNorm(vmin=data_hex_nr.min(), vmax=data_hex_nr.max()), cmap="viridis")
+
+            handles = [mpl_patches.Rectangle((0, 0), 1, 1, fc="white", ec="white", 
+                                 lw=0, alpha=0)] # * 2
+
+            # create the corresponding number of labels (= the text you want to display)
+            labels = []
+            labels.append(["Sq. Lat. by Area"])
+            labels.append(["Tr. Lat. by Area"])
+            labels.append(["Hx. Lat. by Area"])
+            labels.append(["Sq. Lat. by Numbers"])
+            labels.append(["Tr. Lat. by Numbers"])
+            labels.append(["Hx. Lat. by Numbers"])
+            # create the legend, supressing the blank space of the empty line symbol and the
+            # padding between symbol and label by setting handlelenght and handletextpad
+            for i in range(3):
+                for k in range(2):
+                    ax[k, i].legend(handles, labels[3*k + i], loc='best', fontsize='small', fancybox=True, framealpha=0.7, handlelength=0, handletextpad=0)
+                    ax[k, i].set_yscale("log")
+            ax[1, 0].set_xlabel(r"Density $\rho$")
+            ax[1, 1].set_xlabel(r"Density $\rho$")
+            ax[1, 2].set_xlabel(r"Density $\rho$")
+            ax[1, 0].set_ylabel(r"Tumble rate $\alpha$")
+            ax[0, 0].set_ylabel(r"Tumble rate $\alpha$")
+            cbar = fig.colorbar(C, ax=ax)
+            cbar.ax.set_ylabel("Rel. max cluster size")
+            plt.savefig("heat_rel_n_2.pdf", dpi=200, bbox_inches='tight')
+
+
+            # Mean cluster size
+
+            data_square = np.genfromtxt("./heatmap/square_alpha_N_n_2_avg.txt", delimiter=" ")
+            data_square_nr = np.genfromtxt("./heatmap/square_nr_alpha_N_n_2_avg.txt", delimiter=" ")
+            data_tri = np.genfromtxt("./heatmap/tri_alpha_N_n_2_avg.txt", delimiter=" ")
+            data_tri_nr = np.genfromtxt("./heatmap/tri_nr_alpha_N_n_2_avg.txt", delimiter=" ")
+            data_hex = np.genfromtxt("./heatmap/hex_alpha_N_n_2_avg.txt", delimiter=" ")
+            data_hex_nr = np.genfromtxt("./heatmap/hex_nr_alpha_N_n_2_avg.txt", delimiter=" ")
+            
+            # Relative Cluster Size
+
+            fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12, 9), sharey=True, sharex=True)
+            plt.tight_layout()
+
+            for i in range(len(y)):
+                data_square[i, :] = data_square[i, :] / (x[:]*20000)
+                data_square_nr[i, :] = data_square_nr[i, :] / (x[:]*20000)
+                data_tri[i, :] = data_tri[i, :] / (x[:]*20000)
+                data_tri_nr[i, :] = data_tri_nr[i, :] / (x[:]*20000)
+                data_hex[i, :] = data_hex[i, :] / (x[:]*40000)
+                data_hex_nr[i, :] = data_hex_nr[i, :] / (x[:]*40000)
+            
+            
+            
+
+
+            C = ax[0, 0].pcolormesh(X, Y, data_square, norm=colors.LogNorm(vmin=data_square.min(), vmax=data_square.max()), cmap="viridis")
+            C = ax[1, 0].pcolormesh(X, Y, data_square_nr, norm=colors.LogNorm(vmin=data_square_nr.min(), vmax=data_square_nr.max()), cmap="viridis")
+            C = ax[0, 1].pcolormesh(X, Y, data_tri, norm=colors.LogNorm(vmin=data_tri.min(), vmax=data_tri.max()), cmap="viridis")
+            C = ax[1, 1].pcolormesh(X, Y, data_tri_nr, norm=colors.LogNorm(vmin=data_tri_nr.min(), vmax=data_tri_nr.max()), cmap="viridis")
+            C = ax[0, 2].pcolormesh(X, Y, data_hex, norm=colors.LogNorm(vmin=data_hex.min(), vmax=data_hex.max()), cmap="viridis")
+            C = ax[1, 2].pcolormesh(X, Y, data_hex_nr, norm=colors.LogNorm(vmin=data_hex_nr.min(), vmax=data_hex_nr.max()), cmap="viridis")
+
+            handles = [mpl_patches.Rectangle((0, 0), 1, 1, fc="white", ec="white", 
+                                 lw=0, alpha=0)] # * 2
+
+            # create the corresponding number of labels (= the text you want to display)
+            labels = []
+            labels.append(["Sq. Lat. by Area"])
+            labels.append(["Tr. Lat. by Area"])
+            labels.append(["Hx. Lat. by Area"])
+            labels.append(["Sq. Lat. by Numbers"])
+            labels.append(["Tr. Lat. by Numbers"])
+            labels.append(["Hx. Lat. by Numbers"])
+            # create the legend, supressing the blank space of the empty line symbol and the
+            # padding between symbol and label by setting handlelenght and handletextpad
+            for i in range(3):
+                for k in range(2):
+                    ax[k, i].legend(handles, labels[3*k + i], loc='best', fontsize='small', fancybox=True, framealpha=0.7, handlelength=0, handletextpad=0)
+                    ax[k, i].set_yscale("log")
+            
+            ax[1, 0].set_xlabel(r"Density $\rho$")
+            ax[1, 1].set_xlabel(r"Density $\rho$")
+            ax[1, 2].set_xlabel(r"Density $\rho$")
+            ax[1, 0].set_ylabel(r"Tumble rate $\alpha$")
+            ax[0, 0].set_ylabel(r"Tumble rate $\alpha$")
+            cbar = fig.colorbar(C, ax=ax)
+            cbar.ax.set_ylabel("Rel. mean cluster size")
+            plt.savefig("heat_avg_rel_n_2.pdf", dpi=200, bbox_inches='tight')
+
+
+            # ########################### Relative Difference of Nr vs Ar for n=2 #################################
+
+            diff_square = data_square_nr - data_square
+            diff_tri = data_tri_nr - data_tri
+            diff_hex = data_hex_nr - data_hex
+
+
+            fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 4.5), sharey=True, sharex=True)
+            plt.tight_layout()
+            handles = [mpl_patches.Rectangle((0, 0), 1, 1, fc="white", ec="white", 
+                                 lw=0, alpha=0)] # * 2
+            
+            labels = []
+            labels.append(["Sq. Numbers - Area"])
+            labels.append(["Tr. Numbers - Area"])
+            labels.append(["Hx. Numbers - Area"])
+            
+            C = ax[0].pcolormesh(X, Y, diff_square,  cmap="viridis")
+            C = ax[1].pcolormesh(X, Y, diff_tri,  cmap="viridis")
+            C = ax[2].pcolormesh(X, Y, diff_hex,  cmap="viridis")
+
+            for i in range(3):
+                ax[i].legend(handles, labels[i], loc='best', fontsize='small', fancybox=True, framealpha=0.7, handlelength=0, handletextpad=0)
+                ax[i].set_yscale("log")
+
+            ax[0].set_xlabel(r"Density $\rho$")
+            ax[1].set_xlabel(r"Density $\rho$")
+            ax[2].set_xlabel(r"Density $\rho$")
+            ax[0].set_ylabel(r"Tumble rate $\alpha$")
+
+            cbar = fig.colorbar(C, ax=ax)
+            cbar.ax.set_ylabel("Difference in mean cluster size")
+            plt.savefig("heat_avg_diff_rel_n_2.pdf", dpi=200, bbox_inches='tight')
+
+            # ################### RATIO #########################
+
+            ratio_square = data_square
+            ratio_tri = data_tri
+            ratio_hex = data_hex
+
+            for i in range(len(y)):
+                ratio_square[i, :] /=  data_square_nr[i, :]
+                ratio_tri[i, :] /=  data_tri_nr[i, :]
+                ratio_hex[i, :] /=  data_hex_nr[i, :]
+            
+            fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 4.5), sharey=True, sharex=True)
+            plt.tight_layout()
+            handles = [mpl_patches.Rectangle((0, 0), 1, 1, fc="white", ec="white", 
+                                 lw=0, alpha=0)] # * 2
+            
+            labels = []
+            labels.append(["Sq. Area/Numbers"])
+            labels.append(["Tr. Area/Numbers"])
+            labels.append(["Hx. Area/Numbers"])
+            
+            C = ax[0].pcolormesh(X, Y, ratio_square,  cmap="viridis")
+            C = ax[1].pcolormesh(X, Y, ratio_tri,  cmap="viridis")
+            C = ax[2].pcolormesh(X, Y, ratio_hex,  cmap="viridis")
+
+            for i in range(3):
+                ax[i].legend(handles, labels[i], loc='best', fontsize='small', fancybox=True, framealpha=0.7, handlelength=0, handletextpad=0)
+                ax[i].set_yscale("log")
+
+            ax[0].set_xlabel(r"Density $\rho$")
+            ax[1].set_xlabel(r"Density $\rho$")
+            ax[2].set_xlabel(r"Density $\rho$")
+            ax[0].set_ylabel(r"Tumble rate $\alpha$")
+
+            cbar = fig.colorbar(C, ax=ax)
+            cbar.ax.set_ylabel("Ratio of mean cluster size")
+            plt.savefig("heat_avg_ratio_rel_n_2.pdf", dpi=200, bbox_inches='tight')
+
+        # n_max = 3
+        if True:
+            data_square = np.genfromtxt("./heatmap/square_alpha_N_n_3.txt", delimiter=" ")
+            data_square_nr = np.genfromtxt("./heatmap/square_nr_alpha_N_n_3.txt", delimiter=" ")
+            data_tri = np.genfromtxt("./heatmap/tri_alpha_N_n_3.txt", delimiter=" ")
+            data_tri_nr = np.genfromtxt("./heatmap/tri_nr_alpha_N_n_3.txt", delimiter=" ")
+            data_hex = np.genfromtxt("./heatmap/hex_alpha_N_n_3.txt", delimiter=" ")
+            data_hex_nr = np.genfromtxt("./heatmap/hex_nr_alpha_N_n_3.txt", delimiter=" ")
+            x = np.array([i for i in range(300, 30000, 600)])/30000
+            
+            
+            y = np.zeros(len(data_square[:, 0]))
+            y[0] = 1e-6
+            for i in range(1, len(data_square[:, 0])):
+                y[i] = y[i-1]*1.3
+
+            X, Y = np.meshgrid(x, y)
+
+            fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12, 9), sharey=True, sharex=True)
+            plt.tight_layout()
+
+            for i in range(len(y)):
+                data_square[i, :] = data_square[i, :] / (x[:]*30000)
+                data_square_nr[i, :] = data_square_nr[i, :] / (x[:]*30000)
+                data_tri[i, :] = data_tri[i, :] / (x[:]*30000)
+                data_tri_nr[i, :] = data_tri_nr[i, :] / (x[:]*30000)
+                data_hex[i, :] = data_hex[i, :] / (x[:]*60000)
+                data_hex_nr[i, :] = data_hex_nr[i, :] / (x[:]*60000)
+            
+            
+            
+
+
+            C = ax[0, 0].pcolormesh(X, Y, data_square, norm=colors.LogNorm(vmin=data_square.min(), vmax=data_square.max()), cmap="viridis")
+            C = ax[1, 0].pcolormesh(X, Y, data_square_nr, norm=colors.LogNorm(vmin=data_square_nr.min(), vmax=data_square_nr.max()), cmap="viridis")
+            C = ax[0, 1].pcolormesh(X, Y, data_tri, norm=colors.LogNorm(vmin=data_tri.min(), vmax=data_tri.max()), cmap="viridis")
+            C = ax[1, 1].pcolormesh(X, Y, data_tri_nr, norm=colors.LogNorm(vmin=data_tri_nr.min(), vmax=data_tri_nr.max()), cmap="viridis")
+            C = ax[0, 2].pcolormesh(X, Y, data_hex, norm=colors.LogNorm(vmin=data_hex.min(), vmax=data_hex.max()), cmap="viridis")
+            C = ax[1, 2].pcolormesh(X, Y, data_hex_nr, norm=colors.LogNorm(vmin=data_hex_nr.min(), vmax=data_hex_nr.max()), cmap="viridis")
+
+            handles = [mpl_patches.Rectangle((0, 0), 1, 1, fc="white", ec="white", 
+                                 lw=0, alpha=0)] # * 2
+
+            # create the corresponding number of labels (= the text you want to display)
+            labels = []
+            labels.append(["Sq. Lat. by Area"])
+            labels.append(["Tr. Lat. by Area"])
+            labels.append(["Hx. Lat. by Area"])
+            labels.append(["Sq. Lat. by Numbers"])
+            labels.append(["Tr. Lat. by Numbers"])
+            labels.append(["Hx. Lat. by Numbers"])
+            # create the legend, supressing the blank space of the empty line symbol and the
+            # padding between symbol and label by setting handlelenght and handletextpad
+            for i in range(3):
+                for k in range(2):
+                    ax[k, i].legend(handles, labels[3*k + i], loc='best', fontsize='small', fancybox=True, framealpha=0.7, handlelength=0, handletextpad=0)
+                    ax[k, i].set_yscale("log")
+            ax[1, 0].set_xlabel(r"Density $\rho$")
+            ax[1, 1].set_xlabel(r"Density $\rho$")
+            ax[1, 2].set_xlabel(r"Density $\rho$")
+            ax[1, 0].set_ylabel(r"Tumble rate $\alpha$")
+            ax[0, 0].set_ylabel(r"Tumble rate $\alpha$")
+            cbar = fig.colorbar(C, ax=ax)
+            cbar.ax.set_ylabel("Rel. max cluster size")
+            plt.savefig("heat_rel_n_3.pdf", dpi=200, bbox_inches='tight')
+
+
+            # Mean cluster size
+
+            data_square = np.genfromtxt("./heatmap/square_alpha_N_n_3_avg.txt", delimiter=" ")
+            data_square_nr = np.genfromtxt("./heatmap/square_nr_alpha_N_n_3_avg.txt", delimiter=" ")
+            data_tri = np.genfromtxt("./heatmap/tri_alpha_N_n_3_avg.txt", delimiter=" ")
+            data_tri_nr = np.genfromtxt("./heatmap/tri_nr_alpha_N_n_3_avg.txt", delimiter=" ")
+            data_hex = np.genfromtxt("./heatmap/hex_alpha_N_n_3_avg.txt", delimiter=" ")
+            data_hex_nr = np.genfromtxt("./heatmap/hex_nr_alpha_N_n_3_avg.txt", delimiter=" ")
+            
+            # Relative Cluster Size
+
+            fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12, 9), sharey=True, sharex=True)
+            plt.tight_layout()
+
+            for i in range(len(y)):
+                data_square[i, :] = data_square[i, :] / (x[:]*30000)
+                data_square_nr[i, :] = data_square_nr[i, :] / (x[:]*30000)
+                data_tri[i, :] = data_tri[i, :] / (x[:]*30000)
+                data_tri_nr[i, :] = data_tri_nr[i, :] / (x[:]*30000)
+                data_hex[i, :] = data_hex[i, :] / (x[:]*60000)
+                data_hex_nr[i, :] = data_hex_nr[i, :] / (x[:]*60000)
+            
+            
+            
+
+
+            C = ax[0, 0].pcolormesh(X, Y, data_square, norm=colors.LogNorm(vmin=data_square.min(), vmax=data_square.max()), cmap="viridis")
+            C = ax[1, 0].pcolormesh(X, Y, data_square_nr, norm=colors.LogNorm(vmin=data_square_nr.min(), vmax=data_square_nr.max()), cmap="viridis")
+            C = ax[0, 1].pcolormesh(X, Y, data_tri, norm=colors.LogNorm(vmin=data_tri.min(), vmax=data_tri.max()), cmap="viridis")
+            C = ax[1, 1].pcolormesh(X, Y, data_tri_nr, norm=colors.LogNorm(vmin=data_tri_nr.min(), vmax=data_tri_nr.max()), cmap="viridis")
+            C = ax[0, 2].pcolormesh(X, Y, data_hex, norm=colors.LogNorm(vmin=data_hex.min(), vmax=data_hex.max()), cmap="viridis")
+            C = ax[1, 2].pcolormesh(X, Y, data_hex_nr, norm=colors.LogNorm(vmin=data_hex_nr.min(), vmax=data_hex_nr.max()), cmap="viridis")
+
+            handles = [mpl_patches.Rectangle((0, 0), 1, 1, fc="white", ec="white", 
+                                 lw=0, alpha=0)] # * 2
+
+            # create the corresponding number of labels (= the text you want to display)
+            labels = []
+            labels.append(["Sq. Lat. by Area"])
+            labels.append(["Tr. Lat. by Area"])
+            labels.append(["Hx. Lat. by Area"])
+            labels.append(["Sq. Lat. by Numbers"])
+            labels.append(["Tr. Lat. by Numbers"])
+            labels.append(["Hx. Lat. by Numbers"])
+            # create the legend, supressing the blank space of the empty line symbol and the
+            # padding between symbol and label by setting handlelenght and handletextpad
+            for i in range(3):
+                for k in range(2):
+                    ax[k, i].legend(handles, labels[3*k + i], loc='best', fontsize='small', fancybox=True, framealpha=0.7, handlelength=0, handletextpad=0)
+                    ax[k, i].set_yscale("log")
+            
+            ax[1, 0].set_xlabel(r"Density $\rho$")
+            ax[1, 1].set_xlabel(r"Density $\rho$")
+            ax[1, 2].set_xlabel(r"Density $\rho$")
+            ax[1, 0].set_ylabel(r"Tumble rate $\alpha$")
+            ax[0, 0].set_ylabel(r"Tumble rate $\alpha$")
+            cbar = fig.colorbar(C, ax=ax)
+            cbar.ax.set_ylabel("Rel. mean cluster size")
+            plt.savefig("heat_avg_rel_n_3.pdf", dpi=200, bbox_inches='tight')
+
+
+            # ########################### Relative Difference of Nr vs Ar for n=2 #################################
+
+            diff_square = data_square_nr - data_square
+            diff_tri = data_tri_nr - data_tri
+            diff_hex = data_hex_nr - data_hex
+
+
+            fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 4.5), sharey=True, sharex=True)
+            plt.tight_layout()
+            handles = [mpl_patches.Rectangle((0, 0), 1, 1, fc="white", ec="white", 
+                                 lw=0, alpha=0)] # * 2
+            
+            labels = []
+            labels.append(["Sq. Numbers - Area"])
+            labels.append(["Tr. Numbers - Area"])
+            labels.append(["Hx. Numbers - Area"])
+            
+            C = ax[0].pcolormesh(X, Y, diff_square,  cmap="viridis")
+            C = ax[1].pcolormesh(X, Y, diff_tri,  cmap="viridis")
+            C = ax[2].pcolormesh(X, Y, diff_hex,  cmap="viridis")
+
+            for i in range(3):
+                ax[i].legend(handles, labels[i], loc='best', fontsize='small', fancybox=True, framealpha=0.7, handlelength=0, handletextpad=0)
+                ax[i].set_yscale("log")
+
+            ax[0].set_xlabel(r"Density $\rho$")
+            ax[1].set_xlabel(r"Density $\rho$")
+            ax[2].set_xlabel(r"Density $\rho$")
+            ax[0].set_ylabel(r"Tumble rate $\alpha$")
+
+            cbar = fig.colorbar(C, ax=ax)
+            cbar.ax.set_ylabel("Rel. mean cluster size")
+            plt.savefig("heat_avg_diff_rel_n_3.pdf", dpi=200, bbox_inches='tight')
+            
+            # ######################## RATIO #################################
+
+            ratio_square = data_square
+            ratio_tri = data_tri
+            ratio_hex = data_hex
+
+            for i in range(len(y)):
+                ratio_square[i, :] /=  data_square_nr[i, :]
+                ratio_tri[i, :] /=  data_tri_nr[i, :]
+                ratio_hex[i, :] /=  data_hex_nr[i, :]
+            
+            fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 4.5), sharey=True, sharex=True)
+            plt.tight_layout()
+            handles = [mpl_patches.Rectangle((0, 0), 1, 1, fc="white", ec="white", 
+                                 lw=0, alpha=0)] # * 2
+            
+            labels = []
+            labels.append(["Sq. Area/Numbers"])
+            labels.append(["Tr. Area/Numbers"])
+            labels.append(["Hx. Area/Numbers"])
+            
+            C = ax[0].pcolormesh(X, Y, ratio_square,  cmap="viridis")
+            C = ax[1].pcolormesh(X, Y, ratio_tri,  cmap="viridis")
+            C = ax[2].pcolormesh(X, Y, ratio_hex,  cmap="viridis")
+
+            for i in range(3):
+                ax[i].legend(handles, labels[i], loc='best', fontsize='small', fancybox=True, framealpha=0.7, handlelength=0, handletextpad=0)
+                ax[i].set_yscale("log")
+
+            ax[0].set_xlabel(r"Density $\rho$")
+            ax[1].set_xlabel(r"Density $\rho$")
+            ax[2].set_xlabel(r"Density $\rho$")
+            ax[0].set_ylabel(r"Tumble rate $\alpha$")
+
+            cbar = fig.colorbar(C, ax=ax)
+            cbar.ax.set_ylabel("Ratio of mean cluster size")
+            plt.savefig("heat_avg_ratio_rel_n_3.pdf", dpi=200, bbox_inches='tight')
+     
+
+            
+
+
+
 if __name__ == "__main__":
     dist = distribution()
 
+    #dist.plot_heat()
     dist.plot_alpha()
     #dist.plot_cum_hex()
     #plt.show()
