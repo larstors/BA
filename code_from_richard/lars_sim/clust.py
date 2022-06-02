@@ -279,14 +279,15 @@ class distribution:
         
         plt.rcParams.update({'font.size': 18})
         plt.title("Square Lattice")
-        plt.loglog(x_10 + 1, np.cumsum(data_L_10), "r-", label="L=10")
-        plt.loglog(x_20 + 1, np.cumsum(data_L_20), "g-", label="L=20")
-        plt.loglog(x_50 + 1, np.cumsum(data_L_50), "b-", label="L=50")
-        plt.loglog(x_100[::5] + 1, np.cumsum(data_L_100)[::5], "m-x", label="L=100")
-        plt.loglog(x_200[::5] + 1, np.cumsum(data_L_200)[::5], "k-o", label="L=200")
-        plt.loglog(x_500[::5] + 1, np.cumsum(data_L_500)[::5], "y-s", label="L=500")
+        plt.loglog(x_10 + 1, 1-np.cumsum(data_L_10), "r-", label="L=10")
+        plt.loglog(x_20 + 1, 1-np.cumsum(data_L_20), "g-", label="L=20")
+        plt.loglog(x_50 + 1, 1-np.cumsum(data_L_50), "b-", label="L=50")
+        plt.loglog(x_100[::5] + 1, 1-np.cumsum(data_L_100)[::5], "m-x", label="L=100")
+        plt.loglog(x_200[::5] + 1, 1-np.cumsum(data_L_200)[::5], "k-o", label="L=200")
+        plt.loglog(x_500[::5] + 1, 1-np.cumsum(data_L_500)[::5], "y-s", label="L=500")
+        plt.axis([1, 3e2, 1e-7, 1])
         plt.xlabel(r"Cluster size $k$")
-        plt.ylabel(r"CDF $C(k)$")
+        plt.ylabel(r"CDF $1-C(k)$")
         plt.legend()
         plt.grid()
         plt.savefig("./plots/square_L.pdf", dpi=200)
@@ -343,14 +344,15 @@ class distribution:
         
         plt.rcParams.update({'font.size': 18})
         plt.title("Square Lattice")
-        plt.loglog(x_10 + 1, np.cumsum(data_L_10), "r-", label="L=10")
-        plt.loglog(x_20 + 1, np.cumsum(data_L_20), "g-", label="L=20")
-        plt.loglog(x_50 + 1, np.cumsum(data_L_50), "b-", label="L=50")
-        plt.loglog(x_100[::5] + 1, np.cumsum(data_L_100)[::5], "m-x", label="L=100")
-        plt.loglog(x_200[::5] + 1, np.cumsum(data_L_200)[::5], "k-o", label="L=200")
-        plt.loglog(x_500[::5] + 1, np.cumsum(data_L_500)[::5], "y-s", label="L=500")
+        plt.loglog(x_10 + 1, 1-np.cumsum(data_L_10), "r-", label="L=10")
+        plt.loglog(x_20 + 1, 1-np.cumsum(data_L_20), "g-", label="L=20")
+        plt.loglog(x_50 + 1, 1-np.cumsum(data_L_50), "b-", label="L=50")
+        plt.loglog(x_100[::5] + 1, 1-np.cumsum(data_L_100)[::5], "m-x", label="L=100")
+        plt.loglog(x_200[::5] + 1, 1-np.cumsum(data_L_200)[::5], "k-o", label="L=200")
+        plt.loglog(x_500[::5] + 1, 1-np.cumsum(data_L_500)[::5], "y-s", label="L=500")
+        plt.axis([1, 6e4, 1e-7, 1])
         plt.xlabel(r"Cluster size $k$")
-        plt.ylabel(r"CDF $C(k)$")
+        plt.ylabel(r"CDF $1-C(k)$")
         plt.legend()
         plt.grid()
         plt.savefig("./plots/square_L_phi_0.5.pdf", dpi=200)
@@ -410,14 +412,15 @@ class distribution:
         fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
         plt.rcParams.update({'font.size': 18})
         plt.title("Hexagonal Lattice")
-        plt.loglog(x_10 + 1, np.cumsum(data_L_10), "r-", label="L=10")
-        plt.loglog(x_20 + 1, np.cumsum(data_L_20), "g-", label="L=20")
-        plt.loglog(x_50 + 1, np.cumsum(data_L_50), "b-", label="L=50")
-        plt.loglog(x_100[::5] + 1, np.cumsum(data_L_100)[::5], "m-x", label="L=100")
-        plt.loglog(x_200[::5] + 1, np.cumsum(data_L_200)[::5], "k-o", label="L=200")
-        plt.loglog(x_500[::5] + 1, np.cumsum(data_L_500)[::5], "y-s", label="L=500")
+        plt.loglog(x_10 + 1, 1-np.cumsum(data_L_10), "r-", label="L=10")
+        plt.loglog(x_20 + 1, 1-np.cumsum(data_L_20), "g-", label="L=20")
+        plt.loglog(x_50 + 1, 1-np.cumsum(data_L_50), "b-", label="L=50")
+        plt.loglog(x_100[::5] + 1, 1-np.cumsum(data_L_100)[::5], "m-x", label="L=100")
+        plt.loglog(x_200[::5] + 1, 1-np.cumsum(data_L_200)[::5], "k-o", label="L=200")
+        plt.loglog(x_500[::5] + 1, 1-np.cumsum(data_L_500)[::5], "y-s", label="L=500")
+        plt.axis([1, 2e2, 1e-7, 1])
         plt.xlabel(r"Cluster size $k$")
-        plt.ylabel(r"CDF $C(k)$")
+        plt.ylabel(r"CDF $1-C(k)$")
         plt.legend()
         plt.grid()
         plt.savefig("./plots/hexagonal_L.pdf", dpi=200)
@@ -475,14 +478,15 @@ class distribution:
         fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
         plt.rcParams.update({'font.size': 18})
         plt.title("Hexagonal Lattice")
-        plt.loglog(x_10 + 1, np.cumsum(data_L_10), "r-", label="L=10")
-        plt.loglog(x_20 + 1, np.cumsum(data_L_20), "g-", label="L=20")
-        plt.loglog(x_50 + 1, np.cumsum(data_L_50), "b-", label="L=50")
-        plt.loglog(x_100[::5] + 1, np.cumsum(data_L_100)[::5], "m-x", label="L=100")
-        plt.loglog(x_200[::5] + 1, np.cumsum(data_L_200)[::5], "k-o", label="L=200")
-        plt.loglog(x_500[::5] + 1, np.cumsum(data_L_500)[::5], "y-s", label="L=500")
+        plt.loglog(x_10 + 1, 1-np.cumsum(data_L_10), "r-", label="L=10")
+        plt.loglog(x_20 + 1, 1-np.cumsum(data_L_20), "g-", label="L=20")
+        plt.loglog(x_50 + 1, 1-np.cumsum(data_L_50), "b-", label="L=50")
+        plt.loglog(x_100[::5] + 1, 1-np.cumsum(data_L_100)[::5], "m-x", label="L=100")
+        plt.loglog(x_200[::5] + 1, 1-np.cumsum(data_L_200)[::5], "k-o", label="L=200")
+        plt.loglog(x_500[::5] + 1, 1-np.cumsum(data_L_500)[::5], "y-s", label="L=500")
+        plt.axis([1, 1e4, 1e-7, 1])
         plt.xlabel(r"Cluster size $k$")
-        plt.ylabel(r"CDF $C(k)$")
+        plt.ylabel(r"CDF $1-C(k)$")
         plt.legend()
         plt.grid()
         plt.savefig("./plots/hexagonal_L_phi_0.5.pdf", dpi=200)
@@ -541,14 +545,15 @@ class distribution:
         fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
         plt.rcParams.update({'font.size': 18})
         plt.title("Triangular Lattice")
-        plt.loglog(x_10 + 1, np.cumsum(data_L_10), "r-", label="L=10")
-        plt.loglog(x_20 + 1, np.cumsum(data_L_20), "g-", label="L=20")
-        plt.loglog(x_50 + 1, np.cumsum(data_L_50), "b-", label="L=50")
-        plt.loglog(x_100[::5] + 1, np.cumsum(data_L_100)[::5], "m-x", label="L=100")
-        plt.loglog(x_200[::5] + 1, np.cumsum(data_L_200)[::5], "k-o", label="L=200")
-        plt.loglog(x_500[::5] + 1, np.cumsum(data_L_500)[::5], "y-s", label="L=500")
+        plt.loglog(x_10 + 1, 1-np.cumsum(data_L_10), "r-", label="L=10")
+        plt.loglog(x_20 + 1, 1-np.cumsum(data_L_20), "g-", label="L=20")
+        plt.loglog(x_50 + 1, 1-np.cumsum(data_L_50), "b-", label="L=50")
+        plt.loglog(x_100[::5] + 1, 1-np.cumsum(data_L_100)[::5], "m-x", label="L=100")
+        plt.loglog(x_200[::5] + 1, 1-np.cumsum(data_L_200)[::5], "k-o", label="L=200")
+        plt.loglog(x_500[::5] + 1, 1-np.cumsum(data_L_500)[::5], "y-s", label="L=500")
+        plt.axis([1, 4e2, 2e-6, 1])
         plt.xlabel(r"Cluster size $k$")
-        plt.ylabel(r"CDF $C(k)$")
+        plt.ylabel(r"CDF $1-C(k)$")
         plt.legend()
         plt.grid()
         plt.savefig("./plots/triangular_L.pdf", dpi=200)
@@ -606,14 +611,15 @@ class distribution:
         fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
         plt.rcParams.update({'font.size': 18})
         plt.title("Triangular Lattice")
-        plt.loglog(x_10 + 1, np.cumsum(data_L_10), "r-", label="L=10")
-        plt.loglog(x_20 + 1, np.cumsum(data_L_20), "g-", label="L=20")
-        plt.loglog(x_50 + 1, np.cumsum(data_L_50), "b-", label="L=50")
-        plt.loglog(x_100 + 1, np.cumsum(data_L_100), "m-x", label="L=100")
-        plt.loglog(x_200 + 1, np.cumsum(data_L_200), "k-o", label="L=200")
-        plt.loglog(x_500 + 1, np.cumsum(data_L_500), "y-s", label="L=500")
+        plt.loglog(x_10 + 1, 1-np.cumsum(data_L_10), "r-", label="L=10")
+        plt.loglog(x_20 + 1, 1-np.cumsum(data_L_20), "g-", label="L=20")
+        plt.loglog(x_50 + 1, 1-np.cumsum(data_L_50), "b-", label="L=50")
+        plt.loglog(x_100 + 1, 1-np.cumsum(data_L_100), "m-x", label="L=100")
+        plt.loglog(x_200 + 1, 1-np.cumsum(data_L_200), "k-o", label="L=200")
+        plt.loglog(x_500 + 1, 1-np.cumsum(data_L_500), "y-s", label="L=500")
+        plt.axis([1, 2e5, 1e-7, 1])
         plt.xlabel(r"Cluster size $k$")
-        plt.ylabel(r"CDF $C(k)$")
+        plt.ylabel(r"CDF $1-C(k)$")
         plt.legend()
         plt.grid()
         plt.savefig("./plots/triangular_L_phi_0.5.pdf", dpi=200)
@@ -621,7 +627,7 @@ class distribution:
 
     def plot_alpha(self):
         # square
-        if True:
+        if False:
             data_alpha_00001 = np.genfromtxt("./tumblerate/square_alpha0.0001000_phi0.50_L100.txt", delimiter=" ")[0::2]
             data_alpha_0001 = np.genfromtxt("./tumblerate/square_alpha0.0010000_phi0.50_L100.txt", delimiter=" ")[0::2]
             data_alpha_001 = np.genfromtxt("./tumblerate/square_alpha0.0100000_phi0.50_L100.txt", delimiter=" ")[0::2]
@@ -881,6 +887,7 @@ class distribution:
             plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
             plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
             plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.axis([1, 5e3, 1e-7, 1])
             plt.xlabel(r"Cluster size $k$")
             plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
@@ -893,6 +900,7 @@ class distribution:
             plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
             plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
             plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.axis([1, 5e3, 1e-7, 1])
             plt.xlabel(r"Cluster size $k$")
             plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
@@ -982,6 +990,7 @@ class distribution:
             plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
             plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
             plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.axis([1, 2e2, 1e-7, 1])
             plt.xlabel(r"Cluster size $k$")
             plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
@@ -994,6 +1003,7 @@ class distribution:
             plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
             plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
             plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.axis([1, 2e2, 1e-7, 1])
             plt.xlabel(r"Cluster size $k$")
             plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
@@ -1074,7 +1084,7 @@ class distribution:
             data_nr_alpha_1 = data_nr_alpha_1[x_nr_1]/np.sum(data_nr_alpha_1[x_nr_1])
             """
 
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
+            fig1 = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
             plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
             plt.loglog(x_0001 + 1, 1-np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
@@ -1082,25 +1092,27 @@ class distribution:
             plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
             plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
             plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.axis([1, 6e3, 1e-7, 1])
             plt.xlabel(r"Cluster size $k$")
             plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/tri_alpha.pdf", dpi=200)
             
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
+            fig2 = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
             plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
             plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
             plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
             plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.axis([1, 6e3, 1e-7, 1])
             plt.xlabel(r"Cluster size $k$")
             plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/tri_alpha_high.pdf", dpi=200)
             
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
+            fig3 = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
             plt.loglog(x_00001 + 1, data_alpha_00001, "r-", label=r"$\alpha=0.0001$")
             plt.loglog(x_0001 + 1, data_alpha_0001, "g--", label=r"$\alpha=0.001$")
@@ -1114,7 +1126,7 @@ class distribution:
             plt.grid()
             plt.savefig("./plots/tri_alpha_pdf.pdf", dpi=200)
 
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
+            fig4 = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
             plt.loglog(x_001 + 1, data_alpha_001, "b-", label=r"$\alpha=0.01$")
             plt.loglog(x_01 + 1, data_alpha_01, "m--", label=r"$\alpha=0.1$")
@@ -1175,7 +1187,7 @@ class distribution:
             data_nr_alpha_1 = data_nr_alpha_1[x_nr_1]/np.sum(data_nr_alpha_1[x_nr_1])
             """
 
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
+            fig5 = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
             plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
             plt.loglog(x_0001 + 1, 1-np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
@@ -1183,25 +1195,27 @@ class distribution:
             plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
             plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
             plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.axis([1, 3e2, 1e-7, 1])
             plt.xlabel(r"Cluster size $k$")
             plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/tri_alpha_phi_low.pdf", dpi=200)
 
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
+            fig6 = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
             plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
             plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
             plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
             plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.axis([1, 3e2, 1e-7, 1])
             plt.xlabel(r"Cluster size $k$")
             plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/tri_alpha_high_phi_low.pdf", dpi=200)
 
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
+            fig7 = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
             plt.loglog(x_00001 + 1, data_alpha_00001, "r-", label=r"$\alpha=0.0001$")
             plt.loglog(x_0001 + 1, data_alpha_0001, "g--", label=r"$\alpha=0.001$")
@@ -1215,7 +1229,7 @@ class distribution:
             plt.grid()
             plt.savefig("./plots/tri_alpha_phi_low_pdf.pdf", dpi=200)
 
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
+            fig8 = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
             plt.loglog(x_001 + 1, data_alpha_001, "b-", label=r"$\alpha=0.01$")
             plt.loglog(x_01 + 1, data_alpha_01, "m--", label=r"$\alpha=0.1$")
@@ -1229,229 +1243,62 @@ class distribution:
 
     def plot_heat(self):
         # n_max=1
-        if False:
-            # Square
-            if True:
-                data = np.genfromtxt("./heatmap/square_alpha_N.txt", delimiter=" ")
-                x = np.array([i for i in range(100, 10000, 200)])/10000
-                
-                y = np.zeros(len(data[:, 0]))
-                y[0] = 1e-6
-                for i in range(1, len(data[:, 0])):
-                    y[i] = y[i-1]*1.2
+        if True:
+            data_square = np.genfromtxt("./heatmap/square_alpha_N_avg.txt", delimiter=" ")
+            data_tri = np.genfromtxt("./heatmap/tri_alpha_N_avg.txt", delimiter=" ")
+            data_hex = np.genfromtxt("./heatmap/hex_alpha_N_avg.txt", delimiter=" ")
+            x = np.array([i for i in range(300, 30000, 600)])/30000
+            
+            
+            y = np.zeros(len(data_square[:, 0]))
+            y[0] = 1e-6
+            for i in range(1, len(data_square[:, 0])):
+                y[i] = y[i-1]*1.3
 
-                X, Y = np.meshgrid(x, y)
+            X, Y = np.meshgrid(x, y)
 
-                fig, ax = plt.subplots()
+            fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 4.5), sharey=True, sharex=True)
+            plt.tight_layout()
 
-                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
-                ax.set_xlabel(r"Density $\rho$")
-                ax.set_ylabel(r"Tumble rate $\alpha$")
-                ax.set_yscale("log")
-                cbar = fig.colorbar(C, ax=ax)
-                cbar.ax.set_ylabel("Max cluster size")
-                plt.savefig("heat.pdf", dpi=200)
-                
-                for i in range(len(y)):
-                    data[i, :] = data[i, :] / (x[:]*10000)
-                
-                
-                fig, ax = plt.subplots()
+            for i in range(len(y)):
+                data_square[i, :] = data_square[i, :] / (x[:]*10000)
+                data_tri[i, :] = data_tri[i, :] / (x[:]*10000)
+                data_hex[i, :] = data_hex[i, :] / (x[:]*20000)
+            
+            
+            
 
 
-                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
-                ax.set_xlabel(r"Density $\rho$")
-                ax.set_ylabel(r"Tumble rate $\alpha$")
-                ax.set_yscale("log")
-                cbar = fig.colorbar(C, ax=ax)
-                cbar.ax.set_ylabel("Rel. max cluster size")
-                plt.savefig("heat_rel.pdf", dpi=200)
+            C = ax[0].pcolormesh(X, Y, data_square, norm=colors.LogNorm(vmin=data_square.min(), vmax=data_square.max()), cmap="viridis")
+            C = ax[1].pcolormesh(X, Y, data_tri, norm=colors.LogNorm(vmin=data_tri.min(), vmax=data_tri.max()), cmap="viridis")
+            C = ax[2].pcolormesh(X, Y, data_hex, norm=colors.LogNorm(vmin=data_hex.min(), vmax=data_hex.max()), cmap="viridis")
+
+            handles = [mpl_patches.Rectangle((0, 0), 1, 1, fc="white", ec="white", 
+                                 lw=0, alpha=0)] # * 2
+
+            # create the corresponding number of labels (= the text you want to display)
+            labels = []
+            labels.append(["Sq. Lat."])
+            labels.append(["Tr. Lat."])
+            labels.append(["Hx. Lat."])
+
+            # create the legend, supressing the blank space of the empty line symbol and the
+            # padding between symbol and label by setting handlelenght and handletextpad
+            for i in range(3):
+                ax[i].legend(handles, labels[i], loc='best', fontsize='small', fancybox=True, framealpha=0.7, handlelength=0, handletextpad=0)
+                ax[i].set_yscale("log")
+            ax[0].set_xlabel(r"Density $\rho$")
+            ax[1].set_xlabel(r"Density $\rho$")
+            ax[2].set_xlabel(r"Density $\rho$")
+            ax[0].set_ylabel(r"Tumble rate $\alpha$")
+            cbar = fig.colorbar(C, ax=ax)
+            cbar.ax.set_ylabel("Rel. max cluster size")
+            plt.savefig("heat_rel_n_1.pdf", dpi=200, bbox_inches='tight')
 
 
-                # Mean cluster size
-
-
-                data = np.genfromtxt("./heatmap/square_alpha_N_avg.txt", delimiter=" ")
-                x = np.array([i for i in range(100, 10000, 200)])/10000
-                
-                y = np.zeros(len(data[:, 0]))
-                y[0] = 1e-6
-                for i in range(1, len(data[:, 0])):
-                    y[i] = y[i-1]*1.2
-
-                X, Y = np.meshgrid(x, y)
-
-                fig, ax = plt.subplots()
-
-                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
-                ax.set_xlabel(r"Density $\rho$")
-                ax.set_ylabel(r"Tumble rate $\alpha$")
-                ax.set_yscale("log")
-                cbar = fig.colorbar(C, ax=ax)
-                cbar.ax.set_ylabel("Mean cluster size")
-                plt.savefig("heat_avg.pdf", dpi=200)
-                
-                for i in range(len(y)):
-                    data[i, :] = data[i, :] / (x[:]*10000)
-                
-                fig, ax = plt.subplots()
-
-                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
-                ax.set_xlabel(r"Density $\rho$")
-                ax.set_ylabel(r"Tumble rate $\alpha$")
-                ax.set_yscale("log")
-                cbar = fig.colorbar(C, ax=ax)
-                cbar.ax.set_ylabel("Rel. mean cluster size")
-                plt.savefig("heat_avg_rel.pdf", dpi=200)
-
-            # Triangle
-            if True:
-                data = np.genfromtxt("./heatmap/tri_alpha_N.txt", delimiter=" ")
-
-                x = np.array([i for i in range(100, 10000, 200)])/10000
-                
-                y = np.zeros(len(data[:, 0]))
-                y[0] = 1e-6
-                for i in range(1, len(data[:, 0])):
-                    y[i] = y[i-1]*1.2
-
-                X, Y = np.meshgrid(x, y)
-
-                fig, ax = plt.subplots()
-
-                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
-                ax.set_xlabel(r"Density $\rho$")
-                ax.set_ylabel(r"Tumble rate $\alpha$")
-                ax.set_yscale("log")
-                cbar = fig.colorbar(C, ax=ax)
-                cbar.ax.set_ylabel("Max cluster size")
-                plt.savefig("tri_heat.pdf", dpi=200)
-
-                for i in range(len(y)):
-                    data[i, :] = data[i, :] / (x[:]*10000)
-                
-                fig, ax = plt.subplots()
-
-                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
-                ax.set_xlabel(r"Density $\rho$")
-                ax.set_ylabel(r"Tumble rate $\alpha$")
-                ax.set_yscale("log")
-                cbar = fig.colorbar(C, ax=ax)
-                cbar.ax.set_ylabel("Rel. max cluster size")
-                plt.savefig("tri_heat_rel.pdf", dpi=200)
-
-
-                # Mean cluster size
-
-
-                data = np.genfromtxt("./heatmap/tri_alpha_N_avg.txt", delimiter=" ")
-                x = np.array([i for i in range(100, 10000, 200)])/10000
-                
-                y = np.zeros(len(data[:, 0]))
-                y[0] = 1e-6
-                for i in range(1, len(data[:, 0])):
-                    y[i] = y[i-1]*1.2
-
-                X, Y = np.meshgrid(x, y)
-
-                fig, ax = plt.subplots()
-
-                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
-                ax.set_xlabel(r"Density $\rho$")
-                ax.set_ylabel(r"Tumble rate $\alpha$")
-                ax.set_yscale("log")
-                cbar = fig.colorbar(C, ax=ax)
-                cbar.ax.set_ylabel("Mean cluster size")
-                plt.savefig("tri_heat_avg.pdf", dpi=200)
-
-                for i in range(len(y)):
-                    data[i, :] = data[i, :] / (x[:]*10000)
-                
-                fig, ax = plt.subplots()
-
-                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
-                ax.set_xlabel(r"Density $\rho$")
-                ax.set_ylabel(r"Tumble rate $\alpha$")
-                ax.set_yscale("log")
-                cbar = fig.colorbar(C, ax=ax)
-                cbar.ax.set_ylabel("Rel. mean cluster size")
-                plt.savefig("tri_heat_avg_rel.pdf", dpi=200)
-
-            # Hexagonal
-            if True:
-                data = np.genfromtxt("./heatmap/hex_alpha_N.txt", delimiter=" ")
-
-                x = np.array([i for i in range(200, 20000, 400)])/20000
-                
-                y = np.zeros(len(data[:, 0]))
-                y[0] = 1e-6
-                for i in range(1, len(data[:, 0])):
-                    y[i] = y[i-1]*1.2
-
-                X, Y = np.meshgrid(x, y)
-
-                fig, ax = plt.subplots()
-
-                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
-                ax.set_xlabel(r"Density $\rho$")
-                ax.set_ylabel(r"Tumble rate $\alpha$")
-                ax.set_yscale("log")
-                cbar = fig.colorbar(C, ax=ax)
-                cbar.ax.set_ylabel("Max cluster size")
-                plt.savefig("hex_heat.pdf", dpi=200)
-
-                for i in range(len(y)):
-                    data[i, :] = data[i, :] / (x[:]*20000)
-                
-                fig, ax = plt.subplots()
-
-                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
-                ax.set_xlabel(r"Density $\rho$")
-                ax.set_ylabel(r"Tumble rate $\alpha$")
-                ax.set_yscale("log")
-                cbar = fig.colorbar(C, ax=ax)
-                cbar.ax.set_ylabel("Rel. max cluster size")
-                plt.savefig("hex_heat_rel.pdf", dpi=200)
-
-
-                # Mean cluster size
-
-
-                data = np.genfromtxt("./heatmap/hex_alpha_N_avg.txt", delimiter=" ")
-                x = np.array([i for i in range(200, 20000, 400)])/20000
-                
-                y = np.zeros(len(data[:, 0]))
-                y[0] = 1e-6
-                for i in range(1, len(data[:, 0])):
-                    y[i] = y[i-1]*1.2
-
-                X, Y = np.meshgrid(x, y)
-
-                fig, ax = plt.subplots()
-
-                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
-                ax.set_xlabel(r"Density $\rho$")
-                ax.set_ylabel(r"Tumble rate $\alpha$")
-                ax.set_yscale("log")
-                cbar = fig.colorbar(C, ax=ax)
-                cbar.ax.set_ylabel("Mean cluster size")
-                plt.savefig("hex_heat_avg.pdf", dpi=200)
-
-                for i in range(len(y)):
-                    data[i, :] = data[i, :] / (x[:]*20000)
-                
-                fig, ax = plt.subplots()
-
-                C = ax.pcolormesh(X, Y, data, norm=colors.LogNorm(vmin=data.min(), vmax=data.max()), cmap="viridis")
-                ax.set_xlabel(r"Density $\rho$")
-                ax.set_ylabel(r"Tumble rate $\alpha$")
-                ax.set_yscale("log")
-                cbar = fig.colorbar(C, ax=ax)
-                cbar.ax.set_ylabel("Rel. mean cluster size")
-                plt.savefig("hex_heat_avg_rel.pdf", dpi=200)
 
         # n_max = 2
-        if True:
+        if False:
             data_square = np.genfromtxt("./heatmap/square_alpha_N_n_2.txt", delimiter=" ")
             data_square_nr = np.genfromtxt("./heatmap/square_nr_alpha_N_n_2.txt", delimiter=" ")
             data_tri = np.genfromtxt("./heatmap/tri_alpha_N_n_2.txt", delimiter=" ")
@@ -1651,7 +1498,7 @@ class distribution:
             plt.savefig("heat_avg_ratio_rel_n_2.pdf", dpi=200, bbox_inches='tight')
 
         # n_max = 3
-        if True:
+        if False:
             data_square = np.genfromtxt("./heatmap/square_alpha_N_n_3.txt", delimiter=" ")
             data_square_nr = np.genfromtxt("./heatmap/square_nr_alpha_N_n_3.txt", delimiter=" ")
             data_tri = np.genfromtxt("./heatmap/tri_alpha_N_n_3.txt", delimiter=" ")
@@ -1850,7 +1697,346 @@ class distribution:
             cbar.ax.set_ylabel("Ratio of mean cluster size")
             plt.savefig("heat_avg_ratio_rel_n_3.pdf", dpi=200, bbox_inches='tight')
      
+    def plot_time_evolution(self):
+        if False:
+            data_1 = np.genfromtxt("./number/square_number_alpha0.00001_phi0.50_L100.txt", delimiter=" ")
+            data_2 = np.genfromtxt("./number/square_number_alpha0.00010_phi0.50_L100.txt", delimiter=" ")
+            data_3 = np.genfromtxt("./number/square_number_alpha0.00100_phi0.50_L100.txt", delimiter=" ")
+            data_4 = np.genfromtxt("./number/square_number_alpha0.01000_phi0.50_L100.txt", delimiter=" ")
+            data_5 = np.genfromtxt("./number/square_number_alpha0.10000_phi0.50_L100.txt", delimiter=" ")
+            data_6 = np.genfromtxt("./number/square_number_alpha1.00000_phi0.50_L100.txt", delimiter=" ")
+            
+            # ###################################### FIG 1 ################################################
 
+            fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
+            plt.tight_layout()
+
+            ax[0].plot(data_1[:, 0], data_1[:, 1], label=r"$\alpha=10^{-5}$")
+            ax[0].plot(data_2[:, 0], data_2[:, 1], label=r"$\alpha=10^{-4}$")
+            #ax[0].plot(data_3[:, 0], data_3[:, 1], label=r"$\alpha=10^{-3}$")
+            #ax[0].plot(data_4[:, 0], data_4[:, 1], label=r"$\alpha=10^{-2}$")
+            #ax[0].plot(data_5[:, 0], data_5[:, 1], label=r"$\alpha=10^{-1}$")
+            #ax[0].plot(data_6[:, 0], data_6[:, 1], label=r"$\alpha=10^{0}$")
+            ax[0].grid()
+            ax[0].legend()
+            ax[0].set_ylabel("Number of clusters")
+            ax[0].set_xscale("log")
+
+            ax[1].plot(data_1[:, 0], data_1[:, 2]/5000, label=r"$\alpha=10^{-5}$")
+            ax[1].plot(data_2[:, 0], data_2[:, 2]/5000, label=r"$\alpha=10^{-4}$")
+            #ax[1].plot(data_3[:, 0], data_3[:, 2]/5000, label=r"$\alpha=10^{-3}$")
+            #ax[1].plot(data_4[:, 0], data_4[:, 2]/5000, label=r"$\alpha=10^{-2}$")
+            #ax[1].plot(data_5[:, 0], data_5[:, 2]/5000, label=r"$\alpha=10^{-1}$")
+            #ax[1].plot(data_6[:, 0], data_6[:, 2]/5000, label=r"$\alpha=10^{0}$")
+            ax[1].grid()
+            ax[1].set_yscale("log")
+            ax[1].set_xscale("log")
+            ax[1].legend()
+            ax[1].set_ylabel("Mean cluster size")
+            ax[1].set_xlabel(r"Time $t$")
+
+            plt.savefig("./plots/time_1.pdf", dpi=200, bbox_inches='tight')
+
+            # ####################################### FIG 2 #############################################
+
+            fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
+            plt.tight_layout()
+
+            
+            ax[0].plot(data_3[:, 0], data_3[:, 1], label=r"$\alpha=10^{-3}$")
+            ax[0].plot(data_4[:, 0], data_4[:, 1], label=r"$\alpha=10^{-2}$")
+            ax[0].grid()
+            ax[0].legend()
+            ax[0].set_ylabel("Number of clusters")
+            ax[0].set_xscale("log")
+
+            
+            ax[1].plot(data_3[:, 0], data_3[:, 2]/5000, label=r"$\alpha=10^{-3}$")
+            ax[1].plot(data_4[:, 0], data_4[:, 2]/5000, label=r"$\alpha=10^{-2}$")
+            ax[1].grid()
+            ax[1].set_yscale("log")
+            ax[1].set_xscale("log")
+            ax[1].legend()
+            ax[1].set_ylabel("Mean cluster size")
+            ax[1].set_xlabel(r"Time $t$")
+
+            plt.savefig("./plots/time_2.pdf", dpi=200, bbox_inches='tight')
+
+            # ######################################## FIG 3 #############################################
+
+            fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
+            plt.tight_layout()
+
+            
+            ax[0].plot(data_5[:, 0], data_5[:, 1], label=r"$\alpha=10^{-1}$")
+            ax[0].plot(data_6[:, 0], data_6[:, 1], label=r"$\alpha=10^{0}$")
+            ax[0].grid()
+            ax[0].legend()
+            ax[0].set_ylabel("Number of clusters")
+            ax[0].set_xscale("log")
+
+            
+            ax[1].plot(data_5[:, 0], data_5[:, 2]/5000, label=r"$\alpha=10^{-1}$")
+            ax[1].plot(data_6[:, 0], data_6[:, 2]/5000, label=r"$\alpha=10^{0}$")
+            ax[1].grid()
+            ax[1].set_yscale("log")
+            ax[1].set_xscale("log")
+            ax[1].legend()
+            ax[1].set_ylabel("Mean cluster size")
+            ax[1].set_xlabel(r"Time $t$")
+
+            plt.savefig("./plots/time_3.pdf", dpi=200, bbox_inches='tight')
+        
+        # Square
+        if True:
+            data_1 = np.genfromtxt("./number/square_number_alpha0.10000_phi0.50_L100.txt", delimiter=" ")
+            data_2 = np.genfromtxt("./number/square_number_alpha0.01000_phi0.50_L100.txt", delimiter=" ")
+
+            data_3 = np.genfromtxt("./number/square_number_alpha0.10000_phi1.00_L100_2.txt", delimiter=" ")
+            data_4 = np.genfromtxt("./number/square_number_alpha0.01000_phi1.00_L100_2.txt", delimiter=" ")
+
+            data_5 = np.genfromtxt("./number/square_number_alpha0.10000_phi1.50_L100_3.txt", delimiter=" ")
+            data_6 = np.genfromtxt("./number/square_number_alpha0.01000_phi1.50_L100_3.txt", delimiter=" ")
+            
+            # ###################################### FIG 1 ################################################
+
+            fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
+            plt.tight_layout()
+
+            ax[0].plot(data_1[1:, 0], data_1[1:, 1], label=r"$\alpha=0.1$")
+            ax[0].plot(data_2[1:, 0], data_2[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].grid()
+            ax[0].set_yscale("log")
+            ax[0].legend()
+            ax[0].set_ylabel("Number of clusters")
+            ax[0].set_xscale("log")
+
+            ax[1].plot(data_1[1:, 0], data_1[1:, 2], label=r"$\alpha=0.1$")
+            ax[1].plot(data_2[1:, 0], data_2[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].grid()
+            ax[1].set_yscale("log")
+            ax[1].set_xscale("log")
+            ax[1].legend()
+            ax[1].set_ylabel("Mean cluster size")
+            ax[1].set_xlabel(r"Time $t$")
+
+            plt.savefig("./plots/square_1.pdf", dpi=200, bbox_inches='tight')
+
+            # ###################################### FIG 2 ################################################
+
+            fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
+            plt.tight_layout()
+
+            ax[0].plot(data_3[1:, 0], data_3[1:, 1], label=r"$\alpha=0.1$")
+            ax[0].plot(data_4[1:, 0], data_4[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].grid()
+            ax[0].set_yscale("log")
+            ax[0].legend()
+            ax[0].set_ylabel("Number of clusters")
+            ax[0].set_xscale("log")
+
+            ax[1].plot(data_3[1:, 0], data_3[1:, 2], label=r"$\alpha=0.1$")
+            ax[1].plot(data_4[1:, 0], data_4[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].grid()
+            ax[1].set_yscale("log")
+            ax[1].set_xscale("log")
+            ax[1].legend()
+            ax[1].set_ylabel("Mean cluster size")
+            ax[1].set_xlabel(r"Time $t$")
+
+            plt.savefig("./plots/square_2.pdf", dpi=200, bbox_inches='tight')
+
+            # ###################################### FIG 3 ################################################
+
+            fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
+            plt.tight_layout()
+
+            ax[0].plot(data_5[1:, 0], data_5[1:, 1], label=r"$\alpha=0.1$")
+            ax[0].plot(data_6[1:, 0], data_6[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].grid()
+            ax[0].set_yscale("log")
+            ax[0].legend()
+            ax[0].set_ylabel("Number of clusters")
+            ax[0].set_xscale("log")
+
+            ax[1].plot(data_5[1:, 0], data_5[1:, 2], label=r"$\alpha=0.1$")
+            ax[1].plot(data_6[1:, 0], data_6[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].grid()
+            ax[1].set_yscale("log")
+            ax[1].set_xscale("log")
+            ax[1].legend()
+            ax[1].set_ylabel("Mean cluster size")
+            ax[1].set_xlabel(r"Time $t$")
+
+            plt.savefig("./plots/square_3.pdf", dpi=200, bbox_inches='tight')
+
+        # Tri
+        if True:
+            data_1 = np.genfromtxt("./number/tri_number_alpha0.10000_phi0.50_L100.txt", delimiter=" ")
+            data_2 = np.genfromtxt("./number/tri_number_alpha0.01000_phi0.50_L100.txt", delimiter=" ")
+
+            data_3 = np.genfromtxt("./number/tri_number_alpha0.10000_phi1.00_L100_2.txt", delimiter=" ")
+            data_4 = np.genfromtxt("./number/tri_number_alpha0.01000_phi1.00_L100_2.txt", delimiter=" ")
+
+            data_5 = np.genfromtxt("./number/tri_number_alpha0.10000_phi1.50_L100_3.txt", delimiter=" ")
+            data_6 = np.genfromtxt("./number/tri_number_alpha0.01000_phi1.50_L100_3.txt", delimiter=" ")
+            
+            # ###################################### FIG 1 ################################################
+
+            fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
+            plt.tight_layout()
+
+            ax[0].plot(data_1[1:, 0], data_1[1:, 1], label=r"$\alpha=0.1$")
+            ax[0].plot(data_2[1:, 0], data_2[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].grid()
+            ax[0].set_yscale("log")
+            ax[0].legend()
+            ax[0].set_ylabel("Number of clusters")
+            ax[0].set_xscale("log")
+
+            ax[1].plot(data_1[1:, 0], data_1[1:, 2], label=r"$\alpha=0.1$")
+            ax[1].plot(data_2[1:, 0], data_2[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].grid()
+            ax[1].set_yscale("log")
+            ax[1].set_xscale("log")
+            ax[1].legend()
+            ax[1].set_ylabel("Mean cluster size")
+            ax[1].set_xlabel(r"Time $t$")
+
+            plt.savefig("./plots/tri_1.pdf", dpi=200, bbox_inches='tight')
+
+            # ###################################### FIG 2 ################################################
+
+            fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
+            plt.tight_layout()
+
+            ax[0].plot(data_3[1:, 0], data_3[1:, 1], label=r"$\alpha=0.1$")
+            ax[0].plot(data_4[1:, 0], data_4[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].grid()
+            ax[0].set_yscale("log")
+            ax[0].legend()
+            ax[0].set_ylabel("Number of clusters")
+            ax[0].set_xscale("log")
+
+            ax[1].plot(data_3[1:, 0], data_3[1:, 2], label=r"$\alpha=0.1$")
+            ax[1].plot(data_4[1:, 0], data_4[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].grid()
+            ax[1].set_yscale("log")
+            ax[1].set_xscale("log")
+            ax[1].legend()
+            ax[1].set_ylabel("Mean cluster size")
+            ax[1].set_xlabel(r"Time $t$")
+
+            plt.savefig("./plots/tri_2.pdf", dpi=200, bbox_inches='tight')
+
+            # ###################################### FIG 3 ################################################
+
+            fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
+            plt.tight_layout()
+
+            ax[0].plot(data_5[1:, 0], data_5[1:, 1], label=r"$\alpha=0.1$")
+            ax[0].plot(data_6[1:, 0], data_6[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].grid()
+            ax[0].set_yscale("log")
+            ax[0].legend()
+            ax[0].set_ylabel("Number of clusters")
+            ax[0].set_xscale("log")
+
+            ax[1].plot(data_5[1:, 0], data_5[1:, 2], label=r"$\alpha=0.1$")
+            ax[1].plot(data_6[1:, 0], data_6[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].grid()
+            ax[1].set_yscale("log")
+            ax[1].set_xscale("log")
+            ax[1].legend()
+            ax[1].set_ylabel("Mean cluster size")
+            ax[1].set_xlabel(r"Time $t$")
+
+            plt.savefig("./plots/tri_3.pdf", dpi=200, bbox_inches='tight')
+
+        # Hex
+        if True:
+            data_1 = np.genfromtxt("./number/hex_number_alpha0.10000_phi1.00_L100.txt", delimiter=" ")
+            data_2 = np.genfromtxt("./number/hex_number_alpha0.01000_phi1.00_L100.txt", delimiter=" ")
+
+            data_3 = np.genfromtxt("./number/hex_number_alpha0.10000_phi2.00_L100_2.txt", delimiter=" ")
+            data_4 = np.genfromtxt("./number/hex_number_alpha0.01000_phi2.00_L100_2.txt", delimiter=" ")
+
+            data_5 = np.genfromtxt("./number/hex_number_alpha0.10000_phi3.00_L100_3.txt", delimiter=" ")
+            data_6 = np.genfromtxt("./number/hex_number_alpha0.01000_phi3.00_L100_3.txt", delimiter=" ")
+            
+            # ###################################### FIG 1 ################################################
+
+            fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
+            plt.tight_layout()
+
+            ax[0].plot(data_1[1:, 0], data_1[1:, 1], label=r"$\alpha=0.1$")
+            ax[0].plot(data_2[1:, 0], data_2[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].grid()
+            ax[0].set_yscale("log")
+            ax[0].legend()
+            ax[0].set_ylabel("Number of clusters")
+            ax[0].set_xscale("log")
+
+            ax[1].plot(data_1[1:, 0], data_1[1:, 2], label=r"$\alpha=0.1$")
+            ax[1].plot(data_2[1:, 0], data_2[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].grid()
+            ax[1].set_yscale("log")
+            ax[1].set_xscale("log")
+            ax[1].legend()
+            ax[1].set_ylabel("Mean cluster size")
+            ax[1].set_xlabel(r"Time $t$")
+
+            plt.savefig("./plots/hex_1.pdf", dpi=200, bbox_inches='tight')
+
+            # ###################################### FIG 2 ################################################
+
+            fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
+            plt.tight_layout()
+
+            ax[0].plot(data_3[1:, 0], data_3[1:, 1], label=r"$\alpha=0.1$")
+            ax[0].plot(data_4[1:, 0], data_4[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].grid()
+            ax[0].set_yscale("log")
+            ax[0].legend()
+            ax[0].set_ylabel("Number of clusters")
+            ax[0].set_xscale("log")
+
+
+            ax[1].plot(data_3[1:, 0], data_3[1:, 2], label=r"$\alpha=0.1$")
+            ax[1].plot(data_4[1:, 0], data_4[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].grid()
+            ax[1].set_yscale("log")
+            ax[1].set_xscale("log")
+            ax[1].legend()
+            ax[1].set_ylabel("Mean cluster size")
+            ax[1].set_xlabel(r"Time $t$")
+
+            plt.savefig("./plots/hex_2.pdf", dpi=200, bbox_inches='tight')
+
+            # ###################################### FIG 3 ################################################
+
+            fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
+            plt.tight_layout()
+
+            ax[0].plot(data_5[1:, 0], data_5[1:, 1], label=r"$\alpha=0.1$")
+            ax[0].plot(data_6[1:, 0], data_6[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].grid()
+            ax[0].set_yscale("log")
+            ax[0].legend()
+            ax[0].set_ylabel("Number of clusters")
+            ax[0].set_xscale("log")
+
+            ax[1].plot(data_5[1:, 0], data_5[1:, 2], label=r"$\alpha=0.1$")
+            ax[1].plot(data_6[1:, 0], data_6[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].grid()
+            ax[1].set_yscale("log")
+            ax[1].set_xscale("log")
+            ax[1].legend()
+            ax[1].set_ylabel("Mean cluster size")
+            ax[1].set_xlabel(r"Time $t$")
+
+            plt.savefig("./plots/hex_3.pdf", dpi=200, bbox_inches='tight')
+            
             
 
 
@@ -1858,8 +2044,11 @@ class distribution:
 if __name__ == "__main__":
     dist = distribution()
 
+
+    dist.plot_time_evolution()
+
     #dist.plot_heat()
-    dist.plot_alpha()
+    #dist.plot_alpha()
     #dist.plot_cum_hex()
     #plt.show()
     #dist.plot_square_L()

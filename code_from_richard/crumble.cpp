@@ -537,7 +537,7 @@ public:
 
     // Function to determine the mean cluster size by simple taking the sum off all clusters (not vacant ones) and dividing by number of clusters. Note that we will only regard particle clusters here 
     // (at least so far)
-    size_t avg_cluster_size(){
+    double avg_cluster_size(){
       // Lookup table of cluster membership by lattice site
         std::vector<unsigned> memberof(sites.size());
         // Initially, this is just the site id as each site is its own cluster
@@ -585,11 +585,10 @@ public:
         }
 
         mean = mean / count;
-
         return mean;
     }
 
-    size_t avg_cluster_size_nr(){
+    double avg_cluster_size_nr(){
       // Lookup table of cluster membership by lattice site
         std::vector<unsigned> memberof_nr(sites.size());
         // Initially, this is just the site id as each site is its own cluster
@@ -643,6 +642,16 @@ public:
         mean = mean / count;
 
         return mean;
+    }
+
+    // function to return the number of particle clusters
+    unsigned number_cluster(){
+      hist_t hist = cluster_distributions();
+      unsigned count = 0;
+      for (unsigned i = 0; i < hist.size(); i+=2){
+        if (hist[i] != 0) count++;
+      }
+      return count;
     }
 
 };
@@ -1182,7 +1191,7 @@ public:
 
     // Function to determine the mean cluster size by simple taking the sum off all clusters (not vacant ones) and dividing by number of clusters. Note that we will only regard particle clusters here 
     // (at least so far)
-    size_t avg_cluster_size(){
+    double avg_cluster_size(){
       // Lookup table of cluster membership by lattice site
         std::vector<unsigned> memberof(sites.size());
         // Initially, this is just the site id as each site is its own cluster
@@ -1234,7 +1243,7 @@ public:
         return mean;
     }
 
-    size_t avg_cluster_size_nr(){
+    double avg_cluster_size_nr(){
       // Lookup table of cluster membership by lattice site
         std::vector<unsigned> memberof_nr(sites.size());
         // Initially, this is just the site id as each site is its own cluster
@@ -1290,6 +1299,15 @@ public:
         return mean;
     }
 
+    // function to return the number of particle clusters
+    unsigned number_cluster(){
+      hist_t hist = cluster_distributions();
+      unsigned count = 0;
+      for (unsigned i = 0; i < hist.size(); i+=2){
+        if (hist[i] != 0) count++;
+      }
+      return count;
+    }
 
 };
 
@@ -1950,7 +1968,7 @@ public:
 
     // Function to determine the mean cluster size by simple taking the sum off all clusters (not vacant ones) and dividing by number of clusters. Note that we will only regard particle clusters here 
     // (at least so far)
-    size_t avg_cluster_size(){
+    double avg_cluster_size(){
       // Lookup table of cluster membership by lattice site
         std::vector<unsigned> memberof(2 * sites.size());
         // Initially, this is just the site id as each site is its own cluster
@@ -2010,7 +2028,7 @@ public:
         return mean;
     }
 
-    size_t avg_cluster_size_nr(){
+    double avg_cluster_size_nr(){
       // Lookup table of cluster membership by lattice site
         std::vector<unsigned> memberof_nr(2 * sites.size());
         // Initially, this is just the site id as each site is its own cluster
@@ -2076,6 +2094,16 @@ public:
         mean = mean / count;
 
         return mean;
+    }
+
+    // function to return the number of particle clusters
+    unsigned number_cluster(){
+      hist_t hist = cluster_distributions();
+      unsigned count = 0;
+      for (unsigned i = 0; i < hist.size(); i+=2){
+        if (hist[i] != 0) count++;
+      }
+      return count;
     }
 };
 
@@ -2306,6 +2334,7 @@ int main(int argc, char* argv[]) {
   if(output[0] == 'p') output = "particles";
   else if(output[0] == 'v') output = "vacancies";
   else if(output[0] == 'c') output = "clusters";
+  else if(output[0] == 'n') output = "number"; // this is for output of time evolution of cluster number and mean cluster size
   else if(output[0] == 'f') output = "function"; // this output is for testing different features. It is not static, as of now, so one should not uses this  without proper inspection of what it does
   else if(output[0] == 'h') output = "heatmap"; // this is for heatmap of clustersizes
                                                 // TODO add similar for motility? moves/planned moves
@@ -2330,7 +2359,7 @@ int main(int argc, char* argv[]) {
   // alpha
   std::ostringstream alpha;
   alpha << std::fixed;
-  alpha << std::setprecision(7);
+  alpha << std::setprecision(5);
   alpha << P.alpha[0];
   std::string alpha_p = alpha.str();
   // phi
@@ -2340,11 +2369,18 @@ int main(int argc, char* argv[]) {
   phi << double(P.N)/double(P.L[0] * P.L[1]);
   std::string phi_p = phi.str();
   
+  // occ
+  std::ostringstream occ;
+  occ << std::fixed;
+  occ << std::setprecision(0);
+  occ << P.n_max;
+  std::string occ_p = occ.str();
+
   string txt = ".txt";
   string tumb = "alpha" + alpha_p;
   string dens = "phi" + phi_p;
   string size = "L" + std::to_string(P.L[0]);
-  string path = "./lars_sim/tumblerate/";
+  string path = "./lars_sim/latticesize/";
   string txtoutput = path+lattice_type+"_"+tumb+"_"+ dens+"_"+size+txt;
   string txtoutput_nr = path+lattice_type+"_nr"+"_"+tumb+"_"+ dens+"_"+size+txt;
 
@@ -2486,7 +2522,21 @@ int main(int argc, char* argv[]) {
           outfile_nr << endl;
           outfile_avg_nr << endl;
         }
+      }
+      else if (output == "number"){
+        ofstream outfile;
+        string name = "./lars_sim/number/square_";
+        string name_number = name+"number"+"_"+tumb+"_"+dens+"_"+size+"_"+occ_p+txt;
+        outfile.open(name_number);
 
+
+        t = L.run_until(burnin);  
+        outfile << t << " " << L.number_cluster() << " " << L.avg_cluster_size_nr() << endl;
+        for(double n=1; t < burnin + until; n*=1.01) {
+          t = L.run_until(burnin + n * every);
+          outfile << t << " " << L.number_cluster() << " " << L.avg_cluster_size_nr() << endl;
+        }
+      
       } else {
         ofstream outfile;
         outfile.open("./lars_sim/gif/square.txt");
@@ -2659,6 +2709,22 @@ int main(int argc, char* argv[]) {
         }
         std::cout << "avg by area" << mean/count << endl;
         std::cout << "avg by number" << mean_nr/count << endl;
+      }
+      
+      else if (output == "number"){
+        ofstream outfile;
+        string name = "./lars_sim/number/tri_";
+        string name_number = name+"number"+"_"+tumb+"_"+dens+"_"+size+"_"+occ_p+txt;
+        outfile.open(name_number);
+
+
+        t = TL.run_until(burnin);  
+        outfile << t << " " << TL.number_cluster() << " " << TL.avg_cluster_size_nr() << endl;
+        for(double n=1; t < burnin + until; n*=1.01) {
+          t = TL.run_until(burnin + n * every);
+          outfile << t << " " << TL.number_cluster() << " " << TL.avg_cluster_size_nr() << endl;
+        }
+      
       }
       else {
         std::cout << "avg by area" << endl;
@@ -2839,7 +2905,20 @@ int main(int argc, char* argv[]) {
           outfile_avg_nr << endl;
         }
       
-      
+      }
+      else if (output == "number"){
+        ofstream outfile;
+        string name = "./lars_sim/number/hex_";
+        string name_number = name+"number"+"_"+tumb+"_"+dens+"_"+size+"_"+occ_p+txt;
+        outfile.open(name_number);
+
+
+        t = HL.run_until(burnin);  
+        outfile << t << " " << HL.number_cluster() << " " << HL.avg_cluster_size_nr() << endl;
+        for(double n=1; t < burnin + until; n*=1.01) {
+          t = HL.run_until(burnin + n * every);
+          outfile << t << " " << HL.number_cluster() << " " << HL.avg_cluster_size_nr() << endl;
+        }
       } else if (output == "snapshots"){
         ofstream outfile;
         outfile.open("./lars_sim/gif/hexdir.txt");
@@ -2925,6 +3004,20 @@ int main(int argc, char* argv[]) {
             outfile << endl;
           }
         } 
+      }
+      else if (output == "number"){
+        ofstream outfile;
+        string name = "./lars_sim/number/square_";
+        string name_number = name+"number"+"_"+tumb+"_"+dens+"_"+size+txt;
+        outfile.open(name_number);
+
+
+        t = L.run_until(burnin);  
+        outfile << t << " " << L.number_cluster() << " " << L.avg_cluster_size() << endl;
+        for(double n=1; t < burnin + until; n*=1.01) {
+          t = L.run_until(burnin + n * every);
+          outfile << t << " " << L.number_cluster() << " " << L.avg_cluster_size() << endl;
+        }
       }
       else if (output == "heatmap"){
         ofstream outfile, outfile_avg;
@@ -3076,7 +3169,22 @@ int main(int argc, char* argv[]) {
           outfile << endl;
           outfile_avg << endl;
         } 
-      }else {
+      }
+      else if (output == "number"){
+        ofstream outfile;
+        string name = "./lars_sim/number/tri_";
+        string name_number = name+"number"+"_"+tumb+"_"+dens+"_"+size+txt;
+        outfile.open(name_number);
+
+
+        t = TL.run_until(burnin);  
+        outfile << t << " " << TL.number_cluster() << " " << TL.avg_cluster_size() << endl;
+        for(double n=1; t < burnin + until; n*=1.01) {
+          t = TL.run_until(burnin + n * every);
+          outfile << t << " " << TL.number_cluster() << " " << TL.avg_cluster_size() << endl;
+        }
+      }
+      else {
         ofstream outfile;
         outfile.open("./lars_sim/gif/triangle.txt");
         //outfile << "# L = [ ";
@@ -3097,8 +3205,7 @@ int main(int argc, char* argv[]) {
         }
 
       }
-
-
+    
     } else if(lattice_type == "hexagonal"){
       
       // Initialise a random number generator and set up the model
@@ -3206,6 +3313,21 @@ int main(int argc, char* argv[]) {
           outfile_avg << endl;
         }
       
+      }
+      
+      else if (output == "number"){
+        ofstream outfile;
+        string name = "./lars_sim/number/hex_";
+        string name_number = name+"number"+"_"+tumb+"_"+dens+"_"+size+txt;
+        outfile.open(name_number);
+
+
+        t = HL.run_until(burnin);  
+        outfile << t << " " << HL.number_cluster() << " " << HL.avg_cluster_size() << endl;
+        for(double n=1; t < burnin + until; n*=1.01) {
+          t = HL.run_until(burnin + n * every);
+          outfile << t << " " << HL.number_cluster() << " " << HL.avg_cluster_size() << endl;
+        }
       }else if (output == "particles") {
         ofstream outfile;
         outfile.open("./lars_sim/gif/hexagonal.txt");
