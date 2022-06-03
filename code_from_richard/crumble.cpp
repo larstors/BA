@@ -646,12 +646,51 @@ public:
 
     // function to return the number of particle clusters
     unsigned number_cluster(){
-      hist_t hist = cluster_distributions();
-      unsigned count = 0;
-      for (unsigned i = 0; i < hist.size(); i+=2){
-        if (hist[i] != 0) count++;
-      }
-      return count;
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n) clusters[n] = std::list<unsigned>(1, n); // Single-element list comprising the lattice site
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof[n], small = memberof[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+        }
+
+        // variable for mean and the count of clusters
+        unsigned count = 0; 
+        for (const auto& kv : clusters) {
+            // instead of occupied we check whether there are any particles present
+            if (sites[kv.first].present > 0) { 
+              count += 1;
+            }
+        }
+
+        return count;
     }
 
 };
@@ -1301,12 +1340,55 @@ public:
 
     // function to return the number of particle clusters
     unsigned number_cluster(){
-      hist_t hist = cluster_distributions();
-      unsigned count = 0;
-      for (unsigned i = 0; i < hist.size(); i+=2){
-        if (hist[i] != 0) count++;
-      }
-      return count;
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof_nr(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof_nr.begin(), memberof_nr.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters_nr;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          if (sites[n].present == 0) clusters_nr[n] = std::list<unsigned>(1, n);
+          else clusters_nr[n] = std::list<unsigned>(sites[n].present, n);
+
+        }
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize_nr = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof_nr[n], small = memberof_nr[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters_nr[large].size() < clusters_nr[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters_nr[small]) memberof_nr[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters_nr[large].splice(clusters_nr[large].end(), clusters_nr[small]);
+                    // Remove the smaller cluster from the map
+                    clusters_nr.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize_nr = std::max(maxsize_nr, clusters_nr[large].size());
+                }
+            }
+        }
+
+
+        unsigned count = 0; 
+        for (const auto& kv : clusters_nr) {
+            // instead of occupied we check whether there are any particles present
+            if (sites[kv.first].present > 0) { 
+              count += 1;
+            }
+        }
+
+        return count;
     }
 
 };
@@ -2092,18 +2174,72 @@ public:
         }
 
         mean = mean / count;
-
         return mean;
     }
 
     // function to return the number of particle clusters
     unsigned number_cluster(){
-      hist_t hist = cluster_distributions();
-      unsigned count = 0;
-      for (unsigned i = 0; i < hist.size(); i+=2){
-        if (hist[i] != 0) count++;
-      }
-      return count;
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof_nr(2 * sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof_nr.begin(), memberof_nr.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters_nr;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          for (unsigned i = 0; i < 2; i++){
+            if (sites[n].present[i] == 0) clusters_nr[2*n + i] = std::list<unsigned>(1, 2*n + i);
+            else {
+              clusters_nr[2*n + i] = std::list<unsigned>(sites[n].present[i], 2*n+i);
+              /*
+              for (unsigned k = 0; k < sites[n].present[i]; k++){
+                pres[k] = 2*n + i;
+              }
+              clusters_nr[2*n + i] = pres;
+              */
+            }
+          }
+        }
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize_nr = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+          for (unsigned i = 0; i < 2; i++){
+            // TODO figure out why forward neighbour makes algorithm not work
+            for (const auto& m : neighbours(n, i)) {
+                unsigned large = memberof_nr[2*n + i], small = memberof_nr[2*m + (i+1)%2];
+                // If they are in the same cluster we can move on
+                if (small == large) continue;
+                // If one of them is empty but the other isn't we move on
+                else if (sites[n].present[i] == 0 && sites[m].present[(i+1)%2] != 0) continue;
+                else if (sites[n].present[i] != 0 && sites[m].present[(i+1)%2] == 0) continue;
+                // merge clusters
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters_nr[large].size() < clusters_nr[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters_nr[small]) memberof_nr[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters_nr[large].splice(clusters_nr[large].end(), clusters_nr[small]);
+                    // Remove the smaller cluster from the map
+                    clusters_nr.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize_nr = std::max(maxsize_nr, clusters_nr[large].size());
+                }
+            }
+          }
+        }
+
+        // variable for mean and the count of clusters
+        unsigned count = 0; 
+        for (const auto& kv : clusters_nr) {
+            // instead of occupied we check whether there are any particles present
+            if (sites[(kv.first - kv.first%2)/2].present[kv.first%2] > 0) { 
+              count += 1;
+            }
+        }
+
+        return count;
     }
 };
 
