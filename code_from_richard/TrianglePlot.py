@@ -36,7 +36,7 @@ class AnimatedScatter(object):
     """An animated scatter plot using matplotlib.animations.FuncAnimation."""
     def __init__(self, numpoints=50):
         #f = open("./lars_sim/gif/triangle.txt")
-        f = open("./lars_sim/testing/triangle_heat.txt")
+        f = open("./lars_sim/testing/triangle.txt")
         self.data = []
         for line in f:
             self.data.append(np.loadtxt(StringIO(line), dtype=int))
@@ -45,8 +45,8 @@ class AnimatedScatter(object):
         # Setup the figure and axes
         self.fig, self.ax = plt.subplots(figsize=(20, 20))
         # Then setup FuncAnimation.
-        self.ani = animation.FuncAnimation(self.fig, self.update, interval=1, 
-                                          init_func=self.setup_plot, blit=False, save_count=300)
+        #self.ani = animation.FuncAnimation(self.fig, self.update, interval=1, 
+        #                                  init_func=self.setup_plot, blit=False, save_count=300)
         
 
     def conv(self, n):
@@ -114,9 +114,9 @@ class AnimatedScatter(object):
 if __name__ == '__main__':
     a = AnimatedScatter()
     #a.ani.save('./lars_sim/gif/TriStart_n_2_N_750.gif', fps=10)
-    a.ani.save('./lars_sim/testing/triangle_heat.gif', fps=10)
-    #a.update(50)
-    #plt.show()
+    #a.ani.save('./lars_sim/testing/triangle_heat.gif', fps=10)
+    a.update(0)
+    plt.show()
     #plt.savefig("./lars_sim/triang_test.pdf")
 
 

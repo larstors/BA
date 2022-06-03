@@ -269,6 +269,46 @@ public:
          drates[2*d] = drates[2*d+1] = d<P.alpha.size() ? P.alpha[d]/tumble.lambda() : 1.0;
       }
       anyway = std::discrete_distribution<unsigned>(drates.begin(), drates.end());
+
+      std::vector<unsigned>position;
+        for(unsigned i = 0; i < P.n_max; i++){
+          for(unsigned n = 0; n < sites.size(); n++){
+            position.push_back(i*sites.size() + n);
+          }
+        }
+
+
+        unsigned possibilities = position.size();
+        unsigned unplaced = P.N;
+        unsigned id = 0;
+        while (unplaced > 0){
+          unsigned index = std::uniform_int_distribution<unsigned>(0, possibilities)(rng);
+          
+          unsigned l = position[index];
+
+
+          unsigned n = l%sites.size();
+          unsigned i = l/sites.size();
+
+          place(n, id, anyway(rng), 0.0, i);
+
+          position.erase(position.begin()+index);
+          position.push_back(l);
+          
+          id++;
+          possibilities--;
+          unplaced--;
+        }
+
+        for (unsigned index = 0; index < P.n_max; index++){
+          for (unsigned n = 0; n < sites.size(); ++n) {
+            if (sites[n].occupied[index] == false){
+              sites[n].id[index] = id;
+              id++;
+            }
+          }
+        }
+      /*
       // Place particles on the lattice
       unsigned unplaced = P.N; // Current number of particles remaining to be placed
       unsigned id_vac = P.N;
@@ -288,7 +328,7 @@ public:
         }
       }
       assert(unplaced == 0);
-        
+      */
         // Activate particles that can move, and schedule a hop accordingly
       for (unsigned n = 0; n < sites.size(); ++n) {
         for (unsigned k = 0; k < P.n_max; ++k){
@@ -962,7 +1002,46 @@ public:
         }
         anyway = std::discrete_distribution<unsigned>(drates.begin(), drates.end());
         
+        std::vector<unsigned>position;
+        for(unsigned i = 0; i < P.n_max; i++){
+          for(unsigned n = 0; n < sites.size(); n++){
+            position.push_back(i*sites.size() + n);
+          }
+        }
 
+
+        unsigned possibilities = position.size();
+        unsigned unplaced = P.N;
+        unsigned id = 0;
+        while (unplaced > 0){
+          unsigned index = std::uniform_int_distribution<unsigned>(0, possibilities)(rng);
+          
+          unsigned l = position[index];
+
+
+          unsigned n = l%sites.size();
+          unsigned i = l/sites.size();
+
+          place(n, id, anyway(rng), 0.0, i);
+
+          position.erase(position.begin()+index);
+          position.push_back(l);
+          
+          id++;
+          possibilities--;
+          unplaced--;
+        }
+
+        for (unsigned index = 0; index < P.n_max; index++){
+          for (unsigned n = 0; n < sites.size(); ++n) {
+            if (sites[n].occupied[index] == false){
+              sites[n].id[index] = id;
+              id++;
+            }
+          }
+        }
+
+        /*
         // Place particles on the lattice
         unsigned unplaced = P.N; // Current number of particles remaining to be placed
         unsigned id_vac = P.N;
@@ -982,7 +1061,7 @@ public:
           }
         }
         assert(unplaced == 0);
-        
+        */
         // Activate particles that can move, and schedule a hop accordingly
         for (unsigned n = 0; n < sites.size(); ++n) {
           for (unsigned k = 0; k < P.n_max; ++k){
@@ -1728,7 +1807,49 @@ public:
         }
         anyway = std::discrete_distribution<unsigned>(drates.begin(), drates.end()); 
 
+        std::vector<unsigned>position;
+        for(unsigned i = 0; i < 2*P.n_max; i++){
+          for(unsigned n = 0; n < sites.size(); n++){
+            position.push_back(i*sites.size() + n);
+          }
+        }
 
+
+        unsigned possibilities = position.size();
+        unsigned unplaced = P.N;
+        unsigned id = 0;
+        while (unplaced > 0){
+          unsigned index = std::uniform_int_distribution<unsigned>(0, possibilities)(rng);
+          
+          unsigned l = position[index];
+
+
+          unsigned n = l%sites.size();
+          unsigned i = l/sites.size();
+
+          direction_t direction = anyway(rng);
+          int dir = preference_direction(n, i, direction);
+          auto dnbs = neighbours_dir(n);
+
+          place(n, id, direction, 0.0, i, dnbs[dir]);
+
+          position.erase(position.begin()+index);
+          position.push_back(l);
+          
+          id++;
+          possibilities--;
+          unplaced--;
+        }
+
+        for (unsigned index = 0; index < P.n_max; index++){
+          for (unsigned n = 0; n < sites.size(); ++n) {
+            if (sites[n].occupied[index] == false){
+              sites[n].id[index] = id;
+              id++;
+            }
+          }
+        }
+        /*
         // Place particles on the lattice
         unsigned unplaced = P.N; // Current number of particles remaining to be placed
         unsigned id_vac = P.N;
@@ -1749,16 +1870,11 @@ public:
                 // don't need to randomize these, since they are vacancies
                 sites[n].id[index] = id_vac;
                 id_vac++;
-                /*
-                for (unsigned k = 1; k < 2 * P.n_max; k++){
-                  sites[n].id[k] = n + k * P.L[0] * P.L[1];
-                }
-                */
             }
           }
         }
         assert(unplaced == 0);
-
+        */
         // Activate particles that can move, and schedule a hop accordingly
         for (unsigned n = 0; n < sites.size(); ++n) {
           for (unsigned i = 0; i < 2 * P.n_max; i++){
@@ -2495,7 +2611,7 @@ int main(int argc, char* argv[]) {
   // alpha
   std::ostringstream alpha;
   alpha << std::fixed;
-  alpha << std::setprecision(5);
+  alpha << std::setprecision(2);
   alpha << P.alpha[0];
   std::string alpha_p = alpha.str();
   // phi
@@ -2516,9 +2632,9 @@ int main(int argc, char* argv[]) {
   string tumb = "alpha" + alpha_p;
   string dens = "phi" + phi_p;
   string size = "L" + std::to_string(P.L[0]);
-  string path = "./lars_sim/latticesize/";
-  string txtoutput = path+lattice_type+"_"+tumb+"_"+ dens+"_"+size+txt;
-  string txtoutput_nr = path+lattice_type+"_nr"+"_"+tumb+"_"+ dens+"_"+size+txt;
+  string path = "./lars_sim/latticetype/";
+  string txtoutput = path+lattice_type+"_"+tumb+"_"+ dens+"_"+size+"_"+occ_p+txt;
+  string txtoutput_nr = path+lattice_type+"_nr"+"_"+tumb+"_"+ dens+"_"+size+"_"+occ_p+txt;
 
   if (P.n_max > 1){
     // Depending on what lattice, the output may be different
@@ -2828,23 +2944,23 @@ int main(int argc, char* argv[]) {
       } 
       else if (output == "function"){
         ofstream outfile;
-        outfile.open("./lars_sim/testing/triangle_heat.txt");
-        double mean = 0.0;
-        double count = 0.0;
-        double mean_nr = 0.0;
+        outfile.open("./lars_sim/testing/triangle.txt");
+        //outfile << "# L = [ ";
+        //for(const auto& L: P.L) outfile << L << " ";
+        //outfile << "]" << endl;
+        //outfile << "# N = " << P.N << endl;
+        //outfile << "# alpha = [ ";
+        //for(const auto& alpha: P.alpha) outfile << alpha << " ";
+        //outfile << "]" << endl;
+        //outfile << "# output = " << output << endl;
+        //outfile << "# initial = " << burnin << endl;
+        //outfile << "# interval = " << every << endl;
+
         for(unsigned n=0; t < burnin + until; ++n) {
           t = TL.run_until(burnin + n * every);
-          if (int(t)%100 == 0){
-              count++;
-              mean = mean + TL.avg_cluster_size();
-              mean_nr = mean_nr + TL.avg_cluster_size_nr();
-          }
           // only doing a positional output here
           outfile << TriangleParticleWriter(TL, outfile) << endl;
-
         }
-        std::cout << "avg by area" << mean/count << endl;
-        std::cout << "avg by number" << mean_nr/count << endl;
       }
       
       else if (output == "number"){
@@ -3068,6 +3184,26 @@ int main(int argc, char* argv[]) {
 
       }
 
+      else if (output == "function"){
+        ofstream outfile;
+        outfile.open("./lars_sim/testing/hexagonal.txt");
+        //outfile << "# L = [ ";
+        //for(const auto& L: P.L) outfile << L << " ";
+        //outfile << "]" << endl;
+        //outfile << "# N = " << P.N << endl;
+        //outfile << "# alpha = [ ";
+        //for(const auto& alpha: P.alpha) outfile << alpha << " ";
+        //outfile << "]" << endl;
+        //outfile << "# output = " << output << endl;
+        //outfile << "# initial = " << burnin << endl;
+        //outfile << "# interval = " << every << endl;
+
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = HL.run_until(burnin + n * every);
+          // only doing a positional output here
+          outfile << HexagonalParticleWriter(HL, outfile) << endl;
+        }
+      }
 
 
     }
@@ -3320,6 +3456,7 @@ int main(int argc, char* argv[]) {
           outfile << t << " " << TL.number_cluster() << " " << TL.avg_cluster_size() << endl;
         }
       }
+      
       else {
         ofstream outfile;
         outfile.open("./lars_sim/gif/triangle.txt");

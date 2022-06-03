@@ -37,7 +37,7 @@ class AnimatedScatter(object):
     """An animated scatter plot using matplotlib.animations.FuncAnimation."""
     def __init__(self, numpoints=50):
         # opening file (note the annoying way to do it because of different number of cols)
-        f = open("./lars_sim/gif/hexagonal.txt")
+        f = open("./lars_sim/testing/hexagonal.txt")
         self.data = []
         for line in f:
             self.data.append(np.loadtxt(StringIO(line), dtype=int))
@@ -45,8 +45,8 @@ class AnimatedScatter(object):
         # Setup the figure and axes
         self.fig, self.ax = plt.subplots(figsize=(20, 20))
         # Then setup FuncAnimation.
-        self.ani = animation.FuncAnimation(self.fig, self.update, interval=5, 
-                                          init_func=self.setup_plot, blit=True, save_count=1000)
+        #self.ani = animation.FuncAnimation(self.fig, self.update, interval=5, 
+        #                                  init_func=self.setup_plot, blit=True, save_count=1000)
         
     
     def hex_cor(self, n, j):
@@ -216,10 +216,10 @@ class AnimatedScatter(object):
 
 if __name__ == '__main__':
     a = AnimatedScatter()
-    a.ani.save('./lars_sim/gif/HexStart_n_2_N_750.gif', fps=20)
+    #a.ani.save('./lars_sim/gif/HexStart_n_2_N_750.gif', fps=20)
     #a.direction(0)
-    #a.update(-1)
-    #plt.show()
+    a.update(3)
+    plt.show()
     #plt.savefig("hexdir2.pdf", dpi=200)
     #animation = a.ani_direction()
     #animation.save("./lars_sim/HexagonalDirection.gif", fps=10)
