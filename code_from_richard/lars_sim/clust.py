@@ -1789,14 +1789,17 @@ class distribution:
         
         # Square
         if True:
-            data_1 = np.genfromtxt("./number/square_number_alpha0.10000_phi0.50_L100.txt", delimiter=" ")
-            data_2 = np.genfromtxt("./number/square_number_alpha0.01000_phi0.50_L100.txt", delimiter=" ")
+            data_1 = np.genfromtxt("./number/square_number_alpha0.10_phi0.47_L100.txt", delimiter=" ")
+            data_2 = np.genfromtxt("./number/square_number_alpha0.01_phi0.47_L100.txt", delimiter=" ")
+            data_7 = np.genfromtxt("./number/square_number_alpha0.00_phi0.47_L100.txt", delimiter=" ")
 
-            data_3 = np.genfromtxt("./number/square_number_alpha0.10000_phi1.00_L100_2.txt", delimiter=" ")
-            data_4 = np.genfromtxt("./number/square_number_alpha0.01000_phi1.00_L100_2.txt", delimiter=" ")
+            data_3 = np.genfromtxt("./number/square_number_alpha0.10_phi0.55_L100_2.txt", delimiter=" ")
+            data_4 = np.genfromtxt("./number/square_number_alpha0.01_phi0.55_L100_2.txt", delimiter=" ")
+            data_8 = np.genfromtxt("./number/square_number_alpha0.00_phi0.55_L100_2.txt", delimiter=" ")
 
-            data_5 = np.genfromtxt("./number/square_number_alpha0.10000_phi1.50_L100_3.txt", delimiter=" ")
-            data_6 = np.genfromtxt("./number/square_number_alpha0.01000_phi1.50_L100_3.txt", delimiter=" ")
+            data_5 = np.genfromtxt("./number/square_number_alpha0.10_phi0.58_L100_3.txt", delimiter=" ")
+            data_6 = np.genfromtxt("./number/square_number_alpha0.01_phi0.58_L100_3.txt", delimiter=" ")
+            data_9 = np.genfromtxt("./number/square_number_alpha0.00_phi0.58_L100_3.txt", delimiter=" ")
             
             # ###################################### FIG 1 ################################################
 
@@ -1805,6 +1808,7 @@ class distribution:
 
             ax[0].plot(data_1[1:, 0], data_1[1:, 1], label=r"$\alpha=0.1$")
             ax[0].plot(data_2[1:, 0], data_2[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].plot(data_7[1:, 0], data_7[1:, 1], label=r"$\alpha=0.00$")
             ax[0].grid()
             ax[0].set_yscale("log")
             ax[0].legend()
@@ -1813,6 +1817,7 @@ class distribution:
 
             ax[1].plot(data_1[1:, 0], data_1[1:, 2], label=r"$\alpha=0.1$")
             ax[1].plot(data_2[1:, 0], data_2[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].plot(data_7[1:, 0], data_7[1:, 2], label=r"$\alpha=0.00$")
             ax[1].grid()
             ax[1].set_yscale("log")
             ax[1].set_xscale("log")
@@ -1829,6 +1834,7 @@ class distribution:
 
             ax[0].plot(data_3[1:, 0], data_3[1:, 1], label=r"$\alpha=0.1$")
             ax[0].plot(data_4[1:, 0], data_4[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].plot(data_8[1:, 0], data_8[1:, 1], label=r"$\alpha=0.00$")
             ax[0].grid()
             ax[0].set_yscale("log")
             ax[0].legend()
@@ -1837,6 +1843,7 @@ class distribution:
 
             ax[1].plot(data_3[1:, 0], data_3[1:, 2], label=r"$\alpha=0.1$")
             ax[1].plot(data_4[1:, 0], data_4[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].plot(data_8[1:, 0], data_8[1:, 2], label=r"$\alpha=0.00$")
             ax[1].grid()
             ax[1].set_yscale("log")
             ax[1].set_xscale("log")
@@ -1853,6 +1860,7 @@ class distribution:
 
             ax[0].plot(data_5[1:, 0], data_5[1:, 1], label=r"$\alpha=0.1$")
             ax[0].plot(data_6[1:, 0], data_6[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].plot(data_9[1:, 0], data_9[1:, 1], label=r"$\alpha=0.00$")
             ax[0].grid()
             ax[0].set_yscale("log")
             ax[0].legend()
@@ -1861,6 +1869,7 @@ class distribution:
 
             ax[1].plot(data_5[1:, 0], data_5[1:, 2], label=r"$\alpha=0.1$")
             ax[1].plot(data_6[1:, 0], data_6[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].plot(data_9[1:, 0], data_9[1:, 2], label=r"$\alpha=0.00$")
             ax[1].grid()
             ax[1].set_yscale("log")
             ax[1].set_xscale("log")
@@ -1872,14 +1881,17 @@ class distribution:
 
         # Tri
         if True:
-            data_1 = np.genfromtxt("./number/tri_number_alpha0.10000_phi0.50_L100.txt", delimiter=" ")
-            data_2 = np.genfromtxt("./number/tri_number_alpha0.01000_phi0.50_L100.txt", delimiter=" ")
+            data_1 = np.genfromtxt("./number/tri_number_alpha0.10_phi0.40_L100.txt", delimiter=" ")
+            data_2 = np.genfromtxt("./number/tri_number_alpha0.01_phi0.40_L100.txt", delimiter=" ")
+            data_7 = np.genfromtxt("./number/tri_number_alpha0.00_phi0.40_L100.txt", delimiter=" ")
 
-            data_3 = np.genfromtxt("./number/tri_number_alpha0.10000_phi1.00_L100_2.txt", delimiter=" ")
-            data_4 = np.genfromtxt("./number/tri_number_alpha0.01000_phi1.00_L100_2.txt", delimiter=" ")
+            data_3 = np.genfromtxt("./number/tri_number_alpha0.10_phi0.45_L100_2.txt", delimiter=" ")
+            data_4 = np.genfromtxt("./number/tri_number_alpha0.01_phi0.45_L100_2.txt", delimiter=" ")
+            data_8 = np.genfromtxt("./number/tri_number_alpha0.00_phi0.45_L100_2.txt", delimiter=" ")
 
-            data_5 = np.genfromtxt("./number/tri_number_alpha0.10000_phi1.50_L100_3.txt", delimiter=" ")
-            data_6 = np.genfromtxt("./number/tri_number_alpha0.01000_phi1.50_L100_3.txt", delimiter=" ")
+            data_5 = np.genfromtxt("./number/tri_number_alpha0.10_phi0.47_L100_3.txt", delimiter=" ")
+            data_6 = np.genfromtxt("./number/tri_number_alpha0.01_phi0.47_L100_3.txt", delimiter=" ")
+            data_9 = np.genfromtxt("./number/tri_number_alpha0.00_phi0.47_L100_3.txt", delimiter=" ")
             
             # ###################################### FIG 1 ################################################
 
@@ -1888,6 +1900,7 @@ class distribution:
 
             ax[0].plot(data_1[1:, 0], data_1[1:, 1], label=r"$\alpha=0.1$")
             ax[0].plot(data_2[1:, 0], data_2[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].plot(data_7[1:, 0], data_7[1:, 1], label=r"$\alpha=0.001$")
             ax[0].grid()
             ax[0].set_yscale("log")
             ax[0].legend()
@@ -1896,6 +1909,7 @@ class distribution:
 
             ax[1].plot(data_1[1:, 0], data_1[1:, 2], label=r"$\alpha=0.1$")
             ax[1].plot(data_2[1:, 0], data_2[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].plot(data_7[1:, 0], data_7[1:, 2], label=r"$\alpha=0.001$")
             ax[1].grid()
             ax[1].set_yscale("log")
             ax[1].set_xscale("log")
@@ -1912,6 +1926,7 @@ class distribution:
 
             ax[0].plot(data_3[1:, 0], data_3[1:, 1], label=r"$\alpha=0.1$")
             ax[0].plot(data_4[1:, 0], data_4[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].plot(data_8[1:, 0], data_8[1:, 1], label=r"$\alpha=0.001$")
             ax[0].grid()
             ax[0].set_yscale("log")
             ax[0].legend()
@@ -1920,6 +1935,7 @@ class distribution:
 
             ax[1].plot(data_3[1:, 0], data_3[1:, 2], label=r"$\alpha=0.1$")
             ax[1].plot(data_4[1:, 0], data_4[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].plot(data_8[1:, 0], data_8[1:, 2], label=r"$\alpha=0.001$")
             ax[1].grid()
             ax[1].set_yscale("log")
             ax[1].set_xscale("log")
@@ -1936,6 +1952,7 @@ class distribution:
 
             ax[0].plot(data_5[1:, 0], data_5[1:, 1], label=r"$\alpha=0.1$")
             ax[0].plot(data_6[1:, 0], data_6[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].plot(data_9[1:, 0], data_9[1:, 1], label=r"$\alpha=0.001$")
             ax[0].grid()
             ax[0].set_yscale("log")
             ax[0].legend()
@@ -1944,6 +1961,7 @@ class distribution:
 
             ax[1].plot(data_5[1:, 0], data_5[1:, 2], label=r"$\alpha=0.1$")
             ax[1].plot(data_6[1:, 0], data_6[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].plot(data_9[1:, 0], data_9[1:, 2], label=r"$\alpha=0.001$")
             ax[1].grid()
             ax[1].set_yscale("log")
             ax[1].set_xscale("log")
@@ -1953,16 +1971,45 @@ class distribution:
 
             plt.savefig("./plots/tri_3.pdf", dpi=200, bbox_inches='tight')
 
+            # comparison of same alpha different n
+            if True:
+                fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
+                plt.tight_layout()
+
+                ax[0].plot(data_1[1:, 0], data_1[1:, 1], label=r"$n_\mathrm{max}=1$")
+                ax[0].plot(data_3[1:, 0], data_3[1:, 1], label=r"$n_\mathrm{max}=2$")
+                ax[0].plot(data_5[1:, 0], data_5[1:, 1], label=r"$n_\mathrm{max}=3$")
+                ax[0].grid()
+                ax[0].set_yscale("log")
+                ax[0].legend()
+                ax[0].set_ylabel("Number of clusters")
+                ax[0].set_xscale("log")
+
+                ax[1].plot(data_1[1:, 0], data_1[1:, 2], label=r"$n_\mathrm{max}=1$")
+                ax[1].plot(data_3[1:, 0], data_3[1:, 2], label=r"$n_\mathrm{max}=2$")
+                ax[1].plot(data_5[1:, 0], data_5[1:, 2], label=r"$n_\mathrm{max}=3$")
+                ax[1].grid()
+                ax[1].set_yscale("log")
+                ax[1].set_xscale("log")
+                ax[1].legend()
+                ax[1].set_ylabel("Mean cluster size")
+                ax[1].set_xlabel(r"Time $t$")
+
+                plt.savefig("./plots/tri_comp_n_alpha_0.1.pdf", dpi=200, bbox_inches='tight')
+
         # Hex
         if True:
-            data_1 = np.genfromtxt("./number/hex_number_alpha0.10000_phi1.00_L100.txt", delimiter=" ")
-            data_2 = np.genfromtxt("./number/hex_number_alpha0.01000_phi1.00_L100.txt", delimiter=" ")
+            data_1 = np.genfromtxt("./number/hex_number_alpha0.10_phi1.10_L100.txt", delimiter=" ")
+            data_2 = np.genfromtxt("./number/hex_number_alpha0.01_phi1.10_L100.txt", delimiter=" ")
+            data_7 = np.genfromtxt("./number/hex_number_alpha0.00_phi1.10_L100.txt", delimiter=" ")
 
-            data_3 = np.genfromtxt("./number/hex_number_alpha0.10000_phi2.00_L100_2.txt", delimiter=" ")
-            data_4 = np.genfromtxt("./number/hex_number_alpha0.01000_phi2.00_L100_2.txt", delimiter=" ")
+            data_3 = np.genfromtxt("./number/hex_number_alpha0.10_phi1.32_L100_2.txt", delimiter=" ")
+            data_4 = np.genfromtxt("./number/hex_number_alpha0.01_phi1.32_L100_2.txt", delimiter=" ")
+            data_8 = np.genfromtxt("./number/hex_number_alpha0.00_phi1.32_L100_2.txt", delimiter=" ")
 
-            data_5 = np.genfromtxt("./number/hex_number_alpha0.10000_phi3.00_L100_3.txt", delimiter=" ")
-            data_6 = np.genfromtxt("./number/hex_number_alpha0.01000_phi3.00_L100_3.txt", delimiter=" ")
+            data_5 = np.genfromtxt("./number/hex_number_alpha0.10_phi1.41_L100_3.txt", delimiter=" ")
+            data_6 = np.genfromtxt("./number/hex_number_alpha0.01_phi1.41_L100_3.txt", delimiter=" ")
+            data_9 = np.genfromtxt("./number/hex_number_alpha0.00_phi1.41_L100_3.txt", delimiter=" ")
             
             # ###################################### FIG 1 ################################################
 
@@ -1971,6 +2018,7 @@ class distribution:
 
             ax[0].plot(data_1[1:, 0], data_1[1:, 1], label=r"$\alpha=0.1$")
             ax[0].plot(data_2[1:, 0], data_2[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].plot(data_7[1:, 0], data_7[1:, 1], label=r"$\alpha=0.001$")
             ax[0].grid()
             ax[0].set_yscale("log")
             ax[0].legend()
@@ -1979,6 +2027,7 @@ class distribution:
 
             ax[1].plot(data_1[1:, 0], data_1[1:, 2], label=r"$\alpha=0.1$")
             ax[1].plot(data_2[1:, 0], data_2[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].plot(data_7[1:, 0], data_7[1:, 2], label=r"$\alpha=0.001$")
             ax[1].grid()
             ax[1].set_yscale("log")
             ax[1].set_xscale("log")
@@ -1995,6 +2044,7 @@ class distribution:
 
             ax[0].plot(data_3[1:, 0], data_3[1:, 1], label=r"$\alpha=0.1$")
             ax[0].plot(data_4[1:, 0], data_4[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].plot(data_8[1:, 0], data_8[1:, 1], label=r"$\alpha=0.001$")
             ax[0].grid()
             ax[0].set_yscale("log")
             ax[0].legend()
@@ -2004,6 +2054,7 @@ class distribution:
 
             ax[1].plot(data_3[1:, 0], data_3[1:, 2], label=r"$\alpha=0.1$")
             ax[1].plot(data_4[1:, 0], data_4[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].plot(data_8[1:, 0], data_8[1:, 2], label=r"$\alpha=0.001$")
             ax[1].grid()
             ax[1].set_yscale("log")
             ax[1].set_xscale("log")
@@ -2020,6 +2071,7 @@ class distribution:
 
             ax[0].plot(data_5[1:, 0], data_5[1:, 1], label=r"$\alpha=0.1$")
             ax[0].plot(data_6[1:, 0], data_6[1:, 1], label=r"$\alpha=0.01$")
+            ax[0].plot(data_9[1:, 0], data_9[1:, 1], label=r"$\alpha=0.001$")
             ax[0].grid()
             ax[0].set_yscale("log")
             ax[0].legend()
@@ -2028,6 +2080,7 @@ class distribution:
 
             ax[1].plot(data_5[1:, 0], data_5[1:, 2], label=r"$\alpha=0.1$")
             ax[1].plot(data_6[1:, 0], data_6[1:, 2], label=r"$\alpha=0.01$")
+            ax[1].plot(data_9[1:, 0], data_9[1:, 2], label=r"$\alpha=0.001$")
             ax[1].grid()
             ax[1].set_yscale("log")
             ax[1].set_xscale("log")

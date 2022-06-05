@@ -2586,6 +2586,7 @@ int main(int argc, char* argv[]) {
   if(output[0] == 'p') output = "particles";
   else if(output[0] == 'v') output = "vacancies";
   else if(output[0] == 'c') output = "clusters";
+  else if(output[0] == 's') output = "stable"; // this is for making gifs that show how a system stabilizes...
   else if(output[0] == 'n') output = "number"; // this is for output of time evolution of cluster number and mean cluster size
   else if(output[0] == 'f') output = "function"; // this output is for testing different features. It is not static, as of now, so one should not uses this  without proper inspection of what it does
   else if(output[0] == 'h') output = "heatmap"; // this is for heatmap of clustersizes
@@ -2978,8 +2979,19 @@ int main(int argc, char* argv[]) {
         }
       
       }
+      else if (output == "stable"){
+        ofstream part, numb;
+        part.open("./lars_sim/Data/stable/triangular.txt");
+        numb.open("./lars_sim/Data/stable/triangular_number.txt");
+        
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = TL.run_until(burnin + n * every);
+          // only doing a positional output here
+          numb << t << " " << TL.number_cluster() << endl;
+          part << TriangleParticleWriter(TL, part) << endl;
+        }
+      }
       else {
-        std::cout << "avg by area" << endl;
         ofstream outfile;
         outfile.open("./lars_sim/gif/triangle.txt");
         //outfile << "# L = [ ";
@@ -3111,7 +3123,20 @@ int main(int argc, char* argv[]) {
 
         }
 
-      } 
+      }
+      else if (output == "stable"){
+        ofstream part, numb;
+        part.open("./lars_sim/Data/stable/hexagonal.txt");
+        numb.open("./lars_sim/Data/stable/hexagonal_number.txt");
+        
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = HL.run_until(burnin + n * every);
+          // only doing a positional output here
+          numb << t << " " << HL.number_cluster() << endl;
+          part << HexagonalParticleWriter(HL, part) << endl;
+        }
+      }
+
       else if (output == "heatmap"){
         ofstream outfile, outfile_avg, outfile_nr, outfile_avg_nr;
         outfile.open("./lars_sim/heatmap/hex_alpha_N_n_2.txt");
