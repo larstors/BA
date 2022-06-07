@@ -176,8 +176,47 @@ class AnimatedScatter(object):
         # Note that it expects a sequence of artists, thus the trailing comma.
         return self.scat,
 
+# square
+if True:
+    f = open("./Data/stable/square.txt")
+    data = []
+    for line in f:
+        data.append(np.loadtxt(StringIO(line), dtype=int))
+        
+    numb = np.genfromtxt("./Data/stable/square_number.txt", delimiter=" ")
 
 
+    fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(20, 20), gridspec_kw={'height_ratios': [15, 2]})
+
+    def conv(n):
+
+        x = []
+        y = []
+        for i in n:
+            x.append(i % L[0])
+            y.append(int(i/L[0]))
+        
+        return x, y
+        
+    def animate_tri(i):
+        ax[0].cla()
+        ax[0].scatter(x=conv(data[i][1::3])[0], y=conv(data[i][1::3])[1], c=data[i][2::3], cmap="Greens", s=20, vmin=0, vmax=n, marker="s")
+        ax[0].axis([-50, 110, -5, 90])
+        if i%2:
+            ax[1].plot(numb[i, 0], numb[i, 1], "ko", markersize=1)
+        ax[1].axis([min(numb[:, 0]), max(numb[:, 0]), min(numb[:, 1]), max(numb[:, 1])])
+        ax[1].set_yscale("log")
+        ax[1].set_ylabel("Number of Cluster")
+        ax[1].set_xlabel(r"Time $t$")
+        
+
+
+
+    # Then setup FuncAnimation.
+    ani_tri = animation.FuncAnimation(fig, animate_tri, interval=1, blit=False, save_count=len(numb)-1)
+    ani_tri.save('./gif/Sq_stable_n_2_alpha_0.1.gif', writer='PillowWriter', fps=10)
+
+# triangular
 if False:
     f = open("./Data/stable/triangular.txt")
     data = []

@@ -361,6 +361,24 @@ public:
         }
     }
 
+    double motility_fraction(){
+      double count = 0;
+      for (unsigned n = 0; n < sites.size(); n++){
+        for (unsigned k = 0; k < P.n_max; k++){
+            if (!sites[n].occupied[k]) continue;
+            if (tumble(rng) < S.time() - sites[n].hoptime[k]) {
+                // At least one tumble event happened since we last attempted a hop; so randomise the direction
+                sites[n].direction[k] = anyway(rng);
+            }
+            auto dnbs = neighbours(n);
+            if (sites[dnbs[sites[n].direction[k]]].present == P.n_max){
+              count++;
+            }
+        }
+      }
+      return count/double(P.N);
+    }
+
   // Return cluster size distributions.
     // Element 2n   contains the number of clusters of particles of size n+1
     // Element 2n+1 contains the number of clusters of vacancies of size n+1
@@ -1094,6 +1112,24 @@ public:
         }
     }
 
+    double motility_fraction(){
+      double count = 0;
+      for (unsigned n = 0; n < sites.size(); n++){
+        for (unsigned k = 0; k < P.n_max; k++){
+            if (!sites[n].occupied[k]) continue;
+            if (tumble(rng) < S.time() - sites[n].hoptime[k]) {
+                // At least one tumble event happened since we last attempted a hop; so randomise the direction
+                sites[n].direction[k] = anyway(rng);
+            }
+            auto dnbs = neighbours(n);
+            if (sites[dnbs[sites[n].direction[k]]].present == P.n_max){
+              count++;
+            }
+        }
+      }
+      return count/double(P.N);
+    }
+
     // Return cluster size distributions.
     // Element 2n   contains the number of clusters of particles of size n+1
     // Element 2n+1 contains the number of clusters of vacancies of size n+1
@@ -1653,6 +1689,7 @@ class Hexagonal_lattice {
     // Schedule a hop event for a particle at site n
     void schedule(unsigned n, unsigned index) {
         assert(sites[n].occupied[index]);
+        planned_moves++;
         S.schedule(run(rng), [this, n, index]() {
             assert(sites[n].occupied[index]);
             assert(sites[n].active[index]);
@@ -1675,6 +1712,7 @@ class Hexagonal_lattice {
                 auto dnbs = neighbours_dir(n);
                 
                 if (sites[dnbs[dir]].present[(index + 1)%2] < P.n_max){
+                  actual_moves++;
                   unsigned ind = 0; // index for target space in direction site
                   for (unsigned k = 1 - index%2; k < 2 * P.n_max; k+=2){
                     if (!sites[dnbs[dir]].occupied[k]){
@@ -1792,6 +1830,8 @@ class Hexagonal_lattice {
 
 
 public:
+    unsigned planned_moves;
+    unsigned actual_moves;
 
     Hexagonal_lattice(const Parameters& P, Engine& rng) :
         P(P), // NB: this takes a copy
@@ -1814,6 +1854,10 @@ public:
           }
         }
 
+        planned_moves = 0;
+        actual_moves = 0;
+
+        
 
         unsigned possibilities = position.size();
         unsigned unplaced = P.N;
@@ -1905,6 +1949,27 @@ public:
             site.hoptime[i] = S.time();
           }
         }
+    }
+
+    // function that calculates the fraction of immobile particles
+    double motility_fraction(){
+      double count = 0;
+      for (unsigned n = 0; n < sites.size(); n++){
+        for (unsigned i = 0; i < 2 * P.n_max; i++){
+          if (!sites[n].occupied[i]) continue;
+          if (tumble(rng) < S.time() - sites[n].hoptime[i]){
+            sites[n].direction[i] = anyway(rng);
+          }
+          sites[n].hoptime[i] = S.time();
+          // Get the sites adjacent to the departure site
+          int dir = preference_direction(n, i, sites[n].direction[i]);
+          auto dnbs = neighbours_dir(n);
+          if (sites[dnbs[dir]].present[(i + 1)%2] == P.n_max){
+            count++;
+          }
+        }
+      }
+      return count/double(P.N);
     }
 
     // Return cluster size distributions.
@@ -2586,6 +2651,7 @@ int main(int argc, char* argv[]) {
   if(output[0] == 'p') output = "particles";
   else if(output[0] == 'v') output = "vacancies";
   else if(output[0] == 'c') output = "clusters";
+  else if(output[0] == 'm') output = "motility"; // for outputting the motility of the system
   else if(output[0] == 's') output = "stable"; // this is for making gifs that show how a system stabilizes...
   else if(output[0] == 'n') output = "number"; // this is for output of time evolution of cluster number and mean cluster size
   else if(output[0] == 'f') output = "function"; // this output is for testing different features. It is not static, as of now, so one should not uses this  without proper inspection of what it does
@@ -3123,6 +3189,47 @@ int main(int argc, char* argv[]) {
 
         }
 
+      }else if (output == "motility"){
+        ofstream outfile;
+        outfile.open("./lars_sim/Data/motility/hexagonal.txt");
+        for (double al = 0; al < 0.08 ; al+=0.001){
+          // defining lattice for new alpha
+          P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
+          Hexagonal_lattice LB(P, rng);
+          t = 0;
+          std::vector<double> values_mot;
+          std::vector<double> values_mas;
+          double mean = 0;
+          double rel_mass = 0;
+          double count = 0;
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = LB.run_until(burnin + n * every);
+            values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
+            values_mot.push_back(LB.motility_fraction());
+            rel_mass += double(LB.max_cluster_size_nr())/double(P.N);
+            mean += LB.motility_fraction();
+            count++;
+            //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+          }
+          mean = mean / count;
+          rel_mass = rel_mass / count;
+
+
+          double cov_mot = 0;
+          for (auto& val : values_mot){
+            cov_mot += pow(val - mean, 2);
+          }
+          cov_mot = cov_mot/(values_mot.size() - 1);
+
+          double cov_mas = 0;
+          for (auto& val : values_mas){
+            cov_mas += pow(val - rel_mass, 2);
+          }
+          cov_mas = cov_mas/(values_mas.size() - 1);
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
+        }
+      
       }
       else if (output == "stable"){
         ofstream part, numb;
@@ -3638,6 +3745,20 @@ int main(int argc, char* argv[]) {
 
         }
 
+      }else if (output == "motility"){
+        ofstream outfile;
+        outfile.open("./lars_sim/Data/motility/hexagonal.txt");
+
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = HL.run_until(burnin + n * every);
+          // Output of time, non-motile fraction and relative mass. 
+          double rel_mass = double(HL.max_cluster_size_nr())/double(P.N);
+          
+          outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+
+        }
+      
+      
       } else if (output == "snapshots"){
         ofstream outfile;
         outfile.open("hexdir.txt");
@@ -3649,6 +3770,12 @@ int main(int argc, char* argv[]) {
           outfile << HexDirectionWriter(HL, outfile) << endl;
         }
 
+      }
+      else if (output == "function"){
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = HL.run_until(burnin + n * every);
+          std::cout << HL.planned_moves << " " << HL.actual_moves << endl;
+        }
       }
 
 

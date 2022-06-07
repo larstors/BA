@@ -2089,16 +2089,151 @@ class distribution:
             ax[1].set_xlabel(r"Time $t$")
 
             plt.savefig("./plots/hex_3.pdf", dpi=200, bbox_inches='tight')
-            
-            
+
+    def plot_lattice_type(self):
+        # L=100
+        if True:
+            # n=1
+            data_square = np.genfromtxt("./latticetype/square_alpha0.01_phi0.50_L100.txt", delimiter=" ")[0::2]
+            data_tri = np.genfromtxt("./latticetype/triangular_alpha0.01_phi0.50_L100.txt", delimiter=" ")[0::2]
+            data_hex = np.genfromtxt("./latticetype/hexagonal_alpha0.01_phi1.00_L100.txt", delimiter=" ")[0::2]    
+
+            # n=2
+            data_square_2 = np.genfromtxt("./latticetype/square_nr_alpha0.01_phi1.00_L100_2.txt", delimiter=" ")[0::2]
+            data_tri_2 = np.genfromtxt("./latticetype/triangular_nr_alpha0.01_phi1.00_L100_2.txt", delimiter=" ")[0::2]
+            data_hex_2 = np.genfromtxt("./latticetype/hexagonal_nr_alpha0.01_phi2.00_L100_2.txt", delimiter=" ")[0::2]  
+
+            #n=3
+            data_square_3 = np.genfromtxt("./latticetype/square_nr_alpha0.01_phi1.50_L100_3.txt", delimiter=" ")[0::2]
+            data_tri_3 = np.genfromtxt("./latticetype/triangular_nr_alpha0.01_phi1.50_L100_3.txt", delimiter=" ")[0::2]
+            data_hex_3 = np.genfromtxt("./latticetype/hexagonal_nr_alpha0.01_phi3.00_L100_3.txt", delimiter=" ")[0::2]  
 
 
+            k_square = np.argwhere(data_square != 0)
+            k_tri = np.argwhere(data_tri != 0)
+            k_hex = np.argwhere(data_hex != 0)
+            k_square_2 = np.argwhere(data_square_2 != 0)
+            k_tri_2 = np.argwhere(data_tri_2 != 0)
+            k_hex_2 = np.argwhere(data_hex_2 != 0)
+            k_square_3 = np.argwhere(data_square_3 != 0)
+            k_tri_3 = np.argwhere(data_tri_3 != 0)
+            k_hex_3 = np.argwhere(data_hex_3 != 0)
+
+            data_square = data_square[k_square]/np.sum(data_square[k_square])
+            data_tri = data_tri[k_tri]/np.sum(data_tri[k_tri])
+            data_hex = data_hex[k_hex]/np.sum(data_hex[k_hex])
+            data_square_2 = data_square_2[k_square_2]/np.sum(data_square_2[k_square_2])
+            data_tri_2 = data_tri_2[k_tri_2]/np.sum(data_tri_2[k_tri_2])
+            data_hex_2 = data_hex_2[k_hex_2]/np.sum(data_hex_2[k_hex_2])
+            data_square_3 = data_square_3[k_square_3]/np.sum(data_square_3[k_square_3])
+            data_tri_3 = data_tri_3[k_tri_3]/np.sum(data_tri_3[k_tri_3])
+            data_hex_3 = data_hex_3[k_hex_3]/np.sum(data_hex_3[k_hex_3])
+
+
+            fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 4.5), sharey=True)
+            plt.tight_layout()
+            ax[0].set_ylabel(r"CDF $1-C(k)$")
+            ax[0].set_xlabel(r"Cluster size $k$")
+            ax[1].set_xlabel(r"Cluster size $k$")
+            ax[2].set_xlabel(r"Cluster size $k$")
+            ax[0].axis([1, 3e4, 2e-4, 1])
+            ax[1].axis([1, 3e4, 2e-4, 1])
+            ax[2].axis([1, 3e4, 2e-4, 1])
+
+            ax[0].loglog(k_square+1, 1-np.cumsum(data_square), "g-", label="Square")
+            ax[0].loglog(k_tri+1, 1-np.cumsum(data_tri), "r-", label="Triangular")
+            ax[0].loglog(k_hex+1, 1-np.cumsum(data_hex), "b-", label="Hexagonal")
+
+            ax[1].loglog(k_square_2+1, 1-np.cumsum(data_square_2), "g-", label="Square")
+            ax[1].loglog(k_tri_2+1, 1-np.cumsum(data_tri_2), "r-", label="Triangular")
+            ax[1].loglog(k_hex_2+1, 1-np.cumsum(data_hex_2), "b-", label="Hexagonal")
+
+            ax[2].loglog(k_square_3+1, 1-np.cumsum(data_square_3), "g-", label="Square")
+            ax[2].loglog(k_tri_3+1, 1-np.cumsum(data_tri_3), "r-", label="Triangular")
+            ax[2].loglog(k_hex_3+1, 1-np.cumsum(data_hex_3), "b-", label="Hexagonal")
+
+            ax[0].legend()
+            ax[1].legend()
+            ax[2].legend()
+            ax[0].grid()
+            ax[1].grid()
+            ax[2].grid()
+            plt.savefig("./plots/lattype_100.pdf", dpi=200, bbox_inches='tight')
+
+        # L=200
+        if True:
+                # n=1
+            data_square = np.genfromtxt("./latticetype/square_alpha0.01_phi0.50_L200_1.txt", delimiter=" ")[0::2]
+            data_tri = np.genfromtxt("./latticetype/triangular_alpha0.01_phi0.50_L200_1.txt", delimiter=" ")[0::2]
+            data_hex = np.genfromtxt("./latticetype/hexagonal_alpha0.01_phi1.00_L200_1.txt", delimiter=" ")[0::2]    
+
+            # n=2
+            data_square_2 = np.genfromtxt("./latticetype/square_nr_alpha0.01_phi1.00_L200_2.txt", delimiter=" ")[0::2]
+            data_tri_2 = np.genfromtxt("./latticetype/triangular_nr_alpha0.01_phi1.00_L200_2.txt", delimiter=" ")[0::2]
+            data_hex_2 = np.genfromtxt("./latticetype/hexagonal_nr_alpha0.01_phi2.00_L200_2.txt", delimiter=" ")[0::2]  
+
+            #n=3
+            data_square_3 = np.genfromtxt("./latticetype/square_nr_alpha0.01_phi1.50_L200_3.txt", delimiter=" ")[0::2]
+            data_tri_3 = np.genfromtxt("./latticetype/triangular_nr_alpha0.01_phi1.50_L200_3.txt", delimiter=" ")[0::2]
+            data_hex_3 = np.genfromtxt("./latticetype/hexagonal_nr_alpha0.01_phi3.00_L200_3.txt", delimiter=" ")[0::2]  
+
+
+            k_square = np.argwhere(data_square != 0)
+            k_tri = np.argwhere(data_tri != 0)
+            k_hex = np.argwhere(data_hex != 0)
+            k_square_2 = np.argwhere(data_square_2 != 0)
+            k_tri_2 = np.argwhere(data_tri_2 != 0)
+            k_hex_2 = np.argwhere(data_hex_2 != 0)
+            k_square_3 = np.argwhere(data_square_3 != 0)
+            k_tri_3 = np.argwhere(data_tri_3 != 0)
+            k_hex_3 = np.argwhere(data_hex_3 != 0)
+
+            data_square = data_square[k_square]/np.sum(data_square[k_square])
+            data_tri = data_tri[k_tri]/np.sum(data_tri[k_tri])
+            data_hex = data_hex[k_hex]/np.sum(data_hex[k_hex])
+            data_square_2 = data_square_2[k_square_2]/np.sum(data_square_2[k_square_2])
+            data_tri_2 = data_tri_2[k_tri_2]/np.sum(data_tri_2[k_tri_2])
+            data_hex_2 = data_hex_2[k_hex_2]/np.sum(data_hex_2[k_hex_2])
+            data_square_3 = data_square_3[k_square_3]/np.sum(data_square_3[k_square_3])
+            data_tri_3 = data_tri_3[k_tri_3]/np.sum(data_tri_3[k_tri_3])
+            data_hex_3 = data_hex_3[k_hex_3]/np.sum(data_hex_3[k_hex_3])
+
+
+            fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 4.5), sharey=True)
+            plt.tight_layout()
+            ax[0].set_ylabel(r"CDF $1-C(k)$")
+            ax[0].set_xlabel(r"Cluster size $k$")
+            ax[1].set_xlabel(r"Cluster size $k$")
+            ax[2].set_xlabel(r"Cluster size $k$")
+            ax[0].axis([1, 7e4, 2e-4, 1])
+            ax[1].axis([1, 7e4, 2e-4, 1])
+            ax[2].axis([1, 7e4, 2e-4, 1])
+
+            ax[0].loglog(k_square+1, 1-np.cumsum(data_square), "g-", label="Square")
+            ax[0].loglog(k_tri+1, 1-np.cumsum(data_tri), "r-", label="Triangular")
+            ax[0].loglog(k_hex+1, 1-np.cumsum(data_hex), "b-", label="Hexagonal")
+
+            ax[1].loglog(k_square_2+1, 1-np.cumsum(data_square_2), "g-", label="Square")
+            ax[1].loglog(k_tri_2+1, 1-np.cumsum(data_tri_2), "r-", label="Triangular")
+            ax[1].loglog(k_hex_2+1, 1-np.cumsum(data_hex_2), "b-", label="Hexagonal")
+
+            ax[2].loglog(k_square_3+1, 1-np.cumsum(data_square_3), "g-", label="Square")
+            ax[2].loglog(k_tri_3+1, 1-np.cumsum(data_tri_3), "r-", label="Triangular")
+            ax[2].loglog(k_hex_3+1, 1-np.cumsum(data_hex_3), "b-", label="Hexagonal")
+
+            ax[0].legend()
+            ax[1].legend()
+            ax[2].legend()
+            ax[0].grid()
+            ax[1].grid()
+            ax[2].grid()
+            plt.savefig("./plots/lattype_200.pdf", dpi=200, bbox_inches='tight')
 
 if __name__ == "__main__":
     dist = distribution()
 
-
-    dist.plot_time_evolution()
+    dist.plot_lattice_type()
+    #dist.plot_time_evolution()
 
     #dist.plot_heat()
     #dist.plot_alpha()
