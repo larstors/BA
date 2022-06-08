@@ -2856,7 +2856,22 @@ int main(int argc, char* argv[]) {
           outfile << t << " " << L.number_cluster() << " " << L.avg_cluster_size_nr() << endl;
         }
       
-      } else {
+      } 
+      
+      else if (output == "stable"){
+        ofstream part, numb;
+        part.open("./lars_sim/Data/stable/square.txt");
+        numb.open("./lars_sim/Data/stable/square_number.txt");
+        
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = L.run_until(burnin + n * every);
+          // only doing a positional output here
+          numb << t << " " << L.number_cluster() << endl;
+          part << ParticleWriter(L, part) << endl;
+        }
+      }
+      
+      else {
         ofstream outfile;
         outfile.open("./lars_sim/gif/square.txt");
         for(unsigned n=0; t < burnin + until; ++n) {
@@ -3409,6 +3424,19 @@ int main(int argc, char* argv[]) {
           }
         } 
       }
+      else if (output == "stable"){
+        ofstream part, numb;
+        part.open("./lars_sim/Data/stable/square.txt");
+        numb.open("./lars_sim/Data/stable/square_number.txt");
+        
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = L.run_until(burnin + n * every);
+          // only doing a positional output here
+          numb << t << " " << L.number_cluster() << endl;
+          part << ParticleWriter(L, part) << endl;
+        }
+      }
+
       else if (output == "number"){
         ofstream outfile;
         string name = "./lars_sim/number/square_";
@@ -3588,7 +3616,18 @@ int main(int argc, char* argv[]) {
           outfile << t << " " << TL.number_cluster() << " " << TL.avg_cluster_size() << endl;
         }
       }
-      
+      else if (output == "stable"){
+        ofstream part, numb;
+        part.open("./lars_sim/Data/stable/triangular.txt");
+        numb.open("./lars_sim/Data/stable/triangular_number.txt");
+        
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = TL.run_until(burnin + n * every);
+          // only doing a positional output here
+          numb << t << " " << TL.number_cluster() << endl;
+          part << TriangleParticleWriter(TL, part) << endl;
+        }
+      }
       else {
         ofstream outfile;
         outfile.open("./lars_sim/gif/triangle.txt");
@@ -3684,6 +3723,18 @@ int main(int argc, char* argv[]) {
           }
         }
       } 
+      else if (output == "stable"){
+        ofstream part, numb;
+        part.open("./lars_sim/Data/stable/hexagonal.txt");
+        numb.open("./lars_sim/Data/stable/hexagoonal_number.txt");
+        
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = HL.run_until(burnin + n * every);
+          // only doing a positional output here
+          numb << t << " " << HL.number_cluster() << endl;
+          part << HexagonalParticleWriter(HL, part) << endl;
+        }
+      }
       else if (output == "heatmap"){
         ofstream outfile, outfile_avg;
         outfile.open("./lars_sim/heatmap/hex_alpha_N.txt");

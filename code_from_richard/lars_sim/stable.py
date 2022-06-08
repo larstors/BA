@@ -200,8 +200,8 @@ if True:
         
     def animate_tri(i):
         ax[0].cla()
-        ax[0].scatter(x=conv(data[i][1::3])[0], y=conv(data[i][1::3])[1], c=data[i][2::3], cmap="Greens", s=20, vmin=0, vmax=n, marker="s")
-        ax[0].axis([-50, 110, -5, 90])
+        ax[0].scatter(x=conv(data[i][0::2])[0], y=conv(data[i][0::2])[1], c=data[i][1::2], cmap="Greens", s=40, vmin=0, vmax=n, marker="s")
+        #ax[0].axis([-50, 110, -5, 90])
         if i%2:
             ax[1].plot(numb[i, 0], numb[i, 1], "ko", markersize=1)
         ax[1].axis([min(numb[:, 0]), max(numb[:, 0]), min(numb[:, 1]), max(numb[:, 1])])
@@ -214,7 +214,7 @@ if True:
 
     # Then setup FuncAnimation.
     ani_tri = animation.FuncAnimation(fig, animate_tri, interval=1, blit=False, save_count=len(numb)-1)
-    ani_tri.save('./gif/Sq_stable_n_2_alpha_0.1.gif', writer='PillowWriter', fps=10)
+    ani_tri.save('./gif/Sq_stable_n_1_alpha_0.001_long.gif', writer='PillowWriter', fps=10)
 
 # triangular
 if False:
@@ -227,6 +227,18 @@ if False:
 
 
     fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(20, 20), gridspec_kw={'height_ratios': [15, 2]})
+    
+    def conv(n):
+
+        x = []
+        y = []
+        for i in n:
+            x.append(i % L[0] - 0.5 * int(i / L[0]))
+            y.append(int(i/L[0]) * np.sqrt(3)/2)
+        
+        return x, y
+        
+
 
     def trian():
         # indices for entire lattice
@@ -248,16 +260,7 @@ if False:
     triang = trian()
 
 
-    def conv(n):
-
-        x = []
-        y = []
-        for i in n:
-            x.append(i % L[0] - 0.5 * int(i / L[0]))
-            y.append(int(i/L[0]) * np.sqrt(3)/2)
-        
-        return x, y
-        
+    
     def animate_tri(i):
         ax[0].cla()
         ax[0].triplot(triang, 'r-', alpha=0.3, linewidth=0.1)
@@ -275,14 +278,14 @@ if False:
 
     # Then setup FuncAnimation.
     ani_tri = animation.FuncAnimation(fig, animate_tri, interval=1, blit=False, save_count=len(numb)-1)
-    ani_tri.save('./gif/Tri_stable_n_2_alpha_0.1.gif', writer='PillowWriter', fps=10)
+    ani_tri.save('./gif/Tri_stable_n_2_alpha_0.01_long.gif', writer='PillowWriter', fps=10)
 
 
 
 
 if __name__ == '__main__':
-    a = AnimatedScatter()
-    a.ani.save('./gif/Hex_stable_n_3_alpha_0.001_long.gif', fps=10)
+    #a = AnimatedScatter()
+    #a.ani.save('./gif/Hex_stable_n_2_alpha_0.01_long.gif', fps=10)
     #a.update(0)
     #plt.show()
     #plt.savefig("./lars_sim/triang_test.pdf")

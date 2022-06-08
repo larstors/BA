@@ -1298,7 +1298,7 @@ class distribution:
 
 
         # n_max = 2
-        if False:
+        if True:
             data_square = np.genfromtxt("./heatmap/square_alpha_N_n_2.txt", delimiter=" ")
             data_square_nr = np.genfromtxt("./heatmap/square_nr_alpha_N_n_2.txt", delimiter=" ")
             data_tri = np.genfromtxt("./heatmap/tri_alpha_N_n_2.txt", delimiter=" ")
@@ -1824,7 +1824,7 @@ class distribution:
         data_6_hex = np.genfromtxt("./number/hex_number_alpha0.01_phi1.41_L100_3.txt", delimiter=" ")
         data_9_hex = np.genfromtxt("./number/hex_number_alpha0.00_phi1.41_L100_3.txt", delimiter=" ")
         # Square
-        if True:
+        if False:
             # ###################################### FIG 1 ################################################
 
             fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
@@ -1981,7 +1981,7 @@ class distribution:
                 plt.savefig("./plots/square_comp_n_alpha_0.001.pdf", dpi=200, bbox_inches='tight')
 
         # Tri
-        if True:
+        if False:
             # ###################################### FIG 1 ################################################
 
             fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
@@ -2138,7 +2138,7 @@ class distribution:
                 plt.savefig("./plots/tri_comp_n_alpha_0.001.pdf", dpi=200, bbox_inches='tight')
 
         # Hex
-        if True:
+        if False:
             # ###################################### FIG 1 ################################################
 
             fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
@@ -2673,8 +2673,8 @@ class distribution:
 if __name__ == "__main__":
     dist = distribution()
 
-    dist.plot_lattice_type()
-    #dist.plot_time_evolution()
+    #dist.plot_lattice_type()
+    dist.plot_time_evolution()
 
     #dist.plot_heat()
     #dist.plot_alpha()
