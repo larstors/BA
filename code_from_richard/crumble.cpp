@@ -2856,7 +2856,48 @@ int main(int argc, char* argv[]) {
           outfile << t << " " << L.number_cluster() << " " << L.avg_cluster_size_nr() << endl;
         }
       
-      } 
+      } else if (output == "motility"){
+        ofstream outfile;
+        outfile.open("./lars_sim/Data/motility/square.txt");
+        for (double al = 0; al < 0.08 ; al+=0.001){
+          // defining lattice for new alpha
+          P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
+          Lattice LB(P, rng);
+          t = 0;
+          std::vector<double> values_mot;
+          std::vector<double> values_mas;
+          double mean = 0;
+          double rel_mass = 0;
+          double count = 0;
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = LB.run_until(burnin + n * every);
+            values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
+            values_mot.push_back(LB.motility_fraction());
+            rel_mass += double(LB.max_cluster_size_nr())/double(P.N);
+            mean += LB.motility_fraction();
+            count++;
+            //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+          }
+          mean = mean / count;
+          rel_mass = rel_mass / count;
+
+
+          double cov_mot = 0;
+          for (auto& val : values_mot){
+            cov_mot += pow(val - mean, 2);
+          }
+          cov_mot = cov_mot/(values_mot.size() - 1);
+
+          double cov_mas = 0;
+          for (auto& val : values_mas){
+            cov_mas += pow(val - rel_mass, 2);
+          }
+          cov_mas = cov_mas/(values_mas.size() - 1);
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
+        }
+      
+      }
       
       else if (output == "stable"){
         ofstream part, numb;
@@ -3071,6 +3112,47 @@ int main(int argc, char* argv[]) {
           numb << t << " " << TL.number_cluster() << endl;
           part << TriangleParticleWriter(TL, part) << endl;
         }
+      }else if (output == "motility"){
+        ofstream outfile;
+        outfile.open("./lars_sim/Data/motility/triangular.txt");
+        for (double al = 0; al < 0.08 ; al+=0.001){
+          // defining lattice for new alpha
+          P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
+          Triangle_lattice LB(P, rng);
+          t = 0;
+          std::vector<double> values_mot;
+          std::vector<double> values_mas;
+          double mean = 0;
+          double rel_mass = 0;
+          double count = 0;
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = LB.run_until(burnin + n * every);
+            values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
+            values_mot.push_back(LB.motility_fraction());
+            rel_mass += double(LB.max_cluster_size_nr())/double(P.N);
+            mean += LB.motility_fraction();
+            count++;
+            //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+          }
+          mean = mean / count;
+          rel_mass = rel_mass / count;
+
+
+          double cov_mot = 0;
+          for (auto& val : values_mot){
+            cov_mot += pow(val - mean, 2);
+          }
+          cov_mot = cov_mot/(values_mot.size() - 1);
+
+          double cov_mas = 0;
+          for (auto& val : values_mas){
+            cov_mas += pow(val - rel_mass, 2);
+          }
+          cov_mas = cov_mas/(values_mas.size() - 1);
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
+        }
+      
       }
       else {
         ofstream outfile;
@@ -3484,6 +3566,47 @@ int main(int argc, char* argv[]) {
           outfile << endl;
           outfile_avg << endl;
         } 
+      }else if (output == "motility"){
+        ofstream outfile;
+        outfile.open("./lars_sim/Data/motility/square.txt");
+        for (double al = 0; al < 0.08 ; al+=0.001){
+          // defining lattice for new alpha
+          P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
+          Lattice LB(P, rng);
+          t = 0;
+          std::vector<double> values_mot;
+          std::vector<double> values_mas;
+          double mean = 0;
+          double rel_mass = 0;
+          double count = 0;
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = LB.run_until(burnin + n * every);
+            values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
+            values_mot.push_back(LB.motility_fraction());
+            rel_mass += double(LB.max_cluster_size_nr())/double(P.N);
+            mean += LB.motility_fraction();
+            count++;
+            //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+          }
+          mean = mean / count;
+          rel_mass = rel_mass / count;
+
+
+          double cov_mot = 0;
+          for (auto& val : values_mot){
+            cov_mot += pow(val - mean, 2);
+          }
+          cov_mot = cov_mot/(values_mot.size() - 1);
+
+          double cov_mas = 0;
+          for (auto& val : values_mas){
+            cov_mas += pow(val - rel_mass, 2);
+          }
+          cov_mas = cov_mas/(values_mas.size() - 1);
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
+        }
+      
       }
       else {
         ofstream outfile;
@@ -3627,6 +3750,47 @@ int main(int argc, char* argv[]) {
           numb << t << " " << TL.number_cluster() << endl;
           part << TriangleParticleWriter(TL, part) << endl;
         }
+      }else if (output == "motility"){
+        ofstream outfile;
+        outfile.open("./lars_sim/Data/motility/triangular.txt");
+        for (double al = 0; al < 0.08 ; al+=0.001){
+          // defining lattice for new alpha
+          P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
+          Triangle_lattice LB(P, rng);
+          t = 0;
+          std::vector<double> values_mot;
+          std::vector<double> values_mas;
+          double mean = 0;
+          double rel_mass = 0;
+          double count = 0;
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = LB.run_until(burnin + n * every);
+            values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
+            values_mot.push_back(LB.motility_fraction());
+            rel_mass += double(LB.max_cluster_size_nr())/double(P.N);
+            mean += LB.motility_fraction();
+            count++;
+            //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+          }
+          mean = mean / count;
+          rel_mass = rel_mass / count;
+
+
+          double cov_mot = 0;
+          for (auto& val : values_mot){
+            cov_mot += pow(val - mean, 2);
+          }
+          cov_mot = cov_mot/(values_mot.size() - 1);
+
+          double cov_mas = 0;
+          for (auto& val : values_mas){
+            cov_mas += pow(val - rel_mass, 2);
+          }
+          cov_mas = cov_mas/(values_mas.size() - 1);
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
+        }
+      
       }
       else {
         ofstream outfile;
@@ -3799,16 +3963,43 @@ int main(int argc, char* argv[]) {
       }else if (output == "motility"){
         ofstream outfile;
         outfile.open("./lars_sim/Data/motility/hexagonal.txt");
+        for (double al = 0; al < 0.08 ; al+=0.001){
+          // defining lattice for new alpha
+          P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
+          Hexagonal_lattice LB(P, rng);
+          t = 0;
+          std::vector<double> values_mot;
+          std::vector<double> values_mas;
+          double mean = 0;
+          double rel_mass = 0;
+          double count = 0;
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = LB.run_until(burnin + n * every);
+            values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
+            values_mot.push_back(LB.motility_fraction());
+            rel_mass += double(LB.max_cluster_size_nr())/double(P.N);
+            mean += LB.motility_fraction();
+            count++;
+            //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+          }
+          mean = mean / count;
+          rel_mass = rel_mass / count;
 
-        for(unsigned n=0; t < burnin + until; ++n) {
-          t = HL.run_until(burnin + n * every);
-          // Output of time, non-motile fraction and relative mass. 
-          double rel_mass = double(HL.max_cluster_size_nr())/double(P.N);
-          
-          outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
 
+          double cov_mot = 0;
+          for (auto& val : values_mot){
+            cov_mot += pow(val - mean, 2);
+          }
+          cov_mot = cov_mot/(values_mot.size() - 1);
+
+          double cov_mas = 0;
+          for (auto& val : values_mas){
+            cov_mas += pow(val - rel_mass, 2);
+          }
+          cov_mas = cov_mas/(values_mas.size() - 1);
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
         }
-      
       
       } else if (output == "snapshots"){
         ofstream outfile;
