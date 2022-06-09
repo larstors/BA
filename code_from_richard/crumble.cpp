@@ -2032,7 +2032,7 @@ public:
     // Maybe find a better name, this is very long....
     // Important note here: I am considering a site with at least one particle present as a
     // particle cluster. This means that the overall number of id's is not conserved.
-    // For this, consider n particles and n_max=2. If all n on different site, we lose n vacant id's
+    // For this, consider n particles and n_max=2. If all n are on different site, we lose n vacant id's
     // If, on the other hand, the n are on n/2 sites we lose 0 vacant id's
     hist_t cluster_distribution_particle_number() const {
         // Lookup table of cluster membership by lattice site
@@ -3288,7 +3288,9 @@ int main(int argc, char* argv[]) {
 
       }else if (output == "motility"){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/hexagonal.txt");
+        string name = "./lars_sim/Data/motility/hexagonal";
+        string outputname = name+"_"+occ_p+".txt";
+        outfile.open(outputname);
         for (double al = 0; al < 0.08 ; al+=0.001){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
