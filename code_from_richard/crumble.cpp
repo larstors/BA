@@ -81,7 +81,7 @@ class Lattice {
   Parameters P; // A local copy of the model parameters
   std::vector<Site> sites; // Representation of the sites
   Engine& rng; // Source of noise: this is a reference as there should only be one of these!
-  std::discrete_distribution<unsigned> anyway; // Distribution over tumble directions
+  std::discrete_distribution<unsigned> anyway, initial; // Distribution over tumble directions
   std::exponential_distribution<double> run, tumble; // Distribution of times between run and tumble events
   Scheduler S; // Keeps track of the event queue
 
@@ -150,20 +150,18 @@ class Lattice {
         sites[n].active[index] = false;
       } else {
         // if(std::uniform_real_distribution<double>()(rng)>=std::exp(-P.alpha*(S.time()-sites[n].hoptime))) {
-        if(tumble(rng) < S.time() - sites[n].hoptime[index]) {
-          // At least one tumble event happened since we last attempted a hop; so randomise the direction
-          sites[n].direction[index] = anyway(rng);
-          //std::cout << "Now moving in direction " << int(sites[n].direction) << " from "; decode(n); std::cout << std::endl;
+        if (P.alpha[0] - 1e-5 > 0){
+            if (tumble(rng) < S.time() - sites[n].hoptime[index]) {
+              sites[n].direction[index] = anyway(rng);
+            }
         }
         sites[n].hoptime[index] = S.time();
         // Get the sites adjacent to the departure site
         auto dnbs = neighbours(n);
         if (sites[dnbs[sites[n].direction[index]]].present < P.n_max) {
-                  auto itr = std::find(sites[dnbs[sites[n].direction[index]]].occupied.begin(), sites[dnbs[sites[n].direction[index]]].occupied.end(), false);
-                  unsigned k = std::distance(sites[dnbs[sites[n].direction[index]]].occupied.begin(), itr);
-                  assert(k==2);
-                  if (k < (P.n_max) && !sites[dnbs[sites[n].direction[index]]].occupied[k]){
-                    
+          auto itr = std::find(sites[dnbs[sites[n].direction[index]]].occupied.begin(), sites[dnbs[sites[n].direction[index]]].occupied.end(), false);
+          unsigned k = std::distance(sites[dnbs[sites[n].direction[index]]].occupied.begin(), itr);
+          if (k < (P.n_max) && !sites[dnbs[sites[n].direction[index]]].occupied[k]){
                     //std::cout << "here" << endl;
                     // Get the id of the vacancy that is being displaced
                     unsigned vid = sites[dnbs[sites[n].direction[index]]].id[k];
@@ -265,10 +263,13 @@ public:
     {
       // Set up the tumble direction distribution
       std::vector<double> drates(2*P.L.size());
+      std::vector<double> drates_initial(4);
       for(unsigned d=0;d < P.L.size(); ++d) {
          drates[2*d] = drates[2*d+1] = d<P.alpha.size() ? P.alpha[d]/tumble.lambda() : 1.0;
+         drates_initial[2*d] = drates[2*d+1] = 1.0;
       }
       anyway = std::discrete_distribution<unsigned>(drates.begin(), drates.end());
+      initial = std::discrete_distribution<unsigned>(drates_initial.begin(), drates_initial.end());
 
       std::vector<unsigned>position;
         for(unsigned i = 0; i < P.n_max; i++){
@@ -290,7 +291,7 @@ public:
           unsigned n = l%sites.size();
           unsigned i = l/sites.size();
 
-          place(n, id, anyway(rng), 0.0, i);
+          place(n, id, initial(rng), 0.0, i);
 
           position.erase(position.begin()+index);
           position.push_back(l);
@@ -787,7 +788,7 @@ class Triangle_lattice {
 
     std::vector<Site> sites; // Representation of the sites
     Engine& rng; // Source of noise: this is a reference as there should only be one of these!
-    std::discrete_distribution<unsigned> anyway; // Distribution over tumble directions
+    std::discrete_distribution<unsigned> anyway, initial; // Distribution over tumble directions
     std::exponential_distribution<double> run, tumble; // Distribution of times between run and tumble events
     Scheduler S; // Keeps track of the event queue
 
@@ -902,10 +903,13 @@ class Triangle_lattice {
             }
             else {
                   // if(std::uniform_real_distribution<double>()(rng)>=std::exp(-P.alpha*(S.time()-sites[n].hoptime))) {
-                if (tumble(rng) < S.time() - sites[n].hoptime[index]) {
-                    // At least one tumble event happened since we last attempted a hop; so randomise the direction
+                
+                // Make sure that for alpha=0 we dont get some weird changes.
+                // ! Note that for lower alpha this threshold has to be adjusted
+                if (P.alpha[0] - 1e-5 > 0){
+                  if (tumble(rng) < S.time() - sites[n].hoptime[index]) {
                     sites[n].direction[index] = anyway(rng);
-                    //std::cout << "Now moving in direction " << int(sites[n].direction) << " from "; decode(n); std::cout << std::endl;
+                  }
                 }
                 sites[n].hoptime[index] = S.time();
                 // Get the sites adjacent to the departure site
@@ -1015,10 +1019,13 @@ public:
     {
         // Set up the tumble direction distribution
         std::vector<double> drates(2 * P.L.size() + 2);
+        std::vector<double> drates_initial(6);
         for (unsigned d = 0; d < 3; ++d) {
             drates[2 * d] = drates[2 * d + 1] = d < P.alpha.size() ? P.alpha[d] / tumble.lambda() : 1.0;
+            drates_initial[2*d] = drates_initial[2*d+1] = 1.0;
         }
         anyway = std::discrete_distribution<unsigned>(drates.begin(), drates.end());
+        initial = std::discrete_distribution<unsigned>(drates_initial.begin(), drates_initial.end());
         
         std::vector<unsigned>position;
         for(unsigned i = 0; i < P.n_max; i++){
@@ -1040,7 +1047,7 @@ public:
           unsigned n = l%sites.size();
           unsigned i = l/sites.size();
 
-          place(n, id, anyway(rng), 0.0, i);
+          place(n, id, initial(rng), 0.0, i);
 
           position.erase(position.begin()+index);
           position.push_back(l);
@@ -1558,7 +1565,7 @@ class Hexagonal_lattice {
 
     std::vector<Site> sites; // Representation of the sites
     Engine& rng; // Source of noise: this is a reference as there should only be one of these!
-    std::discrete_distribution<unsigned> anyway; // Distribution over tumble directions
+    std::discrete_distribution<unsigned> anyway, initial; // Distribution over tumble directions
     std::exponential_distribution<double> run, tumble; // Distribution of times between run and tumble events
     Scheduler S; // Keeps track of the event queue
     // Given an index into sites, return a sequence of indices corresponding to
@@ -1702,8 +1709,12 @@ class Hexagonal_lattice {
 
             else {
                 // if(std::uniform_real_distribution<double>()(rng)>=std::exp(-P.alpha*(S.time()-sites[n].hoptime))) {
-                if (tumble(rng) < S.time() - sites[n].hoptime[index]) {
+                // Make sure that for alpha=0 we dont get some weird changes.
+                // ! Note that for lower alpha this threshold has to be adjusted
+                if (P.alpha[0] - 1e-5 > 0){
+                  if (tumble(rng) < S.time() - sites[n].hoptime[index]) {
                     sites[n].direction[index] = anyway(rng);
+                  }
                 }
                 sites[n].hoptime[index] = S.time();
                 // Get the sites adjacent to the departure site
@@ -1720,7 +1731,7 @@ class Hexagonal_lattice {
                       break;
                     }
                   }
-
+                  //std::cout << n << " " << int(sites[n].direction[index]) << endl;
                   assert(!sites[dnbs[dir]].active[ind]);
                   // Get the id of the vacancy that is being displaced
                   unsigned vid = sites[dnbs[dir]].id[ind];
@@ -1842,10 +1853,14 @@ public:
     {
         // Set up the tumble direction distribution
         std::vector<double> drates(6);
+        std::vector<double> drates_initial(6);
         for (unsigned d = 0; d < 3; ++d) {
             drates[2*d] = drates[2*d + 1] = d < P.alpha.size() ? P.alpha[d] / tumble.lambda() : 1.0;
+            drates_initial[2*d] = drates_initial[2*d + 1] = 1.0;
         }
         anyway = std::discrete_distribution<unsigned>(drates.begin(), drates.end()); 
+        initial = std::discrete_distribution<unsigned>(drates_initial.begin(), drates_initial.end());
+        
 
         std::vector<unsigned>position;
         for(unsigned i = 0; i < 2*P.n_max; i++){
@@ -1854,6 +1869,7 @@ public:
           }
         }
 
+        
         planned_moves = 0;
         actual_moves = 0;
 
@@ -1871,7 +1887,7 @@ public:
           unsigned n = l%sites.size();
           unsigned i = l/sites.size();
 
-          direction_t direction = anyway(rng);
+          direction_t direction = initial(rng);
           int dir = preference_direction(n, i, direction);
           auto dnbs = neighbours_dir(n);
 
@@ -4018,7 +4034,6 @@ int main(int argc, char* argv[]) {
       else if (output == "function"){
         for(unsigned n=0; t < burnin + until; ++n) {
           t = HL.run_until(burnin + n * every);
-          std::cout << HL.planned_moves << " " << HL.actual_moves << endl;
         }
       }
 

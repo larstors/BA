@@ -20,7 +20,7 @@ ax2 = fig.add_axes([left, bottom, width, height])
 
 
 ax1.plot(data[:, 0], data[:, 1], "rs", label="J")
-ax1.errorbar(data[::4, 0], data[::4, 1], yerr=data[::4, 2], fmt="s", color="red")
+ax1.errorbar(data[::4, 0], data[::4, 1], yerr=np.sqrt(data[::4, 2]), fmt="s", color="red")
 ax1.plot(data[:, 0], data[:, 3], "bo", label="M")
 ax1.legend()
 ax1.set_xlabel(r"$\alpha$")
@@ -40,7 +40,7 @@ ax2 = fig.add_axes([left, bottom, width, height])
 
 
 ax1.plot(data[:, 0], data[:, 1], "rs", label="J")
-ax1.errorbar(data[::4, 0], data[::4, 1], yerr=data[::4, 2], fmt="s", color="red")
+ax1.errorbar(data[::4, 0], data[::4, 1], yerr=np.sqrt(data[::4, 2]), fmt="s", color="red")
 ax1.plot(data[:, 0], data[:, 3], "bo", label="M")
 ax1.legend()
 ax1.set_xlabel(r"$\alpha$")
