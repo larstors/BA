@@ -266,7 +266,7 @@ public:
       std::vector<double> drates_initial(4);
       for(unsigned d=0;d < P.L.size(); ++d) {
          drates[2*d] = drates[2*d+1] = d<P.alpha.size() ? P.alpha[d]/tumble.lambda() : 1.0;
-         drates_initial[2*d] = drates[2*d+1] = 1.0;
+         drates_initial[2*d] = drates_initial[2*d+1] = 1.0;
       }
       anyway = std::discrete_distribution<unsigned>(drates.begin(), drates.end());
       initial = std::discrete_distribution<unsigned>(drates_initial.begin(), drates_initial.end());
@@ -337,6 +337,8 @@ public:
         }
       }
       assert(consistent());
+
+
     }
 
   // Iterates the simulation until the given time; returns the actual time run to
@@ -1094,6 +1096,7 @@ public:
           }
         }
         assert(consistent());
+
     }
 
     // Iterates the simulation until the given time; returns the actual time run to
@@ -2654,6 +2657,8 @@ int main(int argc, char* argv[]) {
   unsigned details = 0;
   double localinterval = 10.0;
 
+  unsigned details = 0; // for detailed 
+
   app.add_option("-o, --output", output, "Output type: snapshots|particles|vacancies|clusters");
   app.add_option("-l, --lattice_type", lattice_type, "Lattice type: square|triangular|hexagonal");
 
@@ -2662,20 +2667,19 @@ int main(int argc, char* argv[]) {
   app.add_option("-e,--every",         every,         "Measurement interval");
   app.add_option("-a,--localaverage",  localaverage,  "Number of local averages (clusters only; 0=stationary state)");
   app.add_option("-i,--localinterval", localinterval, "Interval between local averages");
-  app.add_option("-d,--details", details, "For detailed output");
+  app.add_option("-d,--details", details, "for detailed output do 1, else 0 (default)");
 
   CLI11_PARSE(app, argc, argv);
 
   if(output[0] == 'p') output = "particles";
   else if(output[0] == 'v') output = "vacancies";
   else if(output[0] == 'c') output = "clusters";
-  else if(output[0] == 'w') output = "weighted";
+  else if(output[0] == 'w') output = "weighted"; // for weighted distribution
   else if(output[0] == 'm') output = "motility"; // for outputting the motility of the system
   else if(output[0] == 's') output = "stable"; // this is for making gifs that show how a system stabilizes...
   else if(output[0] == 'n') output = "number"; // this is for output of time evolution of cluster number and mean cluster size
   else if(output[0] == 'f') output = "function"; // this output is for testing different features. It is not static, as of now, so one should not uses this  without proper inspection of what it does
   else if(output[0] == 'h') output = "heatmap"; // this is for heatmap of clustersizes
-                                                // TODO add similar for motility? moves/planned moves
   else output = "snapshots";
 
   if(lattice_type[0] == 's') lattice_type = "square";
@@ -2697,7 +2701,7 @@ int main(int argc, char* argv[]) {
   // alpha
   std::ostringstream alpha;
   alpha << std::fixed;
-  alpha << std::setprecision(2);
+  alpha << std::setprecision(3);
   alpha << P.alpha[0];
   std::string alpha_p = alpha.str();
   // phi
@@ -2868,19 +2872,40 @@ int main(int argc, char* argv[]) {
         outfile.open(name_number);
 
 
-        t = L.run_until(burnin);  
-        outfile << t << " " << L.number_cluster() << " " << L.avg_cluster_size_nr() << endl;
+        t = L.run_until(burnin);
+        hist_t hist = L.cluster_distributions();
+        double second_moment = 0;
+        double first_moment = 0;
+        for (unsigned i = 0; i < hist.size(); i+=2){
+          second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+          first_moment += hist[i] * ((i+2)/2);
+        }
+        double weighted = second_moment / first_moment;
+        weighted = weighted / double(P.N);
+        outfile << t << " " << weighted << " " << L.avg_cluster_size_nr() << endl;
         for(double n=1; t < burnin + until; n*=1.01) {
           t = L.run_until(burnin + n * every);
-          outfile << t << " " << L.number_cluster() << " " << L.avg_cluster_size_nr() << endl;
+          hist_t hist = L.cluster_distributions();
+          double second_moment = 0;
+          double first_moment = 0;
+          for (unsigned i = 0; i < hist.size(); i+=2){
+            second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+            first_moment += hist[i] * ((i+2)/2);
+          }
+          double weighted = second_moment / first_moment;
+          weighted = weighted / double(P.N);
+          outfile << t << " " << weighted << " " << L.avg_cluster_size_nr() << endl;
         }
       
       } else if (output == "motility"){
+        if (details==0){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/square.txt");
-        for (double al = 0; al < 0.08 ; al+=0.001){
+        string name = "./lars_sim/Data/motility/square_perc";
+        string outputname = name+"_"+occ_p+".txt";
+        outfile.open(outputname);
+        for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
-          P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
+          P.alpha[0] = P.alpha[1]  = al;
           Lattice LB(P, rng);
           t = 0;
           std::vector<double> values_mot;
@@ -2916,8 +2941,51 @@ int main(int argc, char* argv[]) {
           outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
         }
       
+      } else if (details==1){
+        ofstream outfile;
+        string name = "./lars_sim/Data/motility/square_perc_details";
+        string outputname = name+"_"+occ_p+".txt";
+        outfile.open(outputname);
+        for (double al = 0.085; al < 0.095 ; al+=0.0005){
+          // defining lattice for new alpha
+          P.alpha[0] = P.alpha[1]  = al;
+          Lattice LB(P, rng);
+          t = 0;
+          std::vector<double> values_mot;
+          std::vector<double> values_mas;
+          double mean = 0;
+          double rel_mass = 0;
+          double count = 0;
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = LB.run_until(burnin + n * every);
+            values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
+            values_mot.push_back(LB.motility_fraction());
+            rel_mass += double(LB.max_cluster_size_nr())/double(P.N);
+            mean += LB.motility_fraction();
+            count++;
+            //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+          }
+          mean = mean / count;
+          rel_mass = rel_mass / count;
+
+
+          double cov_mot = 0;
+          for (auto& val : values_mot){
+            cov_mot += pow(val - mean, 2);
+          }
+          cov_mot = cov_mot/(values_mot.size() - 1);
+
+          double cov_mas = 0;
+          for (auto& val : values_mas){
+            cov_mas += pow(val - rel_mass, 2);
+          }
+          cov_mas = cov_mas/(values_mas.size() - 1);
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
+        }
+
       }
-      
+      }
       else if (output == "stable"){
         ofstream part, numb;
         part.open("./lars_sim/Data/stable/square.txt");
@@ -2930,7 +2998,32 @@ int main(int argc, char* argv[]) {
           part << ParticleWriter(L, part) << endl;
         }
       }
-      
+      else if (output == "weighted"){
+         ofstream output, part;
+         part.open("./lars_sim/Data/weighted/square_part.txt");
+         output.open("./lars_sim/Data/weighted/square.txt");
+         
+         for(double n=1; t < burnin + until; n++) {
+            t = L.run_until(burnin + n * every);
+            part << ParticleWriter(L, part) << endl;
+            hist_t hist = L.cluster_distributions();
+            double second_moment = 0;
+            double first_moment = 0;
+            for (unsigned i = 0; i < hist.size(); i+=2){
+              second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment += hist[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            double weighted = second_moment / first_moment;
+            weighted = weighted / double(P.N);
+            output << t << " " << weighted << " " << L.avg_cluster_size_nr() << endl;
+         }
+      }
+      else if (output=="function"){
+        for(double n=1; t < burnin + until; n*=1.01) {
+            t = L.run_until(burnin + n * every);
+        }
+      }
       else {
         ofstream outfile;
         outfile.open("./lars_sim/gif/square.txt");
@@ -3085,23 +3178,8 @@ int main(int argc, char* argv[]) {
         }
       } 
       else if (output == "function"){
-        ofstream outfile;
-        outfile.open("./lars_sim/testing/triangle.txt");
-        //outfile << "# L = [ ";
-        //for(const auto& L: P.L) outfile << L << " ";
-        //outfile << "]" << endl;
-        //outfile << "# N = " << P.N << endl;
-        //outfile << "# alpha = [ ";
-        //for(const auto& alpha: P.alpha) outfile << alpha << " ";
-        //outfile << "]" << endl;
-        //outfile << "# output = " << output << endl;
-        //outfile << "# initial = " << burnin << endl;
-        //outfile << "# interval = " << every << endl;
-
-        for(unsigned n=0; t < burnin + until; ++n) {
-          t = TL.run_until(burnin + n * every);
-          // only doing a positional output here
-          outfile << TriangleParticleWriter(TL, outfile) << endl;
+        for(double n=1; t < burnin + until; n*=1.01) {
+            t = TL.run_until(burnin + n * every);
         }
       }
       
@@ -3112,13 +3190,52 @@ int main(int argc, char* argv[]) {
         outfile.open(name_number);
 
 
-        t = TL.run_until(burnin);  
-        outfile << t << " " << TL.number_cluster() << " " << TL.avg_cluster_size_nr() << endl;
+        t = TL.run_until(burnin);
+        hist_t hist = TL.cluster_distributions();
+        double second_moment = 0;
+        double first_moment = 0;
+        for (unsigned i = 0; i < hist.size(); i+=2){
+          second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+          first_moment += hist[i] * ((i+2)/2);
+        }
+        double weighted = second_moment / first_moment;
+        weighted = weighted / double(P.N);
+        outfile << t << " " << weighted << " " << TL.avg_cluster_size_nr() << endl;
         for(double n=1; t < burnin + until; n*=1.01) {
           t = TL.run_until(burnin + n * every);
-          outfile << t << " " << TL.number_cluster() << " " << TL.avg_cluster_size_nr() << endl;
+          hist_t hist = TL.cluster_distributions();
+          double second_moment = 0;
+          double first_moment = 0;
+          for (unsigned i = 0; i < hist.size(); i+=2){
+            second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+            first_moment += hist[i] * ((i+2)/2);
+          }
+          double weighted = second_moment / first_moment;
+          weighted = weighted / double(P.N);
+          outfile << t << " " << weighted << " " << TL.avg_cluster_size_nr() << endl;
         }
       
+      }
+      else if (output == "weighted"){
+         ofstream output, part;
+         part.open("./lars_sim/Data/weighted/tri_part.txt");
+         output.open("./lars_sim/Data/weighted/tri.txt");
+         
+         for(double n=1; t < burnin + until; n++) {
+            t = TL.run_until(burnin + n * every);
+            part << TriangleParticleWriter(TL, part) << endl;
+            hist_t hist = TL.cluster_distributions();
+            double second_moment = 0;
+            double first_moment = 0;
+            for (unsigned i = 0; i < hist.size(); i+=2){
+              second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment += hist[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            double weighted = second_moment / first_moment;
+            weighted = weighted / double(P.N);
+            output << t << " " << weighted << " " << TL.avg_cluster_size_nr() << endl;
+         }
       }
       else if (output == "stable"){
         ofstream part, numb;
@@ -3132,9 +3249,12 @@ int main(int argc, char* argv[]) {
           part << TriangleParticleWriter(TL, part) << endl;
         }
       }else if (output == "motility"){
+        if (details==0){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/triangular.txt");
-        for (double al = 0; al < 0.08 ; al+=0.001){
+        string name = "./lars_sim/Data/motility/triangular_perc";
+        string outputname = name+"_"+occ_p+".txt";
+        outfile.open(outputname);
+        for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
           Triangle_lattice LB(P, rng);
@@ -3171,34 +3291,48 @@ int main(int argc, char* argv[]) {
 
           outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
         }
-      
-      } else if (output=="weighted"){
-        if (details==1){
+        } else if (details==1){
           ofstream outfile;
-          outfile.open("./lars_sim/Data/tri_detail/run_2.txt");
-          unsigned t1 = 0;
-          unsigned t2 = 5e2;
-          unsigned t3 = 1e4;
-          
+        string name = "./lars_sim/Data/motility/triangular_perc_details";
+        string outputname = name+"_"+occ_p+".txt";
+        outfile.open(outputname);
+        for (double al = 0.06; al < 0.07 ; al+=0.0005){
+          // defining lattice for new alpha
+          P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
+          Triangle_lattice LB(P, rng);
+          t = 0;
+          std::vector<double> values_mot;
+          std::vector<double> values_mas;
+          double mean = 0;
+          double rel_mass = 0;
+          double count = 0;
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = LB.run_until(burnin + n * every);
+            values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
+            values_mot.push_back(LB.motility_fraction());
+            rel_mass += double(LB.max_cluster_size_nr())/double(P.N);
+            mean += LB.motility_fraction();
+            count++;
+            //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+          }
+          mean = mean / count;
+          rel_mass = rel_mass / count;
 
-          t = TL.run_until(t1);
 
-          hist_t hist = TL.cluster_distributions_particle_numbers();
+          double cov_mot = 0;
+          for (auto& val : values_mot){
+            cov_mot += pow(val - mean, 2);
+          }
+          cov_mot = cov_mot/(values_mot.size() - 1);
 
-          for (const auto& h : hist) outfile << h << " ";
-          outfile << endl;
+          double cov_mas = 0;
+          for (auto& val : values_mas){
+            cov_mas += pow(val - rel_mass, 2);
+          }
+          cov_mas = cov_mas/(values_mas.size() - 1);
 
-          t = TL.run_until(t2);
-          hist = TL.cluster_distributions_particle_numbers();
-
-          for (const auto& h : hist) outfile << h << " ";
-          outfile << endl;
-
-          t = TL.run_until(t3);
-          hist = TL.cluster_distributions_particle_numbers();
-
-          for (const auto& h : hist) outfile << h << " ";
-          outfile << endl;
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
+        }
 
         }
       }
@@ -3336,11 +3470,12 @@ int main(int argc, char* argv[]) {
         }
 
       }else if (output == "motility"){
+        if (details==0){
         ofstream outfile;
-        string name = "./lars_sim/Data/motility/hexagonal";
+        string name = "./lars_sim/Data/motility/hexagonal_perc";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
-        for (double al = 0; al < 0.08 ; al+=0.001){
+        for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
           Hexagonal_lattice LB(P, rng);
@@ -3378,6 +3513,49 @@ int main(int argc, char* argv[]) {
           outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
         }
       
+      } else if (details==1){
+        ofstream outfile;
+        string name = "./lars_sim/Data/motility/hexagonal_perc_details";
+        string outputname = name+"_"+occ_p+".txt";
+        outfile.open(outputname);
+        for (double al = 0.105; al < 0.12 ; al+=0.0005){
+          // defining lattice for new alpha
+          P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
+          Hexagonal_lattice LB(P, rng);
+          t = 0;
+          std::vector<double> values_mot;
+          std::vector<double> values_mas;
+          double mean = 0;
+          double rel_mass = 0;
+          double count = 0;
+          for(unsigned n=0; t < burnin + until; ++n) {
+            t = LB.run_until(burnin + n * every);
+            values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
+            values_mot.push_back(LB.motility_fraction());
+            rel_mass += double(LB.max_cluster_size_nr())/double(P.N);
+            mean += LB.motility_fraction();
+            count++;
+            //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+          }
+          mean = mean / count;
+          rel_mass = rel_mass / count;
+
+
+          double cov_mot = 0;
+          for (auto& val : values_mot){
+            cov_mot += pow(val - mean, 2);
+          }
+          cov_mot = cov_mot/(values_mot.size() - 1);
+
+          double cov_mas = 0;
+          for (auto& val : values_mas){
+            cov_mas += pow(val - rel_mass, 2);
+          }
+          cov_mas = cov_mas/(values_mas.size() - 1);
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
+        }
+      }
       }
       else if (output == "stable"){
         ofstream part, numb;
@@ -3390,6 +3568,27 @@ int main(int argc, char* argv[]) {
           numb << t << " " << HL.number_cluster() << endl;
           part << HexagonalParticleWriter(HL, part) << endl;
         }
+      }
+      else if (output == "weighted"){
+         ofstream output, part;
+         part.open("./lars_sim/Data/weighted/hex_part.txt");
+         output.open("./lars_sim/Data/weighted/hex.txt");
+         
+         for(double n=1; t < burnin + until; n++) {
+            t = HL.run_until(burnin + n * every);
+            part << HexagonalParticleWriter(HL, part) << endl;
+            hist_t hist = HL.cluster_distributions();
+            double second_moment = 0;
+            double first_moment = 0;
+            for (unsigned i = 0; i < hist.size(); i+=2){
+              second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment += hist[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            double weighted = second_moment / first_moment;
+            weighted = weighted / double(P.N);
+            output << t << " " << weighted << " " << HL.avg_cluster_size_nr() << endl;
+         }
       }
 
       else if (output == "heatmap"){
@@ -3445,11 +3644,29 @@ int main(int argc, char* argv[]) {
         outfile.open(name_number);
 
 
-        t = HL.run_until(burnin);  
-        outfile << t << " " << HL.number_cluster() << " " << HL.avg_cluster_size_nr() << endl;
+        t = HL.run_until(burnin);
+        hist_t hist = HL.cluster_distributions();
+        double second_moment = 0;
+        double first_moment = 0;
+        for (unsigned i = 0; i < hist.size(); i+=2){
+          second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+          first_moment += hist[i] * ((i+2)/2);
+        }
+        double weighted = second_moment / first_moment;
+        weighted = weighted / double(P.N);
+        outfile << t << " " << weighted << " " << HL.avg_cluster_size_nr() << endl;
         for(double n=1; t < burnin + until; n*=1.01) {
           t = HL.run_until(burnin + n * every);
-          outfile << t << " " << HL.number_cluster() << " " << HL.avg_cluster_size_nr() << endl;
+          hist_t hist = HL.cluster_distributions();
+          double second_moment = 0;
+          double first_moment = 0;
+          for (unsigned i = 0; i < hist.size(); i+=2){
+            second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+            first_moment += hist[i] * ((i+2)/2);
+          }
+          double weighted = second_moment / first_moment;
+          weighted = weighted / double(P.N);
+          outfile << t << " " << weighted << " " << HL.avg_cluster_size_nr() << endl;
         }
       } else if (output == "snapshots"){
         ofstream outfile;
@@ -3557,6 +3774,27 @@ int main(int argc, char* argv[]) {
           }
         } 
       }
+      else if (output == "weighted"){
+         ofstream output, part;
+         part.open("./lars_sim/Data/weighted/square_part.txt");
+         output.open("./lars_sim/Data/weighted/square.txt");
+         
+         for(double n=1; t < burnin + until; n++) {
+            t = L.run_until(burnin + n * every);
+            part << ParticleWriter(L, part) << endl;
+            hist_t hist = L.cluster_distributions();
+            double second_moment = 0;
+            double first_moment = 0;
+            for (unsigned i = 0; i < hist.size(); i+=2){
+              second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment += hist[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            double weighted = second_moment / first_moment;
+            weighted = weighted / double(P.N);
+            output << t << " " << weighted << " " << L.avg_cluster_size_nr() << endl;
+         }
+      }
       else if (output == "stable"){
         ofstream part, numb;
         part.open("./lars_sim/Data/stable/square.txt");
@@ -3577,11 +3815,29 @@ int main(int argc, char* argv[]) {
         outfile.open(name_number);
 
 
-        t = L.run_until(burnin);  
-        outfile << t << " " << L.number_cluster() << " " << L.avg_cluster_size() << endl;
+        t = L.run_until(burnin);
+        hist_t hist = L.cluster_distributions();
+        double second_moment = 0;
+        double first_moment = 0;
+        for (unsigned i = 0; i < hist.size(); i+=2){
+          second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+          first_moment += hist[i] * ((i+2)/2);
+        }
+        double weighted = second_moment / first_moment;
+        weighted = weighted / double(P.N);
+        outfile << t << " " << weighted << " " << L.avg_cluster_size_nr() << endl;
         for(double n=1; t < burnin + until; n*=1.01) {
           t = L.run_until(burnin + n * every);
-          outfile << t << " " << L.number_cluster() << " " << L.avg_cluster_size() << endl;
+          hist_t hist = L.cluster_distributions();
+          double second_moment = 0;
+          double first_moment = 0;
+          for (unsigned i = 0; i < hist.size(); i+=2){
+            second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+            first_moment += hist[i] * ((i+2)/2);
+          }
+          double weighted = second_moment / first_moment;
+          weighted = weighted / double(P.N);
+          outfile << t << " " << weighted << " " << L.avg_cluster_size_nr() << endl;
         }
       }
       else if (output == "heatmap"){
@@ -3619,10 +3875,10 @@ int main(int argc, char* argv[]) {
         } 
       }else if (output == "motility"){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/square.txt");
-        for (double al = 0; al < 0.08 ; al+=0.001){
+        outfile.open("./lars_sim/Data/motility/square_perc.txt");
+        for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
-          P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
+          P.alpha[0] = P.alpha[1]  = al;
           Lattice LB(P, rng);
           t = 0;
           std::vector<double> values_mot;
@@ -3741,7 +3997,28 @@ int main(int argc, char* argv[]) {
             outfile << endl;
           }
         }
-      } 
+      }
+      else if (output == "weighted"){
+         ofstream output, part;
+         part.open("./lars_sim/Data/weighted/tri_part.txt");
+         output.open("./lars_sim/Data/weighted/tri.txt");
+         
+         for(double n=1; t < burnin + until; n++) {
+            t = TL.run_until(burnin + n * every);
+            part << TriangleParticleWriter(TL, part) << endl;
+            hist_t hist = TL.cluster_distributions();
+            double second_moment = 0;
+            double first_moment = 0;
+            for (unsigned i = 0; i < hist.size(); i+=2){
+              second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment += hist[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            double weighted = second_moment / first_moment;
+            weighted = weighted / double(P.N);
+            output << t << " " << weighted << " " << TL.avg_cluster_size_nr() << endl;
+         }
+      }
       else if (output == "heatmap"){
         ofstream outfile, outfile_avg;
         outfile.open("./lars_sim/heatmap/tri_alpha_N.txt");
@@ -3783,11 +4060,29 @@ int main(int argc, char* argv[]) {
         outfile.open(name_number);
 
 
-        t = TL.run_until(burnin);  
-        outfile << t << " " << TL.number_cluster() << " " << TL.avg_cluster_size() << endl;
+        t = TL.run_until(burnin);
+        hist_t hist = TL.cluster_distributions();
+        double second_moment = 0;
+        double first_moment = 0;
+        for (unsigned i = 0; i < hist.size(); i+=2){
+          second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+          first_moment += hist[i] * ((i+2)/2);
+        }
+        double weighted = second_moment / first_moment;
+        weighted = weighted / double(P.N);
+        outfile << t << " " << weighted << " " << TL.avg_cluster_size_nr() << endl;
         for(double n=1; t < burnin + until; n*=1.01) {
           t = TL.run_until(burnin + n * every);
-          outfile << t << " " << TL.number_cluster() << " " << TL.avg_cluster_size() << endl;
+          hist_t hist = TL.cluster_distributions();
+          double second_moment = 0;
+          double first_moment = 0;
+          for (unsigned i = 0; i < hist.size(); i+=2){
+            second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+            first_moment += hist[i] * ((i+2)/2);
+          }
+          double weighted = second_moment / first_moment;
+          weighted = weighted / double(P.N);
+          outfile << t << " " << weighted << " " << TL.avg_cluster_size_nr() << endl;
         }
       }
       else if (output == "stable"){
@@ -3803,8 +4098,8 @@ int main(int argc, char* argv[]) {
         }
       }else if (output == "motility"){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/triangular.txt");
-        for (double al = 0; al < 0.08 ; al+=0.001){
+        outfile.open("./lars_sim/Data/motility/triangular_perc.txt");
+        for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
           Triangle_lattice LB(P, rng);
@@ -3938,6 +4233,27 @@ int main(int argc, char* argv[]) {
           }
         }
       } 
+      else if (output == "weighted"){
+         ofstream output, part;
+         part.open("./lars_sim/Data/weighted/hex_part.txt");
+         output.open("./lars_sim/Data/weighted/hex.txt");
+         
+         for(double n=1; t < burnin + until; n++) {
+            t = HL.run_until(burnin + n * every);
+            part << HexagonalParticleWriter(HL, part) << endl;
+            hist_t hist = HL.cluster_distributions();
+            double second_moment = 0;
+            double first_moment = 0;
+            for (unsigned i = 0; i < hist.size(); i+=2){
+              second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment += hist[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            double weighted = second_moment / first_moment;
+            weighted = weighted / double(P.N);
+            output << t << " " << weighted << " " << HL.avg_cluster_size_nr() << endl;
+         }
+      }
       else if (output == "stable"){
         ofstream part, numb;
         part.open("./lars_sim/Data/stable/hexagonal.txt");
@@ -3993,11 +4309,29 @@ int main(int argc, char* argv[]) {
         outfile.open(name_number);
 
 
-        t = HL.run_until(burnin);  
-        outfile << t << " " << HL.number_cluster() << " " << HL.avg_cluster_size() << endl;
+        t = HL.run_until(burnin);
+        hist_t hist = HL.cluster_distributions();
+        double second_moment = 0;
+        double first_moment = 0;
+        for (unsigned i = 0; i < hist.size(); i+=2){
+          second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+          first_moment += hist[i] * ((i+2)/2);
+        }
+        double weighted = second_moment / first_moment;
+        weighted = weighted / double(P.N);
+        outfile << t << " " << weighted << " " << HL.avg_cluster_size_nr() << endl;
         for(double n=1; t < burnin + until; n*=1.01) {
           t = HL.run_until(burnin + n * every);
-          outfile << t << " " << HL.number_cluster() << " " << HL.avg_cluster_size() << endl;
+          hist_t hist = HL.cluster_distributions();
+          double second_moment = 0;
+          double first_moment = 0;
+          for (unsigned i = 0; i < hist.size(); i+=2){
+            second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+            first_moment += hist[i] * ((i+2)/2);
+          }
+          double weighted = second_moment / first_moment;
+          weighted = weighted / double(P.N);
+          outfile << t << " " << weighted << " " << HL.avg_cluster_size_nr() << endl;
         }
       }else if (output == "particles") {
         ofstream outfile;
@@ -4013,8 +4347,8 @@ int main(int argc, char* argv[]) {
 
       }else if (output == "motility"){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/hexagonal.txt");
-        for (double al = 0; al < 0.08 ; al+=0.001){
+        outfile.open("./lars_sim/Data/motility/hexagonal_perc.txt");
+        for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
           Hexagonal_lattice LB(P, rng);
