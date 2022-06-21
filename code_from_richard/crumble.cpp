@@ -770,7 +770,7 @@ class Triangle_lattice {
 
     Parameters P; // A local copy of the model parameters
 
-    static constexpr unsigned n_max = 3; // ! Nicer way of doing this?
+    static constexpr unsigned n_max = 5; // ! Nicer way of doing this?
     
     
 
@@ -2651,22 +2651,25 @@ int main(int argc, char* argv[]) {
   std::string lattice_type = ""; 
   double burnin = 1000, until = 5000, every = 2.5;
   unsigned localaverage = 0;
+  unsigned details = 0;
   double localinterval = 10.0;
 
   app.add_option("-o, --output", output, "Output type: snapshots|particles|vacancies|clusters");
-  app.add_option("-l, --lattice_type", lattice_type, "Lattice type: square|triangular(being worked on)|hexagonal(being worked on)");
+  app.add_option("-l, --lattice_type", lattice_type, "Lattice type: square|triangular|hexagonal");
 
   app.add_option("-b,--burnin",        burnin,        "Time to run before starting measurements");
   app.add_option("-u,--until",         until,         "Time to run for once measurements started");
   app.add_option("-e,--every",         every,         "Measurement interval");
   app.add_option("-a,--localaverage",  localaverage,  "Number of local averages (clusters only; 0=stationary state)");
   app.add_option("-i,--localinterval", localinterval, "Interval between local averages");
+  app.add_option("-d,--details", details, "For detailed output");
 
   CLI11_PARSE(app, argc, argv);
 
   if(output[0] == 'p') output = "particles";
   else if(output[0] == 'v') output = "vacancies";
   else if(output[0] == 'c') output = "clusters";
+  else if(output[0] == 'w') output = "weighted";
   else if(output[0] == 'm') output = "motility"; // for outputting the motility of the system
   else if(output[0] == 's') output = "stable"; // this is for making gifs that show how a system stabilizes...
   else if(output[0] == 'n') output = "number"; // this is for output of time evolution of cluster number and mean cluster size
@@ -3169,7 +3172,37 @@ int main(int argc, char* argv[]) {
           outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
         }
       
+      } else if (output=="weighted"){
+        if (details==1){
+          ofstream outfile;
+          outfile.open("./lars_sim/Data/tri_detail/run_2.txt");
+          unsigned t1 = 0;
+          unsigned t2 = 5e2;
+          unsigned t3 = 1e4;
+          
+
+          t = TL.run_until(t1);
+
+          hist_t hist = TL.cluster_distributions_particle_numbers();
+
+          for (const auto& h : hist) outfile << h << " ";
+          outfile << endl;
+
+          t = TL.run_until(t2);
+          hist = TL.cluster_distributions_particle_numbers();
+
+          for (const auto& h : hist) outfile << h << " ";
+          outfile << endl;
+
+          t = TL.run_until(t3);
+          hist = TL.cluster_distributions_particle_numbers();
+
+          for (const auto& h : hist) outfile << h << " ";
+          outfile << endl;
+
+        }
       }
+      
       else {
         ofstream outfile;
         outfile.open("./lars_sim/gif/triangle.txt");
