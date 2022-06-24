@@ -627,13 +627,13 @@ class distribution:
 
     def plot_alpha(self):
         # square
-        if False:
-            data_alpha_00001 = np.genfromtxt("./tumblerate/square_alpha0.0001000_phi0.50_L100.txt", delimiter=" ")[0::2]
-            data_alpha_0001 = np.genfromtxt("./tumblerate/square_alpha0.0010000_phi0.50_L100.txt", delimiter=" ")[0::2]
-            data_alpha_001 = np.genfromtxt("./tumblerate/square_alpha0.0100000_phi0.50_L100.txt", delimiter=" ")[0::2]
-            data_alpha_01 = np.genfromtxt("./tumblerate/square_alpha0.1000000_phi0.50_L100.txt", delimiter=" ")[0::2]
-            data_alpha_05 = np.genfromtxt("./tumblerate/square_alpha0.5000000_phi0.50_L100.txt", delimiter=" ")[0::2]
-            data_alpha_1 = np.genfromtxt("./tumblerate/square_alpha1.0000000_phi0.50_L100.txt", delimiter=" ")[0::2]
+        if True:
+            #data_alpha_00001 = np.genfromtxt("./tumblerate/square_alpha0.0001000_phi0.47_L100_1.txt", delimiter=" ")[0::2]
+            data_alpha_0001 = np.genfromtxt("./tumblerate/square_alpha0.001_phi0.47_L100_1.txt", delimiter=" ")[0::2]
+            data_alpha_001 = np.genfromtxt("./tumblerate/square_alpha0.010_phi0.47_L100_1.txt", delimiter=" ")[0::2]
+            data_alpha_01 = np.genfromtxt("./tumblerate/square_alpha0.100_phi0.47_L100_1.txt", delimiter=" ")[0::2]
+            #data_alpha_05 = np.genfromtxt("./tumblerate/square_alpha0.5000000_phi0.50_L100.txt", delimiter=" ")[0::2]
+            data_alpha_1 = np.genfromtxt("./tumblerate/square_alpha1.000_phi0.47_L100_1.txt", delimiter=" ")[0::2]
 
             """
             data_nr_alpha_0.0001 = np.genfromtxt()
@@ -643,11 +643,11 @@ class distribution:
             data_nr_alpha_0.5 = np.genfromtxt()
             data_nr_alpha_1 = np.genfromtxt()
             """
-            x_00001 = np.argwhere(data_alpha_00001 != 0)
+            #x_00001 = np.argwhere(data_alpha_00001 != 0)
             x_0001 = np.argwhere(data_alpha_0001 != 0)
             x_001 = np.argwhere(data_alpha_001 != 0)
             x_01 = np.argwhere(data_alpha_01 != 0)
-            x_05 = np.argwhere(data_alpha_05 != 0)
+            #x_05 = np.argwhere(data_alpha_05 != 0)
             x_1 = np.argwhere(data_alpha_1 != 0)
 
             """
@@ -658,11 +658,11 @@ class distribution:
             x_nr_05 = np.argwhere(data_nr_alpha_05 != 0)
             x_nr_1 = np.argwhere(data_nr_alpha_1 != 0)
             """
-            data_alpha_00001 = data_alpha_00001[x_00001]/np.sum(data_alpha_00001[x_00001])
+            #data_alpha_00001 = data_alpha_00001[x_00001]/np.sum(data_alpha_00001[x_00001])
             data_alpha_0001 = data_alpha_0001[x_0001]/np.sum(data_alpha_0001[x_0001])
             data_alpha_001 = data_alpha_001[x_001]/np.sum(data_alpha_001[x_001])
             data_alpha_01 = data_alpha_01[x_01]/np.sum(data_alpha_01[x_01])
-            data_alpha_05 = data_alpha_05[x_05]/np.sum(data_alpha_05[x_05])
+            #data_alpha_05 = data_alpha_05[x_05]/np.sum(data_alpha_05[x_05])
             data_alpha_1 = data_alpha_1[x_1]/np.sum(data_alpha_1[x_1])
 
             """
@@ -676,168 +676,42 @@ class distribution:
 
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
+            #plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
             plt.loglog(x_0001 + 1, 1-np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
             plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
-            plt.axis([1, 1e4, 1e-7, 1])
+            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-", label=r"$\alpha=0.1$")
+            #plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-", label=r"$\alpha=1$")
+            plt.axis([1, 1e4, 1e-5, 1])
             plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $1-C(k)$")
+            plt.ylabel(r"$1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/square_alpha.pdf", dpi=200)
             
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
-            plt.axis([1, 1e4, 1e-7, 1])
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $1-C(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/square_alpha_high.pdf", dpi=200)
             
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, data_alpha_00001, "r-", label=r"$\alpha=0.0001$")
-            plt.loglog(x_0001 + 1, data_alpha_0001, "g--", label=r"$\alpha=0.001$")
+            #plt.loglog(x_00001 + 1, data_alpha_00001, "r-", label=r"$\alpha=0.0001$")
+            plt.loglog(x_0001 + 1, data_alpha_0001, "g-", label=r"$\alpha=0.001$")
             plt.loglog(x_001 + 1, data_alpha_001, "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, data_alpha_01, "m--", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, data_alpha_05, "k-", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, data_alpha_1, "y--", label=r"$\alpha=1$")
+            plt.loglog(x_01 + 1, data_alpha_01, "m-", label=r"$\alpha=0.1$")
+            #plt.loglog(x_05 + 1, data_alpha_05, "k-", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, data_alpha_1, "y-", label=r"$\alpha=1$")
             plt.xlabel(r"Cluster size $k$")
             plt.ylabel(r"PDF $p(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/square_alpha_pdf.pdf", dpi=200)
-
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, data_alpha_001, "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, data_alpha_01, "m--", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, data_alpha_05, "k-", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, data_alpha_1, "y--", label=r"$\alpha=1$")
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"PDF $p(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/square_alpha_pdf_high.pdf", dpi=200)
-
-            # ################################################################################
-            # The following is for lower denisties
-
-            data_alpha_00001 = np.genfromtxt("./tumblerate/square_alpha0.0001000_phi0.10_L100.txt", delimiter=" ")[0::2]
-            data_alpha_0001 = np.genfromtxt("./tumblerate/square_alpha0.0010000_phi0.10_L100.txt", delimiter=" ")[0::2]
-            data_alpha_001 = np.genfromtxt("./tumblerate/square_alpha0.0100000_phi0.10_L100.txt", delimiter=" ")[0::2]
-            data_alpha_01 = np.genfromtxt("./tumblerate/square_alpha0.1000000_phi0.10_L100.txt", delimiter=" ")[0::2]
-            data_alpha_05 = np.genfromtxt("./tumblerate/square_alpha0.5000000_phi0.10_L100.txt", delimiter=" ")[0::2]
-            data_alpha_1 = np.genfromtxt("./tumblerate/square_alpha1.0000000_phi0.10_L100.txt", delimiter=" ")[0::2]
-
-            """
-            data_nr_alpha_0.0001 = np.genfromtxt()
-            data_nr_alpha_0.001 = np.genfromtxt()
-            data_nr_alpha_0.01 = np.genfromtxt()
-            data_nr_alpha_0.1 = np.genfromtxt()
-            data_nr_alpha_0.5 = np.genfromtxt()
-            data_nr_alpha_1 = np.genfromtxt()
-            """
-            x_00001 = np.argwhere(data_alpha_00001 != 0)
-            x_0001 = np.argwhere(data_alpha_0001 != 0)
-            x_001 = np.argwhere(data_alpha_001 != 0)
-            x_01 = np.argwhere(data_alpha_01 != 0)
-            x_05 = np.argwhere(data_alpha_05 != 0)
-            x_1 = np.argwhere(data_alpha_1 != 0)
-
-            """
-            x_nr_00001 = np.argwhere(data_nr_alpha_00001 != 0)
-            x_nr_0001 = np.argwhere(data_nr_alpha_0001 != 0)
-            x_nr_001 = np.argwhere(data_nr_alpha_001 != 0)
-            x_nr_01 = np.argwhere(data_nr_alpha_01 != 0)
-            x_nr_05 = np.argwhere(data_nr_alpha_05 != 0)
-            x_nr_1 = np.argwhere(data_nr_alpha_1 != 0)
-            """
-            data_alpha_00001 = data_alpha_00001[x_00001]/np.sum(data_alpha_00001[x_00001])
-            data_alpha_0001 = data_alpha_0001[x_0001]/np.sum(data_alpha_0001[x_0001])
-            data_alpha_001 = data_alpha_001[x_001]/np.sum(data_alpha_001[x_001])
-            data_alpha_01 = data_alpha_01[x_01]/np.sum(data_alpha_01[x_01])
-            data_alpha_05 = data_alpha_05[x_05]/np.sum(data_alpha_05[x_05])
-            data_alpha_1 = data_alpha_1[x_1]/np.sum(data_alpha_1[x_1])
-
-            """
-            data_nr_alpha_00001 = data_nr_alpha_00001[x_nr_00001]/np.sum(data_nr_alpha_00001[x_nr_00001])
-            data_nr_alpha_0001 = data_nr_alpha_0001[x_nr_0001]/np.sum(data_nr_alpha_0001[x_nr_0001])
-            data_nr_alpha_001 = data_nr_alpha_001[x_nr_001]/np.sum(data_nr_alpha_001[x_nr_001])
-            data_nr_alpha_01 = data_nr_alpha_01[x_nr_01]/np.sum(data_nr_alpha_01[x_nr_01])
-            data_nr_alpha_05 = data_nr_alpha_05[x_nr_05]/np.sum(data_nr_alpha_05[x_nr_05])
-            data_nr_alpha_1 = data_nr_alpha_1[x_nr_1]/np.sum(data_nr_alpha_1[x_nr_1])
-            """
-
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
-            plt.loglog(x_0001 + 1, 1-np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
-            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
-            plt.axis([1, 2e2, 1e-7, 1])
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $1-C(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/square_alpha_phi_low.pdf", dpi=200)
-
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
-            plt.axis([1, 2e2, 1e-7, 1])
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $1-C(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/square_alpha_high_phi_low.pdf", dpi=200)
-
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, data_alpha_00001, "r-", label=r"$\alpha=0.0001$")
-            plt.loglog(x_0001 + 1, data_alpha_0001, "g--", label=r"$\alpha=0.001$")
-            plt.loglog(x_001 + 1, data_alpha_001, "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, data_alpha_01, "m--", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, data_alpha_05, "k-", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, data_alpha_1, "y--", label=r"$\alpha=1$")
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"PDF $p(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/square_alpha_phi_low_pdf.pdf", dpi=200)
-
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, data_alpha_001, "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, data_alpha_01, "m--", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, data_alpha_05, "k-", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, data_alpha_1, "y--", label=r"$\alpha=1$")
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"PDF $p(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/square_alpha_high_phi_low_pdf.pdf", dpi=200)
+            
 
         # hexagonal
         if True:
-            data_alpha_00001 = np.genfromtxt("./tumblerate/hexagonal_alpha0.0001000_phi1.00_L100.txt", delimiter=" ")[0::2]
+            #data_alpha_00001 = np.genfromtxt("./tumblerate/hexagonal_alpha0.0001000_phi1.00_L100.txt", delimiter=" ")[0::2]
             data_alpha_0001 = np.genfromtxt("./tumblerate/hexagonal_alpha0.0010000_phi1.00_L100.txt", delimiter=" ")[0::2]
             data_alpha_001 = np.genfromtxt("./tumblerate/hexagonal_alpha0.0100000_phi1.00_L100.txt", delimiter=" ")[0::2]
             data_alpha_01 = np.genfromtxt("./tumblerate/hexagonal_alpha0.1000000_phi1.00_L100.txt", delimiter=" ")[0::2]
-            data_alpha_05 = np.genfromtxt("./tumblerate/hexagonal_alpha0.5000000_phi1.00_L100.txt", delimiter=" ")[0::2]
+            #data_alpha_05 = np.genfromtxt("./tumblerate/hexagonal_alpha0.5000000_phi1.00_L100.txt", delimiter=" ")[0::2]
             data_alpha_1 = np.genfromtxt("./tumblerate/hexagonal_alpha1.0000000_phi1.00_L100.txt", delimiter=" ")[0::2]
 
             """
@@ -848,11 +722,11 @@ class distribution:
             data_nr_alpha_0.5 = np.genfromtxt()
             data_nr_alpha_1 = np.genfromtxt()
             """
-            x_00001 = np.argwhere(data_alpha_00001 != 0)
+            #x_00001 = np.argwhere(data_alpha_00001 != 0)
             x_0001 = np.argwhere(data_alpha_0001 != 0)
             x_001 = np.argwhere(data_alpha_001 != 0)
             x_01 = np.argwhere(data_alpha_01 != 0)
-            x_05 = np.argwhere(data_alpha_05 != 0)
+            #x_05 = np.argwhere(data_alpha_05 != 0)
             x_1 = np.argwhere(data_alpha_1 != 0)
 
             """
@@ -863,11 +737,11 @@ class distribution:
             x_nr_05 = np.argwhere(data_nr_alpha_05 != 0)
             x_nr_1 = np.argwhere(data_nr_alpha_1 != 0)
             """
-            data_alpha_00001 = data_alpha_00001[x_00001]/np.sum(data_alpha_00001[x_00001])
+            #data_alpha_00001 = data_alpha_00001[x_00001]/np.sum(data_alpha_00001[x_00001])
             data_alpha_0001 = data_alpha_0001[x_0001]/np.sum(data_alpha_0001[x_0001])
             data_alpha_001 = data_alpha_001[x_001]/np.sum(data_alpha_001[x_001])
             data_alpha_01 = data_alpha_01[x_01]/np.sum(data_alpha_01[x_01])
-            data_alpha_05 = data_alpha_05[x_05]/np.sum(data_alpha_05[x_05])
+            #data_alpha_05 = data_alpha_05[x_05]/np.sum(data_alpha_05[x_05])
             data_alpha_1 = data_alpha_1[x_1]/np.sum(data_alpha_1[x_1])
 
             """
@@ -881,12 +755,12 @@ class distribution:
 
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
+            #plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
             plt.loglog(x_0001 + 1, 1-np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
             plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
+            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-", label=r"$\alpha=0.1$")
+            #plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-", label=r"$\alpha=1$")
             plt.axis([1, 5e3, 1e-7, 1])
             plt.xlabel(r"Cluster size $k$")
             plt.ylabel(r"CDF $1-C(k)$")
@@ -896,154 +770,28 @@ class distribution:
             
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
-            plt.axis([1, 5e3, 1e-7, 1])
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $1-C(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/hex_alpha_high.pdf", dpi=200)
-            
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, data_alpha_00001, "r-", label=r"$\alpha=0.0001$")
-            plt.loglog(x_0001 + 1, data_alpha_0001, "g--", label=r"$\alpha=0.001$")
+            #plt.loglog(x_00001 + 1, data_alpha_00001, "r-", label=r"$\alpha=0.0001$")
+            plt.loglog(x_0001 + 1, data_alpha_0001, "g-", label=r"$\alpha=0.001$")
             plt.loglog(x_001 + 1, data_alpha_001, "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, data_alpha_01, "m--", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, data_alpha_05, "k-", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, data_alpha_1, "y--", label=r"$\alpha=1$")
+            plt.loglog(x_01 + 1, data_alpha_01, "m-", label=r"$\alpha=0.1$")
+            #plt.loglog(x_05 + 1, data_alpha_05, "k-", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, data_alpha_1, "y-", label=r"$\alpha=1$")
             plt.xlabel(r"Cluster size $k$")
             plt.ylabel(r"PDF $p(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/hex_alpha_pdf.pdf", dpi=200)
 
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, data_alpha_001, "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, data_alpha_01, "m--", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, data_alpha_05, "k-", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, data_alpha_1, "y--", label=r"$\alpha=1$")
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"PDF $p(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/hex_alpha_pdf_high.pdf", dpi=200)
-
-            # ################################################################################
-            # The following is for lower denisties
-
-            data_alpha_00001 = np.genfromtxt("./tumblerate/hexagonal_alpha0.0001000_phi0.20_L100.txt", delimiter=" ")[0::2]
-            data_alpha_0001 = np.genfromtxt("./tumblerate/hexagonal_alpha0.0010000_phi0.20_L100.txt", delimiter=" ")[0::2]
-            data_alpha_001 = np.genfromtxt("./tumblerate/hexagonal_alpha0.0100000_phi0.20_L100.txt", delimiter=" ")[0::2]
-            data_alpha_01 = np.genfromtxt("./tumblerate/hexagonal_alpha0.1000000_phi0.20_L100.txt", delimiter=" ")[0::2]
-            data_alpha_05 = np.genfromtxt("./tumblerate/hexagonal_alpha0.5000000_phi0.20_L100.txt", delimiter=" ")[0::2]
-            data_alpha_1 = np.genfromtxt("./tumblerate/hexagonal_alpha1.0000000_phi0.20_L100.txt", delimiter=" ")[0::2]
-
-            """
-            data_nr_alpha_0.0001 = np.genfromtxt()
-            data_nr_alpha_0.001 = np.genfromtxt()
-            data_nr_alpha_0.01 = np.genfromtxt()
-            data_nr_alpha_0.1 = np.genfromtxt()
-            data_nr_alpha_0.5 = np.genfromtxt()
-            data_nr_alpha_1 = np.genfromtxt()
-            """
-            x_00001 = np.argwhere(data_alpha_00001 != 0)
-            x_0001 = np.argwhere(data_alpha_0001 != 0)
-            x_001 = np.argwhere(data_alpha_001 != 0)
-            x_01 = np.argwhere(data_alpha_01 != 0)
-            x_05 = np.argwhere(data_alpha_05 != 0)
-            x_1 = np.argwhere(data_alpha_1 != 0)
-
-            """
-            x_nr_00001 = np.argwhere(data_nr_alpha_00001 != 0)
-            x_nr_0001 = np.argwhere(data_nr_alpha_0001 != 0)
-            x_nr_001 = np.argwhere(data_nr_alpha_001 != 0)
-            x_nr_01 = np.argwhere(data_nr_alpha_01 != 0)
-            x_nr_05 = np.argwhere(data_nr_alpha_05 != 0)
-            x_nr_1 = np.argwhere(data_nr_alpha_1 != 0)
-            """
-            data_alpha_00001 = data_alpha_00001[x_00001]/np.sum(data_alpha_00001[x_00001])
-            data_alpha_0001 = data_alpha_0001[x_0001]/np.sum(data_alpha_0001[x_0001])
-            data_alpha_001 = data_alpha_001[x_001]/np.sum(data_alpha_001[x_001])
-            data_alpha_01 = data_alpha_01[x_01]/np.sum(data_alpha_01[x_01])
-            data_alpha_05 = data_alpha_05[x_05]/np.sum(data_alpha_05[x_05])
-            data_alpha_1 = data_alpha_1[x_1]/np.sum(data_alpha_1[x_1])
-
-            """
-            data_nr_alpha_00001 = data_nr_alpha_00001[x_nr_00001]/np.sum(data_nr_alpha_00001[x_nr_00001])
-            data_nr_alpha_0001 = data_nr_alpha_0001[x_nr_0001]/np.sum(data_nr_alpha_0001[x_nr_0001])
-            data_nr_alpha_001 = data_nr_alpha_001[x_nr_001]/np.sum(data_nr_alpha_001[x_nr_001])
-            data_nr_alpha_01 = data_nr_alpha_01[x_nr_01]/np.sum(data_nr_alpha_01[x_nr_01])
-            data_nr_alpha_05 = data_nr_alpha_05[x_nr_05]/np.sum(data_nr_alpha_05[x_nr_05])
-            data_nr_alpha_1 = data_nr_alpha_1[x_nr_1]/np.sum(data_nr_alpha_1[x_nr_1])
-            """
-
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
-            plt.loglog(x_0001 + 1, 1-np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
-            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
-            plt.axis([1, 2e2, 1e-7, 1])
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $1-C(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/hex_alpha_phi_low.pdf", dpi=200)
-
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
-            plt.axis([1, 2e2, 1e-7, 1])
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $1-C(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/hex_alpha_high_phi_low.pdf", dpi=200)
-
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, data_alpha_00001, "r-", label=r"$\alpha=0.0001$")
-            plt.loglog(x_0001 + 1, data_alpha_0001, "g--", label=r"$\alpha=0.001$")
-            plt.loglog(x_001 + 1, data_alpha_001, "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, data_alpha_01, "m--", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, data_alpha_05, "k-", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, data_alpha_1, "y--", label=r"$\alpha=1$")
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"PDF $p(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/hex_alpha_phi_low_pdf.pdf", dpi=200)
-
-            fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, data_alpha_001, "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, data_alpha_01, "m--", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, data_alpha_05, "k-", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, data_alpha_1, "y--", label=r"$\alpha=1$")
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"PDF $p(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/hex_alpha_high_phi_low_pdf.pdf", dpi=200)
+           
 
         # triangular
-        if False:
-            data_alpha_00001 = np.genfromtxt("./tumblerate/triangular_alpha0.0001000_phi0.50_L100.txt", delimiter=" ")[0::2]
-            data_alpha_0001 = np.genfromtxt("./tumblerate/triangular_alpha0.0010000_phi0.50_L100.txt", delimiter=" ")[0::2]
-            data_alpha_001 = np.genfromtxt("./tumblerate/triangular_alpha0.0100000_phi0.50_L100.txt", delimiter=" ")[0::2]
-            data_alpha_01 = np.genfromtxt("./tumblerate/triangular_alpha0.1000000_phi0.50_L100.txt", delimiter=" ")[0::2]
-            data_alpha_05 = np.genfromtxt("./tumblerate/triangular_alpha0.5000000_phi0.50_L100.txt", delimiter=" ")[0::2]
-            data_alpha_1 = np.genfromtxt("./tumblerate/triangular_alpha1.0000000_phi0.50_L100.txt", delimiter=" ")[0::2]
+        if True:
+            #data_alpha_00001 = np.genfromtxt("./tumblerate/triangular_alpha0.0001000_phi0.50_L100.txt", delimiter=" ")[0::2]
+            data_alpha_0001 = np.genfromtxt("./tumblerate/triangular_alpha0.001_phi0.40_L100_1.txt", delimiter=" ")[0::2]
+            data_alpha_001 = np.genfromtxt("./tumblerate/triangular_alpha0.010_phi0.40_L100_1.txt", delimiter=" ")[0::2]
+            data_alpha_01 = np.genfromtxt("./tumblerate/triangular_alpha0.100_phi0.40_L100_1.txt", delimiter=" ")[0::2]
+            #data_alpha_05 = np.genfromtxt("./tumblerate/triangular_alpha0.5000000_phi0.50_L100.txt", delimiter=" ")[0::2]
+            data_alpha_1 = np.genfromtxt("./tumblerate/triangular_alpha1.000_phi0.40_L100_1.txt", delimiter=" ")[0::2]
 
             """
             data_nr_alpha_0.0001 = np.genfromtxt()
@@ -1053,11 +801,11 @@ class distribution:
             data_nr_alpha_0.5 = np.genfromtxt()
             data_nr_alpha_1 = np.genfromtxt()
             """
-            x_00001 = np.argwhere(data_alpha_00001 != 0)
+            #x_00001 = np.argwhere(data_alpha_00001 != 0)
             x_0001 = np.argwhere(data_alpha_0001 != 0)
             x_001 = np.argwhere(data_alpha_001 != 0)
             x_01 = np.argwhere(data_alpha_01 != 0)
-            x_05 = np.argwhere(data_alpha_05 != 0)
+            #x_05 = np.argwhere(data_alpha_05 != 0)
             x_1 = np.argwhere(data_alpha_1 != 0)
 
             """
@@ -1068,11 +816,11 @@ class distribution:
             x_nr_05 = np.argwhere(data_nr_alpha_05 != 0)
             x_nr_1 = np.argwhere(data_nr_alpha_1 != 0)
             """
-            data_alpha_00001 = data_alpha_00001[x_00001]/np.sum(data_alpha_00001[x_00001])
+            #data_alpha_00001 = data_alpha_00001[x_00001]/np.sum(data_alpha_00001[x_00001])
             data_alpha_0001 = data_alpha_0001[x_0001]/np.sum(data_alpha_0001[x_0001])
             data_alpha_001 = data_alpha_001[x_001]/np.sum(data_alpha_001[x_001])
             data_alpha_01 = data_alpha_01[x_01]/np.sum(data_alpha_01[x_01])
-            data_alpha_05 = data_alpha_05[x_05]/np.sum(data_alpha_05[x_05])
+            #data_alpha_05 = data_alpha_05[x_05]/np.sum(data_alpha_05[x_05])
             data_alpha_1 = data_alpha_1[x_1]/np.sum(data_alpha_1[x_1])
 
             """
@@ -1086,160 +834,33 @@ class distribution:
 
             fig1 = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
+            #plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
             plt.loglog(x_0001 + 1, 1-np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
             plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
-            plt.axis([1, 6e3, 1e-7, 1])
+            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-", label=r"$\alpha=0.1$")
+            #plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-", label=r"$\alpha=1$")
+            plt.axis([1, 6e3, 1e-5, 1])
             plt.xlabel(r"Cluster size $k$")
             plt.ylabel(r"CDF $1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/tri_alpha.pdf", dpi=200)
             
-            fig2 = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
-            plt.axis([1, 6e3, 1e-7, 1])
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $1-C(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/tri_alpha_high.pdf", dpi=200)
-            
             fig3 = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
             plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, data_alpha_00001, "r-", label=r"$\alpha=0.0001$")
+            #plt.loglog(x_00001 + 1, data_alpha_00001, "r-", label=r"$\alpha=0.0001$")
             plt.loglog(x_0001 + 1, data_alpha_0001, "g--", label=r"$\alpha=0.001$")
             plt.loglog(x_001 + 1, data_alpha_001, "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, data_alpha_01, "m--", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, data_alpha_05, "k-", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, data_alpha_1, "y--", label=r"$\alpha=1$")
+            plt.loglog(x_01 + 1, data_alpha_01, "m-", label=r"$\alpha=0.1$")
+            #plt.loglog(x_05 + 1, data_alpha_05, "k-", label=r"$\alpha=0.5$")
+            plt.loglog(x_1 + 1, data_alpha_1, "y-", label=r"$\alpha=1$")
             plt.xlabel(r"Cluster size $k$")
             plt.ylabel(r"PDF $p(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/tri_alpha_pdf.pdf", dpi=200)
 
-            fig4 = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, data_alpha_001, "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, data_alpha_01, "m--", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, data_alpha_05, "k-", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, data_alpha_1, "y--", label=r"$\alpha=1$")
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"PDF $p(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/tri_alpha_pdf_high.pdf", dpi=200)
-
-            # ################################################################################
-            # The following is for lower denisties
-
-            data_alpha_00001 = np.genfromtxt("./tumblerate/triangular_alpha0.0001000_phi0.10_L100.txt", delimiter=" ")[0::2]
-            data_alpha_0001 = np.genfromtxt("./tumblerate/triangular_alpha0.0010000_phi0.10_L100.txt", delimiter=" ")[0::2]
-            data_alpha_001 = np.genfromtxt("./tumblerate/triangular_alpha0.0100000_phi0.10_L100.txt", delimiter=" ")[0::2]
-            data_alpha_01 = np.genfromtxt("./tumblerate/triangular_alpha0.1000000_phi0.10_L100.txt", delimiter=" ")[0::2]
-            data_alpha_05 = np.genfromtxt("./tumblerate/triangular_alpha0.5000000_phi0.10_L100.txt", delimiter=" ")[0::2]
-            data_alpha_1 = np.genfromtxt("./tumblerate/triangular_alpha1.0000000_phi0.10_L100.txt", delimiter=" ")[0::2]
-
-            """
-            data_nr_alpha_0.0001 = np.genfromtxt()
-            data_nr_alpha_0.001 = np.genfromtxt()
-            data_nr_alpha_0.01 = np.genfromtxt()
-            data_nr_alpha_0.1 = np.genfromtxt()
-            data_nr_alpha_0.5 = np.genfromtxt()
-            data_nr_alpha_1 = np.genfromtxt()
-            """
-            x_00001 = np.argwhere(data_alpha_00001 != 0)
-            x_0001 = np.argwhere(data_alpha_0001 != 0)
-            x_001 = np.argwhere(data_alpha_001 != 0)
-            x_01 = np.argwhere(data_alpha_01 != 0)
-            x_05 = np.argwhere(data_alpha_05 != 0)
-            x_1 = np.argwhere(data_alpha_1 != 0)
-
-            """
-            x_nr_00001 = np.argwhere(data_nr_alpha_00001 != 0)
-            x_nr_0001 = np.argwhere(data_nr_alpha_0001 != 0)
-            x_nr_001 = np.argwhere(data_nr_alpha_001 != 0)
-            x_nr_01 = np.argwhere(data_nr_alpha_01 != 0)
-            x_nr_05 = np.argwhere(data_nr_alpha_05 != 0)
-            x_nr_1 = np.argwhere(data_nr_alpha_1 != 0)
-            """
-            data_alpha_00001 = data_alpha_00001[x_00001]/np.sum(data_alpha_00001[x_00001])
-            data_alpha_0001 = data_alpha_0001[x_0001]/np.sum(data_alpha_0001[x_0001])
-            data_alpha_001 = data_alpha_001[x_001]/np.sum(data_alpha_001[x_001])
-            data_alpha_01 = data_alpha_01[x_01]/np.sum(data_alpha_01[x_01])
-            data_alpha_05 = data_alpha_05[x_05]/np.sum(data_alpha_05[x_05])
-            data_alpha_1 = data_alpha_1[x_1]/np.sum(data_alpha_1[x_1])
-
-            """
-            data_nr_alpha_00001 = data_nr_alpha_00001[x_nr_00001]/np.sum(data_nr_alpha_00001[x_nr_00001])
-            data_nr_alpha_0001 = data_nr_alpha_0001[x_nr_0001]/np.sum(data_nr_alpha_0001[x_nr_0001])
-            data_nr_alpha_001 = data_nr_alpha_001[x_nr_001]/np.sum(data_nr_alpha_001[x_nr_001])
-            data_nr_alpha_01 = data_nr_alpha_01[x_nr_01]/np.sum(data_nr_alpha_01[x_nr_01])
-            data_nr_alpha_05 = data_nr_alpha_05[x_nr_05]/np.sum(data_nr_alpha_05[x_nr_05])
-            data_nr_alpha_1 = data_nr_alpha_1[x_nr_1]/np.sum(data_nr_alpha_1[x_nr_1])
-            """
-
-            fig5 = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
-            plt.loglog(x_0001 + 1, 1-np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
-            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
-            plt.axis([1, 3e2, 1e-7, 1])
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $1-C(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/tri_alpha_phi_low.pdf", dpi=200)
-
-            fig6 = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, 1-np.cumsum(data_alpha_01), "m-x", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, 1-np.cumsum(data_alpha_05), "k-o", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-s", label=r"$\alpha=1$")
-            plt.axis([1, 3e2, 1e-7, 1])
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $1-C(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/tri_alpha_high_phi_low.pdf", dpi=200)
-
-            fig7 = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_00001 + 1, data_alpha_00001, "r-", label=r"$\alpha=0.0001$")
-            plt.loglog(x_0001 + 1, data_alpha_0001, "g--", label=r"$\alpha=0.001$")
-            plt.loglog(x_001 + 1, data_alpha_001, "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, data_alpha_01, "m--", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, data_alpha_05, "k-", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, data_alpha_1, "y--", label=r"$\alpha=1$")
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"PDF $p(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/tri_alpha_phi_low_pdf.pdf", dpi=200)
-
-            fig8 = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
-            plt.loglog(x_001 + 1, data_alpha_001, "b-", label=r"$\alpha=0.01$")
-            plt.loglog(x_01 + 1, data_alpha_01, "m--", label=r"$\alpha=0.1$")
-            plt.loglog(x_05 + 1, data_alpha_05, "k-", label=r"$\alpha=0.5$")
-            plt.loglog(x_1 + 1, data_alpha_1, "y--", label=r"$\alpha=1$")
-            plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"PDF $p(k)$")
-            plt.legend()
-            plt.grid()
-            plt.savefig("./plots/tri_alpha_high_phi_low_pdf.pdf", dpi=200)
 
     def plot_heat(self):
         # n_max=1
@@ -1786,7 +1407,7 @@ class distribution:
             ax[1].set_xlabel(r"Time $t$")
 
             plt.savefig("./plots/time_3.pdf", dpi=200, bbox_inches='tight')
-        
+        plt.rcParams.update({'font.size': 14})
         # ############################### SQUARE DATA #################################
         data_1_square = np.genfromtxt("./number/square_number_alpha0.100_phi0.47_L100.txt", delimiter=" ")
         data_2_square = np.genfromtxt("./number/square_number_alpha0.010_phi0.47_L100.txt", delimiter=" ")
@@ -1834,7 +1455,7 @@ class distribution:
         data_12_hex = np.genfromtxt("./number/hex_number_alpha0.000_phi1.41_L100_3.txt", delimiter=" ")
 
         # Square
-        if True:
+        if False:
             # ###################################### FIG 1 ################################################
 
             fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
@@ -2022,7 +1643,7 @@ class distribution:
                 plt.savefig("./plots/square_comp_n_alpha_0.pdf", dpi=200, bbox_inches='tight')
 
         # Tri
-        if False:
+        if True:
             # ###################################### FIG 1 ################################################
 
             fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
@@ -2210,7 +1831,7 @@ class distribution:
                 plt.savefig("./plots/tri_comp_n_alpha_0.pdf", dpi=200, bbox_inches='tight')
 
         # Hex
-        if False:
+        if True:
             # ###################################### FIG 1 ################################################
 
             fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
@@ -2399,7 +2020,7 @@ class distribution:
                 plt.savefig("./plots/hex_comp_n_alpha_0.pdf", dpi=200, bbox_inches='tight')
 
         # comparison of lattices given n and alpha
-        if True:
+        if False:
             # ###################################### FIG 1 ################################################
 
             fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
@@ -2855,10 +2476,10 @@ if __name__ == "__main__":
     dist = distribution()
 
     #dist.plot_lattice_type()
-    dist.plot_time_evolution()
+    #dist.plot_time_evolution()
 
     #dist.plot_heat()
-    #dist.plot_alpha()
+    dist.plot_alpha()
     #dist.plot_cum_hex()
     #plt.show()
     #dist.plot_square_L()

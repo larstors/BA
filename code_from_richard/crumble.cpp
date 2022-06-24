@@ -3345,7 +3345,7 @@ int main(int argc, char* argv[]) {
   string tumb = "alpha" + alpha_p;
   string dens = "phi" + phi_p;
   string size = "L" + std::to_string(P.L[0]);
-  string path = "./lars_sim/latticetype/";
+  string path = "./lars_sim/tumblerate/";
   string txtoutput = path+lattice_type+"_"+tumb+"_"+ dens+"_"+size+"_"+occ_p+txt;
   string txtoutput_nr = path+lattice_type+"_nr"+"_"+tumb+"_"+ dens+"_"+size+"_"+occ_p+txt;
 
@@ -3523,7 +3523,7 @@ int main(int argc, char* argv[]) {
       } else if (output == "motility"){
         if (details==0){
         ofstream outfile;
-        string name = "./lars_sim/Data/motility/square_perc";
+        string name = "./lars_sim/Data/motility/square_perc_L_50";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
         for (double al = 0.0; al < 0.2 ; al+=0.005){
@@ -3881,7 +3881,7 @@ int main(int argc, char* argv[]) {
       }else if (output == "motility"){
         if (details==0){
         ofstream outfile;
-        string name = "./lars_sim/Data/motility/triangular_perc";
+        string name = "./lars_sim/Data/motility/triangular_perc_L_50";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
         for (double al = 0.0; al < 0.2 ; al+=0.005){
@@ -4132,7 +4132,7 @@ int main(int argc, char* argv[]) {
       }else if (output == "motility"){
         if (details==0){
         ofstream outfile;
-        string name = "./lars_sim/Data/motility/hexagonal_perc";
+        string name = "./lars_sim/Data/motility/hexagonal_perc_L_50";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
         for (double al = 0.0; al < 0.2 ; al+=0.005){
@@ -4577,7 +4577,7 @@ int main(int argc, char* argv[]) {
         } 
       }else if (output == "motility"){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/square_perc.txt");
+        outfile.open("./lars_sim/Data/motility/square_perc_L_50.txt");
         for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1]  = al;
@@ -4831,7 +4831,7 @@ int main(int argc, char* argv[]) {
         }
       }else if (output == "motility"){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/triangular_perc.txt");
+        outfile.open("./lars_sim/Data/motility/triangular_perc_L_50.txt");
         for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
@@ -5111,7 +5111,7 @@ int main(int argc, char* argv[]) {
 
       }else if (output == "motility"){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/hexagonal_perc.txt");
+        outfile.open("./lars_sim/Data/motility/hexagonal_perc_L_50.txt");
         for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;

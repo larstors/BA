@@ -178,7 +178,7 @@ class AnimatedScatter(object):
         return self.scat,
 
 # square
-if False:
+if True:
     f = open("./Data/weighted/square_part.txt")
     data = []
     for line in f:
@@ -215,10 +215,10 @@ if False:
 
     # Then setup FuncAnimation.
     ani_tri = animation.FuncAnimation(fig, animate_tri, interval=1, blit=False, save_count=len(numb)-1)
-    ani_tri.save('./gif/sq_n_3_alp_0.1_long.gif', writer='PillowWriter', fps=10)
+    ani_tri.save('./gif/sq_n_3_alp_0.075_L_50.gif', writer='PillowWriter', fps=10)
 
 # triangular
-if True:
+if False:
     f = open("./Data/weighted/tri_part.txt")
     data = []
     for line in f:
