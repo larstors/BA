@@ -24,6 +24,7 @@
 using namespace std;
 using direction_t = unsigned char;
 using hist_t = std::valarray<unsigned>;
+using vec = std::vector<unsigned>;
 
 // needed for calculating position of particles on hexagonal lattice
 // TODO see if needed somewhere else, otherwise this can be moved to HexagonalParticleWriter
@@ -754,6 +755,204 @@ public:
         return count;
     }
 
+
+    vec surface_volume(){
+     // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n) clusters[n] = std::list<unsigned>(1, n); // Single-element list comprising the lattice site
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof[n], small = memberof[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+        }
+
+        // vector for output of surface and volume of clusters
+        // the index 2i is for volume and 2i+1 is for surface
+        vec output;
+        
+        for (const auto& kv : clusters) {
+            // variable for surface and check 
+            unsigned surf = 0;
+            unsigned check = 0;
+            // check whether particle cluster
+            if (sites[kv.first].present > 0) { 
+              for (const auto& n : kv.second){
+                check = 0;
+                for (const auto& m : neighbours(n)){
+                  if (sites[m].present == 0){
+                    check++;
+                    continue;
+                  }
+                }
+                if (check > 0) surf++;
+              }
+
+              output.push_back(kv.second.size());
+              output.push_back(surf);
+            }
+        }
+
+        return output;
+    }
+    // function to give out position of a cluster in the lattice that has size between lower and upper bound
+    vec single_cluster(unsigned clust_min, unsigned clust_max){
+    // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n) clusters[n] = std::list<unsigned>(1, n); // Single-element list comprising the lattice site
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof[n], small = memberof[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+        }
+
+        // vector for output of surface and volume of clusters
+        vec output;
+        
+        for (const auto& kv : clusters) {
+            // check whether particle cluster
+            if (sites[kv.first].present > 0 && kv.second.size() >= clust_min && kv.second.size() <= clust_max) { 
+              // to get surface and volume 
+              unsigned surf = 0;
+              unsigned check = 0;
+              for (const auto& n : kv.second){
+                check = 0;
+                for (const auto& m : neighbours(n)){
+                  if (sites[m].present == 0){
+                    check++;
+                    continue;
+                  }
+                }
+                if (check > 0) surf++;
+              }
+              // add surface and volume to beginning of output
+              output.push_back(kv.second.size());
+              output.push_back(surf);
+              // add position of particles
+              for (const auto& n : kv.second){
+                output.push_back(n);
+              }
+              break;
+            }
+        }
+
+        return output;
+    }
+
+    unsigned clust_size(unsigned clust_min, unsigned clust_max){
+    // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n) clusters[n] = std::list<unsigned>(1, n); // Single-element list comprising the lattice site
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof[n], small = memberof[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+        }
+
+        // vector for output of surface and volume of clusters
+        unsigned output = 0;
+        
+        for (const auto& kv : clusters) {
+            // check whether particle cluster
+            if (sites[kv.first].present > 0 && kv.second.size() >= clust_min && kv.second.size() <= clust_max) { 
+              output = 1;
+            }
+        }
+
+        return output;
+    }
+
+    hist_t particle_neighbour_dist(){
+      hist_t dist(4);
+      unsigned count = 0;
+      for (unsigned n = 0; n < sites.size(); n++){
+        count = 0;
+        if (sites[n].present > 0){
+        for (const auto& m : neighbours(n)){
+          if (sites[m].present > 0) count++;
+        }
+        dist[count]++;
+        }
+        
+      }
+    }
 };
 
 
@@ -1516,6 +1715,203 @@ public:
         return count;
     }
 
+    vec surface_volume(){
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n) clusters[n] = std::list<unsigned>(1, n); // Single-element list comprising the lattice site
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof[n], small = memberof[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+        }
+
+        // vector for output of surface and volume of clusters
+        vec output;
+        
+        for (const auto& kv : clusters) {
+            // variable for surface and check 
+            unsigned surf = 0;
+            unsigned check = 0;
+            // check whether particle cluster
+            if (sites[kv.first].present > 0) { 
+              for (const auto& n : kv.second){
+                check = 0;
+                for (const auto& m : neighbours(n)){
+                  if (sites[m].present == 0){
+                    check++;
+                    continue;
+                  }
+                }
+                if (check > 0) surf++;
+              }
+
+              output.push_back(kv.second.size());
+              output.push_back(surf);
+            }
+        }
+
+        return output;
+    }
+
+    // function to give out position of a cluster in the lattice that has size between lower and upper bound
+    vec single_cluster(unsigned clust_min, unsigned clust_max){
+    // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n) clusters[n] = std::list<unsigned>(1, n); // Single-element list comprising the lattice site
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof[n], small = memberof[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+        }
+
+        // vector for output of surface and volume of clusters
+        vec output;
+        
+        for (const auto& kv : clusters) {
+            // check whether particle cluster
+            if (sites[kv.first].present > 0 && kv.second.size() >= clust_min && kv.second.size() <= clust_max) { 
+              // to get surface and volume 
+              unsigned surf = 0;
+              unsigned check = 0;
+              for (const auto& n : kv.second){
+                check = 0;
+                for (const auto& m : neighbours(n)){
+                  if (sites[m].present == 0){
+                    check++;
+                    continue;
+                  }
+                }
+                if (check > 0) surf++;
+              }
+              // add surface and volume to beginning of output
+              output.push_back(kv.second.size());
+              output.push_back(surf);
+              // add position of particles
+              for (const auto& n : kv.second){
+                output.push_back(n);
+              }
+              break;
+            }
+        }
+
+        return output;
+    }
+
+    unsigned clust_size(unsigned clust_min, unsigned clust_max){
+    // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n) clusters[n] = std::list<unsigned>(1, n); // Single-element list comprising the lattice site
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof[n], small = memberof[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+        }
+
+        // vector for output of surface and volume of clusters
+        unsigned output = 0;
+        
+        for (const auto& kv : clusters) {
+            // check whether particle cluster
+            if (sites[kv.first].present > 0 && kv.second.size() >= clust_min && kv.second.size() <= clust_max) { 
+              output = 1;
+            }
+        }
+
+        return output;
+    }
+
+    hist_t particle_neighbour_dist(){
+      hist_t dist(6);
+      unsigned count = 0;
+      for (unsigned n = 0; n < sites.size(); n++){
+        count = 0;
+        if (sites[n].present > 0){
+        for (const auto& m : neighbours(n)){
+          if (sites[m].present > 0) count++;
+        }
+        dist[count]++;
+        }
+        
+      }
+    }
 };
 
 
@@ -2441,6 +2837,233 @@ public:
 
         return count;
     }
+
+    vec surface_volume(){
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(2 * sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          for (unsigned i = 0; i < 2; i++){
+            clusters[2*n + i] = std::list<unsigned>(1, 2*n + i); // Single-element list comprising the lattice site
+          }
+        }
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+          for (unsigned i = 0; i < 2; i++){
+            // TODO figure out why forward neighbour makes algorithm not work
+            for (const auto& m : neighbours(n, i)) {
+                unsigned large = memberof[2*n + i], small = memberof[2*m + (i+1)%2];
+                // If they are in the same cluster we can move on
+                if (small == large) continue;
+                // If one of them is empty but the other isn't we move on
+                else if (sites[n].present[i] == 0 && sites[m].present[(i+1)%2] != 0) continue;
+                else if (sites[n].present[i] != 0 && sites[m].present[(i+1)%2] == 0) continue;
+                // merge clusters
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+          }
+        }
+
+        // variable for mean and the count of clusters
+        vec output; 
+        for (const auto& kv : clusters) {
+            unsigned surf = 0;
+            unsigned check = 0;
+            // instead of occupied we check whether there are any particles present
+            if (sites[(kv.first - kv.first%2)/2].present[kv.first%2] > 0) { 
+              for (const auto& n : kv.second){
+                check = 0;
+                for (const auto& m: neighbours((n-n%2)/2, n%2)){
+                  if (sites[m].present[(n+1)%2] == 0) check++;
+                }
+                if (check > 0) surf++;
+              }
+              output.push_back(kv.second.size());
+              output.push_back(surf);
+            }
+        }
+
+        return output;
+    }
+
+    // function to give out position of a cluster in the lattice that has size between lower and upper bound
+    vec single_cluster(unsigned clust_min, unsigned clust_max){
+        // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(2 * sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          for (unsigned i = 0; i < 2; i++){
+            clusters[2*n + i] = std::list<unsigned>(1, 2*n + i); // Single-element list comprising the lattice site
+          }
+        }
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+          for (unsigned i = 0; i < 2; i++){
+            // TODO figure out why forward neighbour makes algorithm not work
+            for (const auto& m : neighbours(n, i)) {
+                unsigned large = memberof[2*n + i], small = memberof[2*m + (i+1)%2];
+                // If they are in the same cluster we can move on
+                if (small == large) continue;
+                // If one of them is empty but the other isn't we move on
+                else if (sites[n].present[i] == 0 && sites[m].present[(i+1)%2] != 0) continue;
+                else if (sites[n].present[i] != 0 && sites[m].present[(i+1)%2] == 0) continue;
+                // merge clusters
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+          }
+        }
+
+
+        // vector for output of surface and volume of clusters
+        vec output;
+        std::cout << "test" << endl;
+        
+        for (const auto& kv : clusters) {
+            // check whether particle cluster
+            if (sites[(kv.first - kv.first%2)/2].present[kv.first%2] > 0 && kv.second.size() >= clust_min && kv.second.size() <= clust_max) { 
+              // to get surface and volume 
+              unsigned surf = 0;
+              unsigned check = 0;
+              for (const auto& n : kv.second){
+                  if (sites[(n-n%2)/2].present[n%2] > 0){
+                    check = 0;
+                    for (const auto& m : neighbours((n-n%2)/2, n%2)){
+                      if (sites[m].present[(n+1)%2] == 0){
+                        check++;
+                        continue;
+                      }
+                    }
+                    if (check > 0) surf++;
+                  }
+              }
+              std::cout << "break" << endl;
+              // add surface and volume to beginning of output
+              output.push_back(kv.second.size());
+              output.push_back(surf);
+              // add position of particles
+              for (const auto& n : kv.second){
+                  if (sites[(n-n%2)/2].present[n%2] > 0){ 
+                    output.push_back((n-n%2)/2);
+                    output.push_back(n%2);
+                  }
+              }
+              break;
+            }
+        }
+        
+        return output;
+    }
+
+    unsigned clust_size(unsigned clust_min, unsigned clust_max){
+        // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(2 * sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          for (unsigned i = 0; i < 2; i++){
+            clusters[2*n + i] = std::list<unsigned>(1, 2*n + i); // Single-element list comprising the lattice site
+          }
+        }
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+          for (unsigned i = 0; i < 2; i++){
+            // TODO figure out why forward neighbour makes algorithm not work
+            for (const auto& m : neighbours(n, i)) {
+                unsigned large = memberof[2*n + i], small = memberof[2*m + (i+1)%2];
+                // If they are in the same cluster we can move on
+                if (small == large) continue;
+                // If one of them is empty but the other isn't we move on
+                else if (sites[n].present[i] == 0 && sites[m].present[(i+1)%2] != 0) continue;
+                else if (sites[n].present[i] != 0 && sites[m].present[(i+1)%2] == 0) continue;
+                // merge clusters
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+          }
+        }
+
+
+        // vector for output of surface and volume of clusters
+        unsigned output = 0;
+        
+        for (const auto& kv : clusters) {
+            // check whether particle cluster
+            if (sites[(kv.first - kv.first%2)/2].present[kv.first%2] > 0 && kv.second.size() >= clust_min && kv.second.size() <= clust_max) { 
+              output = 1;
+            }
+        }
+
+        return output;
+    }
+
+    hist_t particle_neighbour_dist(){
+      hist_t dist(4);
+      unsigned count = 0;
+      for (unsigned n = 0; n < sites.size(); n++){
+        for (unsigned i = 0; i < 2; i++){
+          count = 0;
+          if (sites[n].present[i] > 0){
+          for (const auto& m : neighbours(n, i)){
+            if (sites[m].present[(i+1)%2] > 0) count++;
+          }
+          dist[count]++;
+          }
+        }
+      }
+    }
+
 };
 
 
@@ -2654,7 +3277,6 @@ int main(int argc, char* argv[]) {
   std::string lattice_type = ""; 
   double burnin = 1000, until = 5000, every = 2.5;
   unsigned localaverage = 0;
-  unsigned details = 0;
   double localinterval = 10.0;
 
   unsigned details = 0; // for detailed 
@@ -2674,6 +3296,7 @@ int main(int argc, char* argv[]) {
   if(output[0] == 'p') output = "particles";
   else if(output[0] == 'v') output = "vacancies";
   else if(output[0] == 'c') output = "clusters";
+  else if(output[0] == 'a') output = "area"; // for area/surface analysis
   else if(output[0] == 'w') output = "weighted"; // for weighted distribution
   else if(output[0] == 'm') output = "motility"; // for outputting the motility of the system
   else if(output[0] == 's') output = "stable"; // this is for making gifs that show how a system stabilizes...
@@ -3019,9 +3642,16 @@ int main(int argc, char* argv[]) {
             output << t << " " << weighted << " " << L.avg_cluster_size_nr() << endl;
          }
       }
-      else if (output=="function"){
-        for(double n=1; t < burnin + until; n*=1.01) {
-            t = L.run_until(burnin + n * every);
+      else if (output=="area"){
+        ofstream surf, part;
+        surf.open("./lars_sim/Data/surf/square_sv.txt");
+        part.open("./lars_sim/Data/surf/square_part.txt");
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = L.run_until(burnin + n * every);
+          vec a = L.surface_volume();
+          for (const auto& k : a) surf << k << " ";
+          surf << endl;
+          part << ParticleWriter(L, part) << endl;
         }
       }
       else {
@@ -3336,7 +3966,37 @@ int main(int argc, char* argv[]) {
 
         }
       }
-      
+      else if (output=="area"){
+        ofstream surf, part, clust;
+        surf.open("./lars_sim/Data/surf/tri_sv.txt");
+        part.open("./lars_sim/Data/surf/tri_part.txt");
+        clust.open("./lars_sim/Data/surf/tri_clust.txt");
+        // unsigned so only one cluster each gets printed
+        unsigned check_1 = 0;
+        unsigned check_2 = 0;
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = TL.run_until(burnin + n * every);
+          vec a = TL.surface_volume();
+          for (const auto& k : a) surf << k << " ";
+          surf << endl;
+          part << TriangleParticleWriter(TL, part) << endl;
+
+          if (TL.clust_size(8, 10) == 1 && check_1 == 0){
+            vec n = TL.single_cluster(8, 10);
+            for (const auto& m : n) clust << m << " ";
+            clust << endl;
+            check_1++;
+          }
+
+          if (TL.clust_size(1470, 1520) == 1 && check_2 == 0){
+            vec n = TL.single_cluster(1470, 1520);
+            for (const auto& m : n) clust << m << " ";
+            clust << endl;
+            check_2++;
+          }
+
+        }
+      }
       else {
         ofstream outfile;
         outfile.open("./lars_sim/gif/triangle.txt");
@@ -3590,7 +4250,18 @@ int main(int argc, char* argv[]) {
             output << t << " " << weighted << " " << HL.avg_cluster_size_nr() << endl;
          }
       }
-
+      else if (output=="area"){
+        ofstream surf, part;
+        surf.open("./lars_sim/Data/surf/hex_sv.txt");
+        part.open("./lars_sim/Data/surf/hex_part.txt");
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = HL.run_until(burnin + n * every);
+          vec a = HL.surface_volume();
+          for (const auto& k : a) surf << k << " ";
+          surf << endl;
+          part << HexagonalParticleWriter(HL, part) << endl;
+        }
+      }
       else if (output == "heatmap"){
         ofstream outfile, outfile_avg, outfile_nr, outfile_avg_nr;
         outfile.open("./lars_sim/heatmap/hex_alpha_N_n_2.txt");
@@ -3773,6 +4444,37 @@ int main(int argc, char* argv[]) {
             outfile << endl;
           }
         } 
+      }
+      else if (output=="area"){
+        ofstream surf, part, clust;
+        surf.open("./lars_sim/Data/surf/square_sv.txt");
+        part.open("./lars_sim/Data/surf/square_part.txt");
+        clust.open("./lars_sim/Data/surf/square_clust.txt");
+        // unsigned so only one cluster each gets printed
+        unsigned check_1 = 0;
+        unsigned check_2 = 0;
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = L.run_until(burnin + n * every);
+          vec a = L.surface_volume();
+          for (const auto& k : a) surf << k << " ";
+          surf << endl;
+          part << ParticleWriter(L, part) << endl;
+
+          if (L.clust_size(8, 10) == 1 && check_1 == 0){
+            vec n =L.single_cluster(8, 10);
+            for (const auto& m : n) clust << m << " ";
+            clust << endl;
+            check_1++;
+          }
+
+          if (L.clust_size(3700, 4000) == 1 && check_2 == 0){
+            vec n = L.single_cluster(3700, 4000);
+            for (const auto& m : n) clust << m << " ";
+            clust << endl;
+            check_2++;
+          }
+
+        }
       }
       else if (output == "weighted"){
          ofstream output, part;
@@ -3996,6 +4698,37 @@ int main(int argc, char* argv[]) {
             for(const auto& k: sumhist) outfile << k << " ";
             outfile << endl;
           }
+        }
+      }
+      else if (output=="area"){
+        ofstream surf, part, clust;
+        surf.open("./lars_sim/Data/surf/tri_sv.txt");
+        part.open("./lars_sim/Data/surf/tri_part.txt");
+        clust.open("./lars_sim/Data/surf/tri_clust.txt");
+        // unsigned so only one cluster each gets printed
+        unsigned check_1 = 0;
+        unsigned check_2 = 0;
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = TL.run_until(burnin + n * every);
+          vec a = TL.surface_volume();
+          for (const auto& k : a) surf << k << " ";
+          surf << endl;
+          part << TriangleParticleWriter(TL, part) << endl;
+
+          if (TL.clust_size(8, 10) == 1 && check_1 == 0){
+            vec n = TL.single_cluster(8, 10);
+            for (const auto& m : n) clust << m << " ";
+            clust << endl;
+            check_1++;
+          }
+
+          if (TL.clust_size(3400, 3500) == 1 && check_2 == 0){
+            vec n = TL.single_cluster(3400, 3500);
+            for (const auto& m : n) clust << m << " ";
+            clust << endl;
+            check_2++;
+          }
+
         }
       }
       else if (output == "weighted"){
@@ -4233,6 +4966,37 @@ int main(int argc, char* argv[]) {
           }
         }
       } 
+      else if (output=="area"){
+        ofstream surf, part, clust;
+        surf.open("./lars_sim/Data/surf/hex_sv.txt");
+        part.open("./lars_sim/Data/surf/hex_part.txt");
+        clust.open("./lars_sim/Data/surf/hex_clust.txt");
+        // unsigned so only one cluster each gets printed
+        unsigned check_1 = 0;
+        unsigned check_2 = 0;
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = HL.run_until(burnin + n * every);
+          vec a = HL.surface_volume();
+          for (const auto& k : a) surf << k << " ";
+          surf << endl;
+          part << HexagonalParticleWriter(HL, part) << endl;
+
+          if (HL.clust_size(8, 10) == 1 && check_1 == 0){
+            vec n =HL.single_cluster(8, 10);
+            for (const auto& m : n) clust << m << " ";
+            clust << endl;
+            check_1++;
+          }
+
+          if (HL.clust_size(9000, 10000) == 1 && check_2 == 0){
+            vec n = HL.single_cluster(9000, 10000);
+            for (const auto& m : n) clust << m << " ";
+            clust << endl;
+            check_2++;
+          }
+
+        }
+      }
       else if (output == "weighted"){
          ofstream output, part;
          part.open("./lars_sim/Data/weighted/hex_part.txt");
