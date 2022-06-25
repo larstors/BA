@@ -820,6 +820,67 @@ public:
 
         return output;
     }
+
+    vec cluster_surface(){
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n) clusters[n] = std::list<unsigned>(1, n); // Single-element list comprising the lattice site
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof[n], small = memberof[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+        }
+
+        // vector for output of surface and volume of clusters
+        vec output;
+        
+        for (const auto& kv : clusters) {
+            // variable for surface and check 
+            unsigned surf = 0;
+            unsigned check = 0;
+            // check whether particle cluster
+            if (sites[kv.first].present > 0) { 
+              for (const auto& n : kv.second){
+                check = 0;
+                for (const auto& m : neighbours(n)){
+                  if (sites[m].present == 0){
+                    check++;
+                    continue;
+                  }
+                }
+                if (check > 0) output.push_back(n);
+              }
+            }
+        }
+
+        return output;
+    }
     // function to give out position of a cluster in the lattice that has size between lower and upper bound
     vec single_cluster(unsigned clust_min, unsigned clust_max){
     // Lookup table of cluster membership by lattice site
@@ -1779,6 +1840,66 @@ public:
         return output;
     }
 
+    vec cluster_surface(){
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n) clusters[n] = std::list<unsigned>(1, n); // Single-element list comprising the lattice site
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof[n], small = memberof[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+        }
+
+        // vector for output of surface and volume of clusters
+        vec output;
+        
+        for (const auto& kv : clusters) {
+            // variable for surface and check 
+            unsigned surf = 0;
+            unsigned check = 0;
+            // check whether particle cluster
+            if (sites[kv.first].present > 0) { 
+              for (const auto& n : kv.second){
+                check = 0;
+                for (const auto& m : neighbours(n)){
+                  if (sites[m].present == 0){
+                    check++;
+                    continue;
+                  }
+                }
+                if (check > 0) output.push_back(n);
+              }
+            }
+        }
+
+        return output;
+    }
     // function to give out position of a cluster in the lattice that has size between lower and upper bound
     vec single_cluster(unsigned clust_min, unsigned clust_max){
     // Lookup table of cluster membership by lattice site
@@ -2904,6 +3025,72 @@ public:
         return output;
     }
 
+    vec cluster_surface(){
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof(2 * sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof.begin(), memberof.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          for (unsigned i = 0; i < 2; i++){
+            clusters[2*n + i] = std::list<unsigned>(1, 2*n + i); // Single-element list comprising the lattice site
+          }
+        }
+
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+          for (unsigned i = 0; i < 2; i++){
+            // TODO figure out why forward neighbour makes algorithm not work
+            for (const auto& m : neighbours(n, i)) {
+                unsigned large = memberof[2*n + i], small = memberof[2*m + (i+1)%2];
+                // If they are in the same cluster we can move on
+                if (small == large) continue;
+                // If one of them is empty but the other isn't we move on
+                else if (sites[n].present[i] == 0 && sites[m].present[(i+1)%2] != 0) continue;
+                else if (sites[n].present[i] != 0 && sites[m].present[(i+1)%2] == 0) continue;
+                // merge clusters
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters[large].size() < clusters[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters[small]) memberof[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters[large].splice(clusters[large].end(), clusters[small]);
+                    // Remove the smaller cluster from the map
+                    clusters.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize = std::max(maxsize, clusters[large].size());
+                }
+            }
+          }
+        }
+
+        // variable for mean and the count of clusters
+        vec output; 
+        for (const auto& kv : clusters) {
+            unsigned surf = 0;
+            unsigned check = 0;
+            // instead of occupied we check whether there are any particles present
+            if (sites[(kv.first - kv.first%2)/2].present[kv.first%2] > 0) { 
+              for (const auto& n : kv.second){
+                check = 0;
+                for (const auto& m: neighbours((n-n%2)/2, n%2)){
+                  if (sites[m].present[(n+1)%2] == 0) check++;
+                }
+                if (check > 0){
+                  output.push_back((n-n%2)/2);
+                  output.push_back(n%2);
+                }
+              }
+            }
+        }
+
+        return output;
+    }
     // function to give out position of a cluster in the lattice that has size between lower and upper bound
     vec single_cluster(unsigned clust_min, unsigned clust_max){
         // Lookup table of cluster membership by lattice site
@@ -3296,6 +3483,7 @@ int main(int argc, char* argv[]) {
   if(output[0] == 'p') output = "particles";
   else if(output[0] == 'v') output = "vacancies";
   else if(output[0] == 'c') output = "clusters";
+  else if(output[0] == 'd') output = "distribution"; // for distribution of neighbours (maybe also density?)
   else if(output[0] == 'a') output = "area"; // for area/surface analysis
   else if(output[0] == 'w') output = "weighted"; // for weighted distribution
   else if(output[0] == 'm') output = "motility"; // for outputting the motility of the system
@@ -3523,7 +3711,7 @@ int main(int argc, char* argv[]) {
       } else if (output == "motility"){
         if (details==0){
         ofstream outfile;
-        string name = "./lars_sim/Data/motility/square_perc_L_50";
+        string name = "./lars_sim/Data/motility/square_perc";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
         for (double al = 0.0; al < 0.2 ; al+=0.005){
@@ -3533,9 +3721,12 @@ int main(int argc, char* argv[]) {
           t = 0;
           std::vector<double> values_mot;
           std::vector<double> values_mas;
+          std::vector<double> values_wei;
           double mean = 0;
           double rel_mass = 0;
           double count = 0;
+          double weighted = 0;
+          double cov_w = 0;
           for(unsigned n=0; t < burnin + until; ++n) {
             t = LB.run_until(burnin + n * every);
             values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
@@ -3544,9 +3735,21 @@ int main(int argc, char* argv[]) {
             mean += LB.motility_fraction();
             count++;
             //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+
+            hist_t hist = LB.cluster_distribution_particle_number();
+            double second_moment = 0;
+            double first_moment = 0;
+            for (unsigned i = 0; i < hist.size(); i+=2){
+              second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment += hist[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            values_wei.push_back(second_moment / first_moment * 1.0/double(P.N));
+            weighted += second_moment / first_moment * 1.0/double(P.N);
           }
           mean = mean / count;
           rel_mass = rel_mass / count;
+          weighted = weighted / count;
 
 
           double cov_mot = 0;
@@ -3561,7 +3764,12 @@ int main(int argc, char* argv[]) {
           }
           cov_mas = cov_mas/(values_mas.size() - 1);
 
-          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
+          for (auto& val : values_wei){
+            cov_w += pow(val - weighted, 2);
+          }
+          cov_w = cov_w/(values_wei.size() - 1);
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << " " << weighted << " " << cov_w << endl;
         }
       
       } else if (details==1){
@@ -3881,7 +4089,7 @@ int main(int argc, char* argv[]) {
       }else if (output == "motility"){
         if (details==0){
         ofstream outfile;
-        string name = "./lars_sim/Data/motility/triangular_perc_L_50";
+        string name = "./lars_sim/Data/motility/triangular_perc";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
         for (double al = 0.0; al < 0.2 ; al+=0.005){
@@ -3891,9 +4099,12 @@ int main(int argc, char* argv[]) {
           t = 0;
           std::vector<double> values_mot;
           std::vector<double> values_mas;
+          std::vector<double> values_wei;
           double mean = 0;
           double rel_mass = 0;
           double count = 0;
+          double weighted = 0;
+          double cov_w = 0;
           for(unsigned n=0; t < burnin + until; ++n) {
             t = LB.run_until(burnin + n * every);
             values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
@@ -3902,9 +4113,21 @@ int main(int argc, char* argv[]) {
             mean += LB.motility_fraction();
             count++;
             //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+
+            hist_t hist = LB.cluster_distributions_particle_numbers();
+            double second_moment = 0;
+            double first_moment = 0;
+            for (unsigned i = 0; i < hist.size(); i+=2){
+              second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment += hist[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            values_wei.push_back(second_moment / first_moment * 1.0/double(P.N));
+            weighted += second_moment / first_moment * 1.0/double(P.N);
           }
           mean = mean / count;
           rel_mass = rel_mass / count;
+          weighted = weighted / count;
 
 
           double cov_mot = 0;
@@ -3919,7 +4142,12 @@ int main(int argc, char* argv[]) {
           }
           cov_mas = cov_mas/(values_mas.size() - 1);
 
-          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
+          for (auto& val : values_wei){
+            cov_w += pow(val - weighted, 2);
+          }
+          cov_w = cov_w/(values_wei.size() - 1);
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << " " << weighted << " " << cov_w << endl;
         }
         } else if (details==1){
           ofstream outfile;
@@ -4132,7 +4360,7 @@ int main(int argc, char* argv[]) {
       }else if (output == "motility"){
         if (details==0){
         ofstream outfile;
-        string name = "./lars_sim/Data/motility/hexagonal_perc_L_50";
+        string name = "./lars_sim/Data/motility/hexagonal_perc";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
         for (double al = 0.0; al < 0.2 ; al+=0.005){
@@ -4142,9 +4370,12 @@ int main(int argc, char* argv[]) {
           t = 0;
           std::vector<double> values_mot;
           std::vector<double> values_mas;
+          std::vector<double> values_wei;
           double mean = 0;
           double rel_mass = 0;
           double count = 0;
+          double weighted = 0;
+          double cov_w = 0;
           for(unsigned n=0; t < burnin + until; ++n) {
             t = LB.run_until(burnin + n * every);
             values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
@@ -4153,9 +4384,21 @@ int main(int argc, char* argv[]) {
             mean += LB.motility_fraction();
             count++;
             //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+
+            hist_t hist = LB.cluster_distribution_particle_number();
+            double second_moment = 0;
+            double first_moment = 0;
+            for (unsigned i = 0; i < hist.size(); i+=2){
+              second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment += hist[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            values_wei.push_back(second_moment / first_moment * 1.0/double(P.N));
+            weighted += second_moment / first_moment * 1.0/double(P.N);
           }
           mean = mean / count;
           rel_mass = rel_mass / count;
+          weighted = weighted / count;
 
 
           double cov_mot = 0;
@@ -4170,7 +4413,13 @@ int main(int argc, char* argv[]) {
           }
           cov_mas = cov_mas/(values_mas.size() - 1);
 
-          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
+          for (auto& val : values_wei){
+            cov_w += pow(val - weighted, 2);
+          }
+          cov_w = cov_w/(values_wei.size() - 1);
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << " " << weighted << " " << cov_w << endl;
+        
         }
       
       } else if (details==1){
@@ -4577,7 +4826,7 @@ int main(int argc, char* argv[]) {
         } 
       }else if (output == "motility"){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/square_perc_L_50.txt");
+        outfile.open("./lars_sim/Data/motility/square_perc.txt");
         for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1]  = al;
@@ -4585,9 +4834,12 @@ int main(int argc, char* argv[]) {
           t = 0;
           std::vector<double> values_mot;
           std::vector<double> values_mas;
+          std::vector<double> values_wei;
           double mean = 0;
           double rel_mass = 0;
           double count = 0;
+          double weighted = 0;
+          double cov_w = 0;
           for(unsigned n=0; t < burnin + until; ++n) {
             t = LB.run_until(burnin + n * every);
             values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
@@ -4596,9 +4848,21 @@ int main(int argc, char* argv[]) {
             mean += LB.motility_fraction();
             count++;
             //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+
+            hist_t hist = LB.cluster_distributions();
+            double second_moment = 0;
+            double first_moment = 0;
+            for (unsigned i = 0; i < hist.size(); i+=2){
+              second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment += hist[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            values_wei.push_back(second_moment / first_moment * 1.0/double(P.N));
+            weighted += second_moment / first_moment * 1.0/double(P.N);
           }
           mean = mean / count;
           rel_mass = rel_mass / count;
+          weighted = weighted / count;
 
 
           double cov_mot = 0;
@@ -4613,7 +4877,12 @@ int main(int argc, char* argv[]) {
           }
           cov_mas = cov_mas/(values_mas.size() - 1);
 
-          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
+          for (auto& val : values_wei){
+            cov_w += pow(val - weighted, 2);
+          }
+          cov_w = cov_w/(values_wei.size() - 1);
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << " " << weighted << " " << cov_w << endl;
         }
       
       }
@@ -4831,7 +5100,7 @@ int main(int argc, char* argv[]) {
         }
       }else if (output == "motility"){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/triangular_perc_L_50.txt");
+        outfile.open("./lars_sim/Data/motility/triangular_perc.txt");
         for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
@@ -4839,9 +5108,12 @@ int main(int argc, char* argv[]) {
           t = 0;
           std::vector<double> values_mot;
           std::vector<double> values_mas;
+          std::vector<double> values_wei;
           double mean = 0;
           double rel_mass = 0;
           double count = 0;
+          double weighted = 0;
+          double cov_w = 0;
           for(unsigned n=0; t < burnin + until; ++n) {
             t = LB.run_until(burnin + n * every);
             values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
@@ -4850,9 +5122,21 @@ int main(int argc, char* argv[]) {
             mean += LB.motility_fraction();
             count++;
             //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+
+            hist_t hist = LB.cluster_distributions();
+            double second_moment = 0;
+            double first_moment = 0;
+            for (unsigned i = 0; i < hist.size(); i+=2){
+              second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment += hist[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            values_wei.push_back(second_moment / first_moment * 1.0/double(P.N));
+            weighted += second_moment / first_moment * 1.0/double(P.N);
           }
           mean = mean / count;
           rel_mass = rel_mass / count;
+          weighted = weighted / count;
 
 
           double cov_mot = 0;
@@ -4867,7 +5151,12 @@ int main(int argc, char* argv[]) {
           }
           cov_mas = cov_mas/(values_mas.size() - 1);
 
-          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
+          for (auto& val : values_wei){
+            cov_w += pow(val - weighted, 2);
+          }
+          cov_w = cov_w/(values_wei.size() - 1);
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << " " << weighted << " " << cov_w << endl;
         }
       
       }
@@ -5111,7 +5400,7 @@ int main(int argc, char* argv[]) {
 
       }else if (output == "motility"){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/hexagonal_perc_L_50.txt");
+        outfile.open("./lars_sim/Data/motility/hexagonal_perc.txt");
         for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
@@ -5119,9 +5408,12 @@ int main(int argc, char* argv[]) {
           t = 0;
           std::vector<double> values_mot;
           std::vector<double> values_mas;
+          std::vector<double> values_wei;
           double mean = 0;
           double rel_mass = 0;
           double count = 0;
+          double weighted = 0;
+          double cov_w = 0;
           for(unsigned n=0; t < burnin + until; ++n) {
             t = LB.run_until(burnin + n * every);
             values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
@@ -5130,9 +5422,21 @@ int main(int argc, char* argv[]) {
             mean += LB.motility_fraction();
             count++;
             //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+
+            hist_t hist = LB.cluster_distributions();
+            double second_moment = 0;
+            double first_moment = 0;
+            for (unsigned i = 0; i < hist.size(); i+=2){
+              second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment += hist[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            values_wei.push_back(second_moment / first_moment * 1.0/double(P.N));
+            weighted += second_moment / first_moment * 1.0/double(P.N);
           }
           mean = mean / count;
           rel_mass = rel_mass / count;
+          weighted = weighted / count;
 
 
           double cov_mot = 0;
@@ -5147,7 +5451,12 @@ int main(int argc, char* argv[]) {
           }
           cov_mas = cov_mas/(values_mas.size() - 1);
 
-          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << endl;
+          for (auto& val : values_wei){
+            cov_w += pow(val - weighted, 2);
+          }
+          cov_w = cov_w/(values_wei.size() - 1);
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << " " << weighted << " " << cov_w << endl;
         }
       
       } else if (output == "snapshots"){
