@@ -83,7 +83,7 @@ class Lattice {
   std::vector<Site> sites; // Representation of the sites
   Engine& rng; // Source of noise: this is a reference as there should only be one of these!
   std::discrete_distribution<unsigned> anyway, initial; // Distribution over tumble directions
-  std::exponential_distribution<double> run, tumble; // Distribution of times between run and tumble events
+  std::exponential_distribution<double> run; // Distribution of times between run and tumble events
   Scheduler S; // Keeps track of the event queue
 
   // Given an index into sites, return a sequence of indices corresponding to
@@ -254,7 +254,7 @@ class Lattice {
 
 
 public:
-
+  std::exponential_distribution<double> tumble;
   Lattice(const Parameters& P, Engine& rng) :
     P(P), // NB: this takes a copy
     sites(std::accumulate(P.L.begin(), P.L.end(), 1, std::multiplies<unsigned>())), // Initialise lattice with empty sites
@@ -349,6 +349,10 @@ public:
     return S.time();
   }
 
+  void set_new_lambda(std::exponential_distribution<double> *exp_dis, double val){
+      typename std::exponential_distribution<double>::param_type new_lambda(val);
+      exp_dis->param(new_lambda);
+  }
   // Sample all particle directions from the distribution that applies at the current instant
   // (This is needed if you want "realistic" snapshots, rather than the state at a mixture of times)
   void realise_directions() {
@@ -862,7 +866,6 @@ public:
         
         for (const auto& kv : clusters) {
             // variable for surface and check 
-            unsigned surf = 0;
             unsigned check = 0;
             // check whether particle cluster
             if (sites[kv.first].present > 0) { 
@@ -1051,7 +1054,7 @@ class Triangle_lattice {
     std::vector<Site> sites; // Representation of the sites
     Engine& rng; // Source of noise: this is a reference as there should only be one of these!
     std::discrete_distribution<unsigned> anyway, initial; // Distribution over tumble directions
-    std::exponential_distribution<double> run, tumble; // Distribution of times between run and tumble events
+    std::exponential_distribution<double> run; // Distribution of times between run and tumble events
     Scheduler S; // Keeps track of the event queue
 
     // Given an index into sites, return a sequence of indices corresponding to
@@ -1271,7 +1274,7 @@ class Triangle_lattice {
 
 
 public:
-
+    std::exponential_distribution<double> tumble;
     Triangle_lattice(const Parameters& P, Engine& rng) :
         P(P), // NB: this takes a copy
         sites(std::accumulate(P.L.begin(), P.L.end(), 1, std::multiplies<unsigned>())), // Initialise lattice with empty sites
@@ -1359,6 +1362,10 @@ public:
 
     }
 
+    void set_new_lambda(std::exponential_distribution<double> *exp_dis, double val){
+      typename std::exponential_distribution<double>::param_type new_lambda(val);
+      exp_dis->param(new_lambda);
+    }
     // Iterates the simulation until the given time; returns the actual time run to
     double run_until(double time) {
         while (S.advance(time));
@@ -1881,7 +1888,6 @@ public:
         
         for (const auto& kv : clusters) {
             // variable for surface and check 
-            unsigned surf = 0;
             unsigned check = 0;
             // check whether particle cluster
             if (sites[kv.first].present > 0) { 
@@ -2086,7 +2092,7 @@ class Hexagonal_lattice {
     std::vector<Site> sites; // Representation of the sites
     Engine& rng; // Source of noise: this is a reference as there should only be one of these!
     std::discrete_distribution<unsigned> anyway, initial; // Distribution over tumble directions
-    std::exponential_distribution<double> run, tumble; // Distribution of times between run and tumble events
+    std::exponential_distribution<double> run; // Distribution of times between run and tumble events
     Scheduler S; // Keeps track of the event queue
     // Given an index into sites, return a sequence of indices corresponding to
     // its neighbours. We have periodic boundary conditions
@@ -2363,6 +2369,7 @@ class Hexagonal_lattice {
 public:
     unsigned planned_moves;
     unsigned actual_moves;
+    std::exponential_distribution<double> tumble;
 
     Hexagonal_lattice(const Parameters& P, Engine& rng) :
         P(P), // NB: this takes a copy
@@ -2471,6 +2478,10 @@ public:
         return S.time();
     }
 
+    void set_new_lambda(std::exponential_distribution<double> *exp_dis, double val){
+      typename std::exponential_distribution<double>::param_type new_lambda(val);
+      exp_dis->param(new_lambda);
+    }
     // Sample all particle directions from the distribution that applies at the current instant
     // (This is needed if you want "realistic" snapshots, rather than the state at a mixture of times)
     void realise_directions() {
@@ -3072,7 +3083,6 @@ public:
         // variable for mean and the count of clusters
         vec output; 
         for (const auto& kv : clusters) {
-            unsigned surf = 0;
             unsigned check = 0;
             // instead of occupied we check whether there are any particles present
             if (sites[(kv.first - kv.first%2)/2].present[kv.first%2] > 0) { 
@@ -3484,6 +3494,7 @@ int main(int argc, char* argv[]) {
   else if(output[0] == 'v') output = "vacancies";
   else if(output[0] == 'c') output = "clusters";
   else if(output[0] == 'd') output = "distribution"; // for distribution of neighbours (maybe also density?)
+  else if(output[0] == 'l') output = "lagging"; // this is for output of hysteresis (l and lagging for greek roots of word)
   else if(output[0] == 'a') output = "area"; // for area/surface analysis
   else if(output[0] == 'w') output = "weighted"; // for weighted distribution
   else if(output[0] == 'm') output = "motility"; // for outputting the motility of the system
@@ -3708,7 +3719,144 @@ int main(int argc, char* argv[]) {
           outfile << t << " " << weighted << " " << L.avg_cluster_size_nr() << endl;
         }
       
-      } else if (output == "motility"){
+      } 
+      else if (output == "lagging"){
+        ofstream outfile, backward;
+        string name = "./lars_sim/Data/motility/square_perc_fhyst_L_50";
+        string outputname = name+"_"+occ_p+".txt";
+        outfile.open(outputname);
+        name = "./lars_sim/Data/motility/square_perc_bhyst_L_50";
+        outputname = name+"_"+occ_p+".txt";
+        backward.open(outputname);
+        // foward hysteresis, i.e. start below critical point and move up
+        Lattice LB(P, rng);
+        double tmax = burnin + until;
+        unsigned c = 0;
+        for (double al = 0.076; al < 0.1 ; al+=0.002){
+          // introducing new alpha
+          P.alpha[0] = P.alpha[1] = al;
+          LB.set_new_lambda(&LB.tumble, std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size());
+          std::vector<double> values_mot;
+          std::vector<double> values_mas;
+          std::vector<double> values_wei;
+          double mean = 0;
+          double rel_mass = 0;
+          double count = 0;
+          double weighted = 0;
+          double cov_w = 0;
+          for(unsigned n=0; t < (c+1)*tmax; ++n) {
+            t = LB.run_until(burnin + n * every + c*tmax);
+
+            values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
+            values_mot.push_back(LB.motility_fraction());
+            rel_mass += double(LB.max_cluster_size_nr())/double(P.N);
+            mean += LB.motility_fraction();
+            count++;
+            //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+
+            hist_t hist = LB.cluster_distribution_particle_number();
+            double second_moment = 0;
+            double first_moment = 0;
+            for (unsigned i = 0; i < hist.size(); i+=2){
+              second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment += hist[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            values_wei.push_back(second_moment / first_moment * 1.0/double(P.N));
+            weighted += second_moment / first_moment * 1.0/double(P.N);
+          
+          }
+           mean = mean / count;
+          rel_mass = rel_mass / count;
+          weighted = weighted / count;
+
+
+          double cov_mot = 0;
+          for (auto& val : values_mot){
+            cov_mot += pow(val - mean, 2);
+          }
+          cov_mot = cov_mot/(values_mot.size() - 1);
+
+          double cov_mas = 0;
+          for (auto& val : values_mas){
+            cov_mas += pow(val - rel_mass, 2);
+          }
+          cov_mas = cov_mas/(values_mas.size() - 1);
+
+          for (auto& val : values_wei){
+            cov_w += pow(val - weighted, 2);
+          }
+          cov_w = cov_w/(values_wei.size() - 1);
+          
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << " " << weighted << " " << cov_w << endl;
+          c++;
+        }
+
+        Lattice LT(P, rng);
+        c = 0;
+        t = 0;
+        for (double al = 0.1; al > 0.075 ; al-=0.002){
+          // introducing new alpha
+          P.alpha[0] = P.alpha[1] = al;
+          LT.set_new_lambda(&LT.tumble, std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size());
+          std::vector<double> values_mot_b;
+          std::vector<double> values_mas_b;
+          std::vector<double> values_wei_b;
+          double mean_b = 0;
+          double rel_mass_b = 0;
+          double count_b = 0;
+          double weighted_b = 0;
+          double cov_w_b = 0;
+          for(unsigned n=0; t < (c+1)*tmax; ++n) {
+            t = LT.run_until(burnin + n * every + c*tmax);
+
+            values_mas_b.push_back(double(LT.max_cluster_size_nr())/double(P.N));
+            values_mot_b.push_back(LT.motility_fraction());
+            rel_mass_b += double(LT.max_cluster_size_nr())/double(P.N);
+            mean_b += LT.motility_fraction();
+            count_b++;
+            //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+
+            hist_t hist_b = LT.cluster_distribution_particle_number();
+            double second_moment_b = 0;
+            double first_moment_b = 0;
+            for (unsigned i = 0; i < hist_b.size(); i+=2){
+              second_moment_b += hist_b[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment_b += hist_b[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            values_wei_b.push_back(second_moment_b / first_moment_b * 1.0/double(P.N));
+            weighted_b += second_moment_b / first_moment_b * 1.0/double(P.N);
+          
+          }
+           mean_b = mean_b / count_b;
+          rel_mass_b = rel_mass_b / count_b;
+          weighted_b= weighted_b / count_b;
+
+
+          double cov_mot_b = 0;
+          for (auto& val : values_mot_b){
+            cov_mot_b += pow(val - mean_b, 2);
+          }
+          cov_mot_b = cov_mot_b/(values_mot_b.size() - 1);
+
+          double cov_mas_b = 0;
+          for (auto& val : values_mas_b){
+            cov_mas_b += pow(val - rel_mass_b, 2);
+          }
+          cov_mas_b = cov_mas_b/(values_mas_b.size() - 1);
+
+          for (auto& val : values_wei_b){
+            cov_w_b += pow(val - weighted_b, 2);
+          }
+          cov_w_b = cov_w_b/(values_wei_b.size() - 1);
+
+          backward << al << " " << mean_b << " " << cov_mot_b << " " << rel_mass_b << " " << cov_mas_b << " " << weighted_b << " " << cov_w_b << endl;
+          c++;
+        }
+      }
+      else if (output == "motility"){
         if (details==0){
         ofstream outfile;
         string name = "./lars_sim/Data/motility/square_perc";
@@ -4225,6 +4373,144 @@ int main(int argc, char* argv[]) {
 
         }
       }
+      else if (output == "lagging"){
+        ofstream outfile, backward;
+        string name = "./lars_sim/Data/motility/triangular_perc_fhyst";
+        string outputname = name+"_"+occ_p+".txt";
+        outfile.open(outputname);
+        name = "./lars_sim/Data/motility/triangular_perc_bhyst";
+        outputname = name+"_"+occ_p+".txt";
+        backward.open(outputname);
+        // foward hysteresis, i.e. start below critical point and move up
+        Triangle_lattice LB(P, rng);
+        double tmax = burnin + until;
+        unsigned c = 0;
+        for (double al = 0.05; al < 0.08 ; al+=0.002){
+          // introducing new alpha and updating tumble distribution.
+
+          P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
+          LB.set_new_lambda(&LB.tumble, std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size());
+
+          std::vector<double> values_mot;
+          std::vector<double> values_mas;
+          std::vector<double> values_wei;
+          double mean = 0;
+          double rel_mass = 0;
+          double count = 0;
+          double weighted = 0;
+          double cov_w = 0;
+          for(unsigned n=0; t < (c+1)*tmax; ++n) {
+            t = LB.run_until(burnin + n * every + c*tmax);
+
+            values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
+            values_mot.push_back(LB.motility_fraction());
+            rel_mass += double(LB.max_cluster_size_nr())/double(P.N);
+            mean += LB.motility_fraction();
+            count++;
+            //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+
+            hist_t hist = LB.cluster_distributions_particle_numbers();
+            double second_moment = 0;
+            double first_moment = 0;
+            for (unsigned i = 0; i < hist.size(); i+=2){
+              second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment += hist[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            values_wei.push_back(second_moment / first_moment * 1.0/double(P.N));
+            weighted += second_moment / first_moment * 1.0/double(P.N);
+          
+          }
+           mean = mean / count;
+          rel_mass = rel_mass / count;
+          weighted = weighted / count;
+
+
+          double cov_mot = 0;
+          for (auto& val : values_mot){
+            cov_mot += pow(val - mean, 2);
+          }
+          cov_mot = cov_mot/(values_mot.size() - 1);
+
+          double cov_mas = 0;
+          for (auto& val : values_mas){
+            cov_mas += pow(val - rel_mass, 2);
+          }
+          cov_mas = cov_mas/(values_mas.size() - 1);
+
+          for (auto& val : values_wei){
+            cov_w += pow(val - weighted, 2);
+          }
+          cov_w = cov_w/(values_wei.size() - 1);
+          
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << " " << weighted << " " << cov_w << endl;
+          c++;
+        }
+
+        Triangle_lattice LT(P, rng);
+        c = 0;
+        t = 0;
+        for (double al = 0.08; al > 0.05 ; al-=0.002){
+          // introducing new alpha
+          P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
+          LT.set_new_lambda(&LT.tumble, std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size());
+          std::vector<double> values_mot_b;
+          std::vector<double> values_mas_b;
+          std::vector<double> values_wei_b;
+          double mean_b = 0;
+          double rel_mass_b = 0;
+          double count_b = 0;
+          double weighted_b = 0;
+          double cov_w_b = 0;
+          for(unsigned n=0; t < (c+1)*tmax; ++n) {
+            t = LT.run_until(burnin + n * every + c*tmax);
+
+            values_mas_b.push_back(double(LT.max_cluster_size_nr())/double(P.N));
+            values_mot_b.push_back(LT.motility_fraction());
+            rel_mass_b += double(LT.max_cluster_size_nr())/double(P.N);
+            mean_b += LT.motility_fraction();
+            count_b++;
+            //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+
+            hist_t hist_b = LT.cluster_distributions_particle_numbers();
+            double second_moment_b = 0;
+            double first_moment_b = 0;
+            for (unsigned i = 0; i < hist_b.size(); i+=2){
+              second_moment_b += hist_b[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment_b += hist_b[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            values_wei_b.push_back(second_moment_b / first_moment_b * 1.0/double(P.N));
+            weighted_b += second_moment_b / first_moment_b * 1.0/double(P.N);
+          
+          }
+           mean_b = mean_b / count_b;
+          rel_mass_b = rel_mass_b / count_b;
+          weighted_b= weighted_b / count_b;
+
+
+          double cov_mot_b = 0;
+          for (auto& val : values_mot_b){
+            cov_mot_b += pow(val - mean_b, 2);
+          }
+          cov_mot_b = cov_mot_b/(values_mot_b.size() - 1);
+
+          double cov_mas_b = 0;
+          for (auto& val : values_mas_b){
+            cov_mas_b += pow(val - rel_mass_b, 2);
+          }
+          cov_mas_b = cov_mas_b/(values_mas_b.size() - 1);
+
+          for (auto& val : values_wei_b){
+            cov_w_b += pow(val - weighted_b, 2);
+          }
+          cov_w_b = cov_w_b/(values_wei_b.size() - 1);
+
+          backward << al << " " << mean_b << " " << cov_mot_b << " " << rel_mass_b << " " << cov_mas_b << " " << weighted_b << " " << cov_w_b << endl;
+          c++;
+        }
+      }
       else {
         ofstream outfile;
         outfile.open("./lars_sim/gif/triangle.txt");
@@ -4357,7 +4643,145 @@ int main(int argc, char* argv[]) {
 
         }
 
-      }else if (output == "motility"){
+      }
+      else if (output == "lagging"){
+        ofstream outfile, backward;
+        string name = "./lars_sim/Data/motility/hexagonal_perc_fhyst";
+        string outputname = name+"_"+occ_p+".txt";
+        outfile.open(outputname);
+        name = "./lars_sim/Data/motility/hexagonal_perc_bhyst";
+        outputname = name+"_"+occ_p+".txt";
+        backward.open(outputname);
+        // foward hysteresis, i.e. start below critical point and move up
+        Hexagonal_lattice LB(P, rng);
+        double tmax = burnin + until;
+        unsigned c = 0;
+        for (double al = 0.10; al < 0.126 ; al+=0.002){
+          // introducing new alpha
+          P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
+          LB.set_new_lambda(&LB.tumble, std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size());
+          std::vector<double> values_mot;
+          std::vector<double> values_mas;
+          std::vector<double> values_wei;
+          double mean = 0;
+          double rel_mass = 0;
+          double count = 0;
+          double weighted = 0;
+          double cov_w = 0;
+          for(unsigned n=0; t < (c+1)*tmax; ++n) {
+            t = LB.run_until(burnin + n * every + c*tmax);
+
+            values_mas.push_back(double(LB.max_cluster_size_nr())/double(P.N));
+            values_mot.push_back(LB.motility_fraction());
+            rel_mass += double(LB.max_cluster_size_nr())/double(P.N);
+            mean += LB.motility_fraction();
+            count++;
+            //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+
+            hist_t hist = LB.cluster_distribution_particle_number();
+            double second_moment = 0;
+            double first_moment = 0;
+            for (unsigned i = 0; i < hist.size(); i+=2){
+              second_moment += hist[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment += hist[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            values_wei.push_back(second_moment / first_moment * 1.0/double(P.N));
+            weighted += second_moment / first_moment * 1.0/double(P.N);
+          
+          }
+           mean = mean / count;
+          rel_mass = rel_mass / count;
+          weighted = weighted / count;
+
+
+          double cov_mot = 0;
+          for (auto& val : values_mot){
+            cov_mot += pow(val - mean, 2);
+          }
+          cov_mot = cov_mot/(values_mot.size() - 1);
+
+          double cov_mas = 0;
+          for (auto& val : values_mas){
+            cov_mas += pow(val - rel_mass, 2);
+          }
+          cov_mas = cov_mas/(values_mas.size() - 1);
+
+          for (auto& val : values_wei){
+            cov_w += pow(val - weighted, 2);
+          }
+          cov_w = cov_w/(values_wei.size() - 1);
+          
+
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << " " << weighted << " " << cov_w << endl;
+          c++;
+        }
+
+        Hexagonal_lattice LT(P, rng);
+        c = 0;
+        t = 0;
+        for (double al = 0.126; al > 0.10 ; al-=0.002){
+          // introducing new alpha
+          P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
+          LT.set_new_lambda(&LT.tumble, std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size());
+          std::vector<double> values_mot_b;
+          std::vector<double> values_mas_b;
+          std::vector<double> values_wei_b;
+          double mean_b = 0;
+          double rel_mass_b = 0;
+          double count_b = 0;
+          double weighted_b = 0;
+          double cov_w_b = 0;
+          for(unsigned n=0; t < (c+1)*tmax; ++n) {
+            t = LT.run_until(burnin + n * every + c*tmax);
+
+            values_mas_b.push_back(double(LT.max_cluster_size_nr())/double(P.N));
+            values_mot_b.push_back(LT.motility_fraction());
+            rel_mass_b += double(LT.max_cluster_size_nr())/double(P.N);
+            mean_b += LT.motility_fraction();
+            count_b++;
+            //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
+
+            hist_t hist_b = LT.cluster_distribution_particle_number();
+            double second_moment_b = 0;
+            double first_moment_b = 0;
+            for (unsigned i = 0; i < hist_b.size(); i+=2){
+              second_moment_b += hist_b[i] * ((i+2)/2) * ((i+2)/2);
+              first_moment_b += hist_b[i] * ((i+2)/2);
+            }
+            //std::cout << second_moment << " " << first_moment << endl;
+            values_wei_b.push_back(second_moment_b / first_moment_b * 1.0/double(P.N));
+            weighted_b += second_moment_b / first_moment_b * 1.0/double(P.N);
+          
+          }
+           mean_b = mean_b / count_b;
+          rel_mass_b = rel_mass_b / count_b;
+          weighted_b= weighted_b / count_b;
+
+
+          double cov_mot_b = 0;
+          for (auto& val : values_mot_b){
+            cov_mot_b += pow(val - mean_b, 2);
+          }
+          cov_mot_b = cov_mot_b/(values_mot_b.size() - 1);
+
+          double cov_mas_b = 0;
+          for (auto& val : values_mas_b){
+            cov_mas_b += pow(val - rel_mass_b, 2);
+          }
+          cov_mas_b = cov_mas_b/(values_mas_b.size() - 1);
+
+          for (auto& val : values_wei_b){
+            cov_w_b += pow(val - weighted_b, 2);
+          }
+          cov_w_b = cov_w_b/(values_wei_b.size() - 1);
+
+          backward << al << " " << mean_b << " " << cov_mot_b << " " << rel_mass_b << " " << cov_mas_b << " " << weighted_b << " " << cov_w_b << endl;
+          c++;
+        }
+      }
+
+      else if (output == "motility"){
         if (details==0){
         ofstream outfile;
         string name = "./lars_sim/Data/motility/hexagonal_perc";
