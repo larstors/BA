@@ -25,6 +25,7 @@ using namespace std;
 using direction_t = unsigned char;
 using hist_t = std::valarray<unsigned>;
 using vec = std::vector<unsigned>;
+using vec_d = std::vector<double>;
 
 // needed for calculating position of particles on hexagonal lattice
 // TODO see if needed somewhere else, otherwise this can be moved to HexagonalParticleWriter
@@ -1004,7 +1005,7 @@ public:
     }
 
     hist_t particle_neighbour_dist(){
-      hist_t dist(4);
+      hist_t dist(5);
       unsigned count = 0;
       for (unsigned n = 0; n < sites.size(); n++){
         count = 0;
@@ -1016,7 +1017,23 @@ public:
         }
         
       }
+      return dist;
     }
+
+    vec_d density(){
+      vec_d den;
+
+      for (unsigned n = 0; n < sites.size(); n++){
+          double local = 0.5 * double(sites[n].present);
+          for (const auto& m : neighbours(n)){
+            local += 1.0/8.0 * double(sites[m].present);
+          }
+          den.push_back(local);
+        }
+      
+      return den;
+    }
+    
 };
 
 
@@ -2026,8 +2043,9 @@ public:
     }
 
     hist_t particle_neighbour_dist(){
-      hist_t dist(6);
+      hist_t dist(7);
       unsigned count = 0;
+      
       for (unsigned n = 0; n < sites.size(); n++){
         count = 0;
         if (sites[n].present > 0){
@@ -2038,6 +2056,24 @@ public:
         }
         
       }
+
+      return dist;
+    }
+
+    vec_d density(){
+      vec_d den;
+      
+
+      for (unsigned n = 0; n < sites.size(); n++){
+          double local = 0.5 * double(sites[n].present);
+          for (const auto& m : neighbours(n)){
+            local += 1.0/12.0 * double(sites[m].present);
+          }
+          den.push_back(local);
+        }
+      
+      
+      return den;
     }
 };
 
@@ -3259,6 +3295,22 @@ public:
           }
         }
       }
+      return dist;
+    }
+
+    vec_d density(){
+      vec_d den;
+
+      for (unsigned n = 0; n < sites.size(); n++){
+        for (unsigned i = 0; i < 2; i++){
+          double local = 0.5 * double(sites[n].present[i]);
+          for (const auto& m : neighbours(n, i)){
+            local += 1.0/6.0 * double(sites[m].present[(i+1)%2]);
+          }
+          den.push_back(local);
+        }
+      }
+      return den;
     }
 
 };
@@ -3722,17 +3774,17 @@ int main(int argc, char* argv[]) {
       } 
       else if (output == "lagging"){
         ofstream outfile, backward;
-        string name = "./lars_sim/Data/motility/square_perc_fhyst_L_50";
+        string name = "./lars_sim/Data/motility/square_perc_fhyst";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
-        name = "./lars_sim/Data/motility/square_perc_bhyst_L_50";
+        name = "./lars_sim/Data/motility/square_perc_bhyst";
         outputname = name+"_"+occ_p+".txt";
         backward.open(outputname);
         // foward hysteresis, i.e. start below critical point and move up
         Lattice LB(P, rng);
         double tmax = burnin + until;
         unsigned c = 0;
-        for (double al = 0.076; al < 0.1 ; al+=0.002){
+        for (double al = 0.0875; al < 0.094 ; al+=0.0001625){
           // introducing new alpha
           P.alpha[0] = P.alpha[1] = al;
           LB.set_new_lambda(&LB.tumble, std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size());
@@ -3796,7 +3848,7 @@ int main(int argc, char* argv[]) {
         Lattice LT(P, rng);
         c = 0;
         t = 0;
-        for (double al = 0.1; al > 0.075 ; al-=0.002){
+        for (double al = 0.094; al > 0.0875 ; al-=0.0001625){
           // introducing new alpha
           P.alpha[0] = P.alpha[1] = al;
           LT.set_new_lambda(&LT.tumble, std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size());
@@ -3859,7 +3911,7 @@ int main(int argc, char* argv[]) {
       else if (output == "motility"){
         if (details==0){
         ofstream outfile;
-        string name = "./lars_sim/Data/motility/square_perc";
+        string name = "./lars_sim/Data/motility/square_perc_low";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
         for (double al = 0.0; al < 0.2 ; al+=0.005){
@@ -3997,6 +4049,22 @@ int main(int argc, char* argv[]) {
             weighted = weighted / double(P.N);
             output << t << " " << weighted << " " << L.avg_cluster_size_nr() << endl;
          }
+      }
+      else if (output == "distribution"){
+        ofstream outfile, outfile2;
+        outfile.open("./lars_sim/Data/dist/square_"+occ_p+".txt");
+        outfile2.open("./lars_sim/Data/dist/square_dens_"+occ_p+".txt");
+        hist_t dist(5);
+        for(double n = 0; t < burnin + until; n++) {
+          t = L.run_until(burnin + n * every);
+          vec_d dens = L.density();
+          for (const auto& m : dens) outfile2 << m << " ";
+          outfile2 << endl;
+          hist_t dr = L.particle_neighbour_dist();
+          dist[std::slice(0,dr.size(),1)] += dr;
+        }
+        for (const auto& m : dist) outfile << m << " ";
+        outfile << endl;
       }
       else if (output=="area"){
         ofstream surf, part;
@@ -4237,7 +4305,7 @@ int main(int argc, char* argv[]) {
       }else if (output == "motility"){
         if (details==0){
         ofstream outfile;
-        string name = "./lars_sim/Data/motility/triangular_perc";
+        string name = "./lars_sim/Data/motility/triangular_perc_low";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
         for (double al = 0.0; al < 0.2 ; al+=0.005){
@@ -4385,7 +4453,7 @@ int main(int argc, char* argv[]) {
         Triangle_lattice LB(P, rng);
         double tmax = burnin + until;
         unsigned c = 0;
-        for (double al = 0.05; al < 0.08 ; al+=0.002){
+        for (double al = 0.0625; al < 0.07 ; al+=0.0001875){
           // introducing new alpha and updating tumble distribution.
 
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
@@ -4451,7 +4519,7 @@ int main(int argc, char* argv[]) {
         Triangle_lattice LT(P, rng);
         c = 0;
         t = 0;
-        for (double al = 0.08; al > 0.05 ; al-=0.002){
+        for (double al = 0.07; al > 0.0625 ; al-=0.0001875){
           // introducing new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
           LT.set_new_lambda(&LT.tumble, std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size());
@@ -4510,6 +4578,26 @@ int main(int argc, char* argv[]) {
           backward << al << " " << mean_b << " " << cov_mot_b << " " << rel_mass_b << " " << cov_mas_b << " " << weighted_b << " " << cov_w_b << endl;
           c++;
         }
+      }
+      else if (output == "distribution"){
+        ofstream outfile, outfile2;
+        outfile.open("./lars_sim/Data/dist/tri_"+occ_p+".txt");
+        outfile2.open("./lars_sim/Data/dist/tri_dens_"+occ_p+".txt");
+        hist_t dist(7);
+        for(double n = 0; t < burnin + until; n++) {
+          
+          t = TL.run_until(burnin + n * every);
+          vec_d dens = TL.density();
+          for (const auto& y : dens) outfile2 << y << " ";
+          outfile2 << endl;
+          
+          hist_t dr = TL.particle_neighbour_dist();
+          dist[std::slice(0,dr.size(),1)] += dr;
+          
+        }
+        
+        for (const auto& m : dist) outfile << m << " ";
+        outfile << endl;
       }
       else {
         ofstream outfile;
@@ -4784,7 +4872,7 @@ int main(int argc, char* argv[]) {
       else if (output == "motility"){
         if (details==0){
         ofstream outfile;
-        string name = "./lars_sim/Data/motility/hexagonal_perc";
+        string name = "./lars_sim/Data/motility/hexagonal_perc_low";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
         for (double al = 0.0; al < 0.2 ; al+=0.005){
@@ -5045,7 +5133,22 @@ int main(int argc, char* argv[]) {
           outfile << HexagonalParticleWriter(HL, outfile) << endl;
         }
       }
-
+      else if (output == "distribution"){
+        ofstream outfile, outfile2;
+        outfile.open("./lars_sim/Data/dist/hex_"+occ_p+".txt");
+        outfile2.open("./lars_sim/Data/dist/hex_dens_"+occ_p+".txt");
+        hist_t dist(4);
+        for(double n = 0; t < burnin + until; n++) {
+          t = HL.run_until(burnin + n * every);
+          vec_d dens = HL.density();
+          for (const auto& m : dens) outfile2 << m << " ";
+          outfile2 << endl;
+          hist_t dr = HL.particle_neighbour_dist();
+          dist[std::slice(0,dr.size(),1)] += dr;
+        }
+        for (const auto& m : dist) outfile << m << " ";
+        outfile << endl;
+      }
 
     }
   } else{
@@ -5250,7 +5353,7 @@ int main(int argc, char* argv[]) {
         } 
       }else if (output == "motility"){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/square_perc.txt");
+        outfile.open("./lars_sim/Data/motility/square_perc_low.txt");
         for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1]  = al;
@@ -5309,6 +5412,22 @@ int main(int argc, char* argv[]) {
           outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << " " << weighted << " " << cov_w << endl;
         }
       
+      }
+      else if (output == "distribution"){
+        ofstream outfile, outfile2;
+        outfile.open("./lars_sim/Data/dist/square_"+occ_p+".txt");
+        outfile2.open("./lars_sim/Data/dist/square_dens_"+occ_p+".txt");
+        hist_t dist(5);
+        for(double n = 0; t < burnin + until; n++) {
+          t = L.run_until(burnin + n * every);
+          vec_d dens = L.density();
+          for (const auto& m : dens) outfile2 << m << " ";
+          outfile2 << endl;
+          hist_t dr = L.particle_neighbour_dist();
+          dist[std::slice(0,dr.size(),1)] += dr;
+        }
+        for (const auto& m : dist) outfile << m << " ";
+        outfile << endl;
       }
       else {
         ofstream outfile;
@@ -5524,7 +5643,7 @@ int main(int argc, char* argv[]) {
         }
       }else if (output == "motility"){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/triangular_perc.txt");
+        outfile.open("./lars_sim/Data/motility/triangular_perc_low.txt");
         for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
@@ -5583,6 +5702,26 @@ int main(int argc, char* argv[]) {
           outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << " " << weighted << " " << cov_w << endl;
         }
       
+      }
+      else if (output == "distribution"){
+        ofstream outfile, outfile2;
+        outfile.open("./lars_sim/Data/dist/tri_"+occ_p+".txt");
+        outfile2.open("./lars_sim/Data/dist/tri_dens_"+occ_p+".txt");
+        hist_t dist(7);
+        for(double n = 0; t < burnin + until; n++) {
+          
+          t = TL.run_until(burnin + n * every);
+          vec_d dens = TL.density();
+          for (const auto& y : dens) outfile2 << y << " ";
+          outfile2 << endl;
+          
+          hist_t dr = TL.particle_neighbour_dist();
+          dist[std::slice(0,dr.size(),1)] += dr;
+          
+        }
+        
+        for (const auto& m : dist) outfile << m << " ";
+        outfile << endl;
       }
       else {
         ofstream outfile;
@@ -5824,7 +5963,7 @@ int main(int argc, char* argv[]) {
 
       }else if (output == "motility"){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/hexagonal_perc.txt");
+        outfile.open("./lars_sim/Data/motility/hexagonal_perc_low.txt");
         for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
@@ -5900,7 +6039,22 @@ int main(int argc, char* argv[]) {
           t = HL.run_until(burnin + n * every);
         }
       }
-
+      else if (output == "distribution"){
+        ofstream outfile, outfile2;
+        outfile.open("./lars_sim/Data/dist/hex_"+occ_p+".txt");
+        outfile2.open("./lars_sim/Data/dist/hex_dens_"+occ_p+".txt");
+        hist_t dist(4);
+        for(double n = 0; t < burnin + until; n++) {
+          t = HL.run_until(burnin + n * every);
+          vec_d dens = HL.density();
+          for (const auto& m : dens) outfile2 << m << " ";
+          outfile2 << endl;
+          hist_t dr = HL.particle_neighbour_dist();
+          dist[std::slice(0,dr.size(),1)] += dr;
+        }
+        for (const auto& m : dist) outfile << m << " ";
+        outfile << endl;
+      }
 
 
     }
