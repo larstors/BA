@@ -817,7 +817,7 @@ public:
                 }
                 if (check > 0) surf++;
               }
-
+              //std::cout << surf << " " << kv.second.size() << endl;
               output.push_back(kv.second.size());
               output.push_back(surf);
             }
@@ -865,6 +865,20 @@ public:
         // vector for output of surface and volume of clusters
         vec output;
         
+        for (unsigned n = 0; n < sites.size(); n++){
+          unsigned check =0;
+          if (sites[n].present > 0){
+            for (const auto& m: neighbours(n)){
+              if (sites[m].present < 1){
+                    check++;
+                    continue;
+                  }
+            }
+            if (check > 0) output.push_back(n);
+          }
+        }
+
+        /*
         for (const auto& kv : clusters) {
             // variable for surface and check 
             unsigned check = 0;
@@ -873,15 +887,17 @@ public:
               for (const auto& n : kv.second){
                 check = 0;
                 for (const auto& m : neighbours(n)){
-                  if (sites[m].present == 0){
+                  if (sites[m].present < 1){
                     check++;
                     continue;
                   }
                 }
                 if (check > 0) output.push_back(n);
+                
               }
             }
         }
+        */
 
         return output;
     }
@@ -4067,15 +4083,38 @@ int main(int argc, char* argv[]) {
         outfile << endl;
       }
       else if (output=="area"){
-        ofstream surf, part;
+        ofstream surf, part, clust, border;
         surf.open("./lars_sim/Data/surf/square_sv.txt");
         part.open("./lars_sim/Data/surf/square_part.txt");
+        clust.open("./lars_sim/Data/surf/square_clust.txt");
+        border.open("./lars_sim/Data/surf/square_border.txt");
+
+        // unsigned so only one cluster each gets printed
+        unsigned check_1 = 0;
+        unsigned check_2 = 0;
         for(unsigned n=0; t < burnin + until; ++n) {
           t = L.run_until(burnin + n * every);
           vec a = L.surface_volume();
           for (const auto& k : a) surf << k << " ";
           surf << endl;
           part << ParticleWriter(L, part) << endl;
+          for (const auto& n : L.cluster_surface()) border << n << " ";
+          border << endl;
+
+          if (L.clust_size(8, 10) == 1 && check_1 == 0){
+            vec n =L.single_cluster(8, 10);
+            for (const auto& m : n) clust << m << " ";
+            clust << endl;
+            check_1++;
+          }
+
+          if (L.clust_size(3700, 4000) == 1 && check_2 == 0){
+            vec n = L.single_cluster(3700, 4000);
+            for (const auto& m : n) clust << m << " ";
+            clust << endl;
+            check_2++;
+          }
+
         }
       }
       else {
@@ -4083,12 +4122,12 @@ int main(int argc, char* argv[]) {
         outfile.open("./lars_sim/gif/square.txt");
         for(unsigned n=0; t < burnin + until; ++n) {
           t = L.run_until(burnin + n * every);
-          if (output == "particles") std::cout << ParticleWriter(L, outfile) << std::endl;
-          else if(output == "vacancies") std::cout << VacancyWriter(L) << std::endl;
+          if (output == "particles") outfile << ParticleWriter(L, outfile) << std::endl;
+          else if(output == "vacancies") outfile << VacancyWriter(L) << std::endl;
           else {
             // Ensure that all the particle directions are at the simulation time
             L.realise_directions();
-            std::cout << SnapshotWriter(L) << std::endl;
+            outfile << SnapshotWriter(L) << std::endl;
           }
         }
       
@@ -5012,15 +5051,39 @@ int main(int argc, char* argv[]) {
          }
       }
       else if (output=="area"){
-        ofstream surf, part;
+        ofstream surf, part, clust, border;
         surf.open("./lars_sim/Data/surf/hex_sv.txt");
         part.open("./lars_sim/Data/surf/hex_part.txt");
+        //clust.open("./lars_sim/Data/surf/hex_clust.txt");
+        border.open("./lars_sim/Data/surf/hex_border.txt");
+        // unsigned so only one cluster each gets printed
+        //unsigned check_1 = 0;
+        //unsigned check_2 = 0;
         for(unsigned n=0; t < burnin + until; ++n) {
           t = HL.run_until(burnin + n * every);
           vec a = HL.surface_volume();
           for (const auto& k : a) surf << k << " ";
           surf << endl;
           part << HexagonalParticleWriter(HL, part) << endl;
+          for (const auto& n : HL.cluster_surface()) border << n << " ";
+          border << endl;
+
+          /*
+          if (HL.clust_size(8, 10) == 1 && check_1 == 0){
+            vec n =HL.single_cluster(8, 10);
+            for (const auto& m : n) clust << m << " ";
+            clust << endl;
+            check_1++;
+          }
+
+          if (HL.clust_size(9000, 10000) == 1 && check_2 == 0){
+            vec n = HL.single_cluster(9000, 10000);
+            for (const auto& m : n) clust << m << " ";
+            clust << endl;
+            check_2++;
+          }
+          */
+
         }
       }
       else if (output == "heatmap"){
@@ -5222,10 +5285,12 @@ int main(int argc, char* argv[]) {
         } 
       }
       else if (output=="area"){
-        ofstream surf, part, clust;
+        ofstream surf, part, clust, border;
         surf.open("./lars_sim/Data/surf/square_sv.txt");
         part.open("./lars_sim/Data/surf/square_part.txt");
         clust.open("./lars_sim/Data/surf/square_clust.txt");
+        border.open("./lars_sim/Data/surf/square_border.txt");
+
         // unsigned so only one cluster each gets printed
         unsigned check_1 = 0;
         unsigned check_2 = 0;
@@ -5235,6 +5300,8 @@ int main(int argc, char* argv[]) {
           for (const auto& k : a) surf << k << " ";
           surf << endl;
           part << ParticleWriter(L, part) << endl;
+          for (const auto& n : L.cluster_surface()) border << n << " ";
+          border << endl;
 
           if (L.clust_size(8, 10) == 1 && check_1 == 0){
             vec n =L.single_cluster(8, 10);
@@ -5423,6 +5490,13 @@ int main(int argc, char* argv[]) {
           vec_d dens = L.density();
           for (const auto& m : dens) outfile2 << m << " ";
           outfile2 << endl;
+
+          std::vector<std::complex<double>> four(P.L[0]*P.L[1]);
+          
+
+
+
+
           hist_t dr = L.particle_neighbour_dist();
           dist[std::slice(0,dr.size(),1)] += dr;
         }
@@ -5513,10 +5587,11 @@ int main(int argc, char* argv[]) {
         }
       }
       else if (output=="area"){
-        ofstream surf, part, clust;
+        ofstream surf, part, clust, border;
         surf.open("./lars_sim/Data/surf/tri_sv.txt");
         part.open("./lars_sim/Data/surf/tri_part.txt");
         clust.open("./lars_sim/Data/surf/tri_clust.txt");
+        border.open("./lars_sim/Data/surf/tri_border.txt");
         // unsigned so only one cluster each gets printed
         unsigned check_1 = 0;
         unsigned check_2 = 0;
@@ -5526,6 +5601,8 @@ int main(int argc, char* argv[]) {
           for (const auto& k : a) surf << k << " ";
           surf << endl;
           part << TriangleParticleWriter(TL, part) << endl;
+          for (const auto& n : TL.cluster_surface())border << n << " ";
+          border << endl;
 
           if (TL.clust_size(8, 10) == 1 && check_1 == 0){
             vec n = TL.single_cluster(8, 10);
@@ -5819,10 +5896,11 @@ int main(int argc, char* argv[]) {
         }
       } 
       else if (output=="area"){
-        ofstream surf, part, clust;
+        ofstream surf, part, clust, border;
         surf.open("./lars_sim/Data/surf/hex_sv.txt");
         part.open("./lars_sim/Data/surf/hex_part.txt");
         clust.open("./lars_sim/Data/surf/hex_clust.txt");
+        border.open("./lars_sim/Data/surf/hex_border.txt");
         // unsigned so only one cluster each gets printed
         unsigned check_1 = 0;
         unsigned check_2 = 0;
@@ -5832,6 +5910,8 @@ int main(int argc, char* argv[]) {
           for (const auto& k : a) surf << k << " ";
           surf << endl;
           part << HexagonalParticleWriter(HL, part) << endl;
+          for (const auto& n : HL.cluster_surface()) border << n << " ";
+          border << endl;
 
           if (HL.clust_size(8, 10) == 1 && check_1 == 0){
             vec n =HL.single_cluster(8, 10);
