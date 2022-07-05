@@ -29,7 +29,7 @@ if index == 5:
         for j in range(L):
             rs[i, j] = f[L*i + j]
 
-    rs = rs * 1/(4700 * m)
+    rs = rs * 1/(4700**2)
 
     fig1, ax1 = plt.subplots()
 
@@ -53,7 +53,7 @@ if index == 5:
         for j in range(L):
             rs1[i, j] = f1[L*i + j]
 
-    rs1 = rs1 * 1/(4700*m)
+    rs1 = rs1 * 1/(4700**2)
 
     fig1, ax1 = plt.subplots()
 
@@ -67,7 +67,7 @@ if index == 5:
     plt.savefig("test2.pdf")
 
     fig1, ax1 = plt.subplots()
-
+    """
     c = ax1.pcolormesh(X, Y, rs/rs1, cmap='viridis', shading="auto")
     ax1.set_title('pcolormesh')
     # set the limits of the plot to the limits of the data
@@ -76,6 +76,8 @@ if index == 5:
 
     #plt.show()
     plt.savefig("test3.pdf")
+    """
+    print(rs1.max(), rs.max())
 
 
 
@@ -119,19 +121,19 @@ import scipy as sci
 L = 100
 
 den_sq_3 = np.genfromtxt("square_dens_3.txt", delimiter=" ")
-den_hx_3 = np.genfromtxt("hex_dens_3.txt", delimiter=" ")
-den_tr_3 = np.genfromtxt("tri_dens_3.txt", delimiter=" ")
+#den_hx_3 = np.genfromtxt("hex_dens_3.txt", delimiter=" ")
+#den_tr_3 = np.genfromtxt("tri_dens_3.txt", delimiter=" ")
 
 den_sq_1 = np.genfromtxt("square_dens_1.txt", delimiter=" ")
-den_hx_1 = np.genfromtxt("hex_dens_1.txt", delimiter=" ")
-den_tr_1 = np.genfromtxt("tri_dens_1.txt", delimiter=" ")
+#den_hx_1 = np.genfromtxt("hex_dens_1.txt", delimiter=" ")
+#den_tr_1 = np.genfromtxt("tri_dens_1.txt", delimiter=" ")
 
 
-ind = int(input())
+ind = 0
 
 
 if index == 3:
-    n = len(den_tr_3)
+    n = len(den_sq_3)
     tri_dens = np.ones(L*L*n).reshape(n,L,L)
     
 
@@ -139,7 +141,7 @@ if index == 3:
     for k in range(n):
         for i in range(L):
             for j in range(L):
-                tri_dens[k, i, j] = den_tr_3[k, L*i + j]
+                tri_dens[k, i, j] = den_sq_3[k, L*i + j]
 
     X, Y = np.meshgrid(np.linspace(0, L, L), np.linspace(0, L, L))
 
@@ -161,7 +163,7 @@ if index == 3:
 
 
 if index == 1:
-    n = len(den_tr_1)
+    n = len(den_sq_1)
     l = L
     tri_dens = np.ones(l*l*n).reshape(n,l,l)
     
@@ -176,7 +178,7 @@ if index == 1:
 
     fig, ax =plt.subplots()
 
-    c = ax.pcolormesh(X, Y, tri_dens[2, :, :], cmap='viridis', shading="auto")
+    c = ax.pcolormesh(X, Y, tri_dens[0, :, :], cmap='viridis', shading="auto")
     ax.axis([X.min(), X.max(), Y.min(), Y.max()])
     fig.colorbar(c, ax=ax)
     plt.savefig("test_1.pdf", dpi=100)

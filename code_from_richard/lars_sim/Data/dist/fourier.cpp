@@ -91,7 +91,13 @@ int main(){
     vector<double> r(L*L);
     vector<double> p(L*L);
     double res[L][L];
-    std::ifstream file("tri_dens_3.txt");
+
+    for (unsigned n = 0; n < L; n++){
+        for (unsigned k = 0; k < L; k++){
+            res[n][k] = 0;
+        }
+    }
+    std::ifstream file("square_dens_1.txt");
     if (file.is_open()) {
         std::string line;
         while (std::getline(file, line) && oo == 0) {
@@ -103,13 +109,20 @@ int main(){
             vector<complex<double>> fourier(dens.size());
             double re[L][L];
             double im[L][L];
-            
-            //complex<double> j(0,1);
-            //for (unsigned n = 0; n < L*L; n++){
-            //    for (unsigned i = 0; i < L*L; i++){
-            //            fourier[n] += dens[i]*exp(-j * scalar(rezcoor(n), coor(i)));
-            //    }
-            //}
+            for (unsigned n = 0; n < L; n++){
+                for (unsigned k = 0; k < L; k++){
+                    re[n][k] = 0;
+                    re[n][k] = 0;
+                }
+            }
+            /*
+            complex<double> j(0,1);
+            for (unsigned n = 0; n < L*L; n++){
+                for (unsigned i = 0; i < L*L; i++){
+                        fourier[n] += dens[i]*exp(-j * scalar(rezcoor(n), coor(i)));
+                }
+            }
+            */
 
             for (unsigned n = 0; n < L; n++){
                 for (unsigned k = 0; k < L; k++){
@@ -122,10 +135,12 @@ int main(){
                 }
             }
             
+            /*
             for (unsigned n = 0; n < L*L; n++){
                 r[n] += pow(abs(fourier[n]), 2);
                 //p[n] += abs(fourier[n]);
             }
+            */
 
             for (unsigned n = 0; n < L; n++){
                 for (unsigned k = 0; k < L; k++){
@@ -133,14 +148,15 @@ int main(){
                 }
             }
 
-            oo = 1;
+            //oo = 1;
 
         }
         file.close();
     }
 
-    ofstream outfile;
+    ofstream outfile, outfile1;
     outfile.open("fourier_test1.txt");
+    outfile1.open("fourier_test.txt");
     //for (const auto& m : r) outfile << m << " ";
     for (unsigned n = 0; n < L; n++){
                 for (unsigned k = 0; k < L; k++){
@@ -148,5 +164,9 @@ int main(){
         }
     }
     outfile << endl;
+
+    for (const auto& m : r) outfile1 << m << " ";
+    outfile1 << endl;
+
 }
 

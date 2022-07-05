@@ -5490,13 +5490,6 @@ int main(int argc, char* argv[]) {
           vec_d dens = L.density();
           for (const auto& m : dens) outfile2 << m << " ";
           outfile2 << endl;
-
-          std::vector<std::complex<double>> four(P.L[0]*P.L[1]);
-          
-
-
-
-
           hist_t dr = L.particle_neighbour_dist();
           dist[std::slice(0,dr.size(),1)] += dr;
         }
