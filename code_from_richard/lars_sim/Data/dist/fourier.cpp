@@ -55,6 +55,24 @@ vector<double> rezcoor(unsigned n){
     return c;
 }
 
+vector<double> rezcoor2(unsigned n, unsigned i){
+    vector <double> c(2);
+
+    c[0] = -pi/double(L) + 2.0*pi/double(L*L) * n;
+    c[1] = -pi/double(L) + 2.0*pi/double(L*L) * i;
+
+    return c;
+}
+
+vector<double> coor2(unsigned n, unsigned i){
+    vector<double> c(2);
+
+    c[0] = n - 50; // x
+    c[1] = i - 50; // y
+
+    return c;
+}
+
 
 double scalar(vector<double> a, vector<double> b){
     int l = a.size();
@@ -65,42 +83,70 @@ double scalar(vector<double> a, vector<double> b){
     return sca;
 }
 
+
+
 int main(){
+    unsigned oo = 0;
 
     vector<double> r(L*L);
-    //vector<double> p(L*L);
-    std::ifstream file("square_dens_1.txt");
+    vector<double> p(L*L);
+    double res[L][L];
+    std::ifstream file("tri_dens_3.txt");
     if (file.is_open()) {
         std::string line;
-        while (std::getline(file, line)) {
+        while (std::getline(file, line) && oo == 0) {
             std::vector<std::string> density = split(line, ' ');
             vector<double> dens(density.size());
             transform(density.begin(), density.end(), dens.begin(),
                 [](string const& val) {return stod(val);});
 
             vector<complex<double>> fourier(dens.size());
+            double re[L][L];
+            double im[L][L];
             
-            complex<double> j(0,1);
-            for (unsigned n = 0; n < L*L; n++){
-                for (unsigned i = 0; i < L*L; i++){
-                        fourier[n] += dens[i]*exp(-j * scalar(rezcoor(n), coor(i)));
+            //complex<double> j(0,1);
+            //for (unsigned n = 0; n < L*L; n++){
+            //    for (unsigned i = 0; i < L*L; i++){
+            //            fourier[n] += dens[i]*exp(-j * scalar(rezcoor(n), coor(i)));
+            //    }
+            //}
+
+            for (unsigned n = 0; n < L; n++){
+                for (unsigned k = 0; k < L; k++){
+                    for (unsigned l = 0; l < L; l++){
+                        for (unsigned i = 0; i < L; i++){
+                            re[n][k] += dens[l*L + i] * cos(2*pi * scalar(coor2(i, l), rezcoor2(n, k)));
+                            im[n][k] += dens[l*L + i] * sin(2*pi * scalar(coor2(i, l), rezcoor2(n, k)));
+                        }
+                    }
                 }
             }
-
             
             for (unsigned n = 0; n < L*L; n++){
                 r[n] += pow(abs(fourier[n]), 2);
+                //p[n] += abs(fourier[n]);
             }
 
+            for (unsigned n = 0; n < L; n++){
+                for (unsigned k = 0; k < L; k++){
+                    res[n][k] += re[n][k]*re[n][k] + im[n][k]*im[n][k];
+                }
+            }
 
+            oo = 1;
 
         }
         file.close();
     }
 
     ofstream outfile;
-    outfile.open("fourier_test.txt");
-    for (const auto& m : r) outfile << m << " ";
+    outfile.open("fourier_test1.txt");
+    //for (const auto& m : r) outfile << m << " ";
+    for (unsigned n = 0; n < L; n++){
+                for (unsigned k = 0; k < L; k++){
+                    outfile << res[n][k] << " ";
+        }
+    }
     outfile << endl;
 }
 
