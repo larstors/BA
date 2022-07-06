@@ -97,7 +97,7 @@ int main(){
             res[n][k] = 0;
         }
     }
-    std::ifstream file("square_dens_1.txt");
+    std::ifstream file("circ.txt");
     if (file.is_open()) {
         std::string line;
         while (std::getline(file, line) && oo == 0) {
@@ -112,7 +112,7 @@ int main(){
             for (unsigned n = 0; n < L; n++){
                 for (unsigned k = 0; k < L; k++){
                     re[n][k] = 0;
-                    re[n][k] = 0;
+                    im[n][k] = 0;
                 }
             }
             /*
@@ -128,8 +128,8 @@ int main(){
                 for (unsigned k = 0; k < L; k++){
                     for (unsigned l = 0; l < L; l++){
                         for (unsigned i = 0; i < L; i++){
-                            re[n][k] += dens[l*L + i] * cos(2*pi * scalar(coor2(i, l), rezcoor2(n, k)));
-                            im[n][k] += dens[l*L + i] * sin(2*pi * scalar(coor2(i, l), rezcoor2(n, k)));
+                            re[n][k] += dens[l*L + i] * cos(2*pi*scalar(coor2(i, l), rezcoor2(k, n)));
+                            im[n][k] += dens[l*L + i] * sin(2*pi*scalar(coor2(i, l), rezcoor2(k, n)));
                         }
                     }
                 }
@@ -154,9 +154,8 @@ int main(){
         file.close();
     }
 
-    ofstream outfile, outfile1;
-    outfile.open("fourier_test1.txt");
-    outfile1.open("fourier_test.txt");
+    ofstream outfile;
+    outfile.open("circ_f.txt");
     //for (const auto& m : r) outfile << m << " ";
     for (unsigned n = 0; n < L; n++){
                 for (unsigned k = 0; k < L; k++){
@@ -165,8 +164,8 @@ int main(){
     }
     outfile << endl;
 
-    for (const auto& m : r) outfile1 << m << " ";
-    outfile1 << endl;
+    //for (const auto& m : r) outfile1 << m << " ";
+    //outfile1 << endl;
 
 }
 

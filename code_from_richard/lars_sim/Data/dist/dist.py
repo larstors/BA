@@ -20,8 +20,9 @@ if index == 5:
     L = 100
     X, Y = np.meshgrid(np.linspace(0, L, L), np.linspace(0, L, L))
     m = 101
-    f = np.genfromtxt("fourier_test.txt", delimiter=" ")
-
+    """
+    f = np.genfromtxt("fourier_sq_3.txt", delimiter=" ")
+    
     rs = np.ones(L*L).reshape(L, L)
 
     #filling matrix
@@ -41,9 +42,10 @@ if index == 5:
 
     #plt.show()
     plt.savefig("test1.pdf")
+    """
 
 
-    f1 = np.genfromtxt("fourier_test1.txt", delimiter=" ")
+    f1 = np.genfromtxt("fourier_sq_2.txt", delimiter=" ")
 
     rs1 = np.ones(L*L).reshape(L, L)
 
@@ -53,7 +55,7 @@ if index == 5:
         for j in range(L):
             rs1[i, j] = f1[L*i + j]
 
-    rs1 = rs1 * 1/(4700**2)
+    rs1 = rs1 * 1/(5500**2)
 
     fig1, ax1 = plt.subplots()
 
@@ -64,7 +66,7 @@ if index == 5:
     fig1.colorbar(c, ax=ax1)
 
     #plt.show()
-    plt.savefig("test2.pdf")
+    plt.savefig("ff_sq_n_2.pdf")
 
     fig1, ax1 = plt.subplots()
     """
@@ -77,7 +79,7 @@ if index == 5:
     #plt.show()
     plt.savefig("test3.pdf")
     """
-    print(rs1.max(), rs.max())
+    print(rs1.max())
 
 
 
@@ -122,11 +124,11 @@ L = 100
 
 den_sq_3 = np.genfromtxt("square_dens_3.txt", delimiter=" ")
 #den_hx_3 = np.genfromtxt("hex_dens_3.txt", delimiter=" ")
-#den_tr_3 = np.genfromtxt("tri_dens_3.txt", delimiter=" ")
+den_tr_3 = np.genfromtxt("tri_dens_3.txt", delimiter=" ")
 
 den_sq_1 = np.genfromtxt("square_dens_1.txt", delimiter=" ")
 #den_hx_1 = np.genfromtxt("hex_dens_1.txt", delimiter=" ")
-#den_tr_1 = np.genfromtxt("tri_dens_1.txt", delimiter=" ")
+den_tr_1 = np.genfromtxt("tri_dens_1.txt", delimiter=" ")
 
 
 ind = 0
@@ -152,18 +154,21 @@ if index == 3:
     fig.colorbar(c, ax=ax)
     plt.savefig("test_3.pdf", dpi=100)
 
+    ff_tri = 1/4700**2*abs(np.fft.fftshift(np.fft.fft2(tri_dens[0, :, :])))**2
 
-    ff_tri = np.fft.fft2(tri_dens[ind, :, :])
+    for i in range(1, len(tri_dens)):
+        ff_tri += 1/4700**2*abs(np.fft.fftshift(np.fft.fft2(tri_dens[i, :, :])))**2
+
     fig2, ax2 =plt.subplots()
 
-    c = ax2.pcolormesh(X, Y, np.log(1/4700*np.abs(ff_tri)**2), cmap='viridis', shading="auto")
-    ax2.axis([X.min(), X.max(), Y.min(), Y.max()])
+    c = ax2.pcolormesh(X, Y, np.log(1/101*ff_tri[1:,1:]), cmap='viridis', shading="auto")
+    #ax2.axis([30, 70, 30, 70])
     fig2.colorbar(c, ax=ax2)
     plt.savefig("fft_test_3.pdf", dpi=100)
 
 
 if index == 1:
-    n = len(den_sq_1)
+    n = len(den_tr_1)
     l = L
     tri_dens = np.ones(l*l*n).reshape(n,l,l)
     
@@ -184,10 +189,14 @@ if index == 1:
     plt.savefig("test_1.pdf", dpi=100)
 
 
-    ff_tri = np.fft.fft2(tri_dens[ind, :, :])
+    ff_tri = 1/4700**2*abs(np.fft.fftshift(np.fft.fft2(tri_dens[0, :, :])))**2
+
+    for i in range(1, len(tri_dens)):
+        ff_tri += 1/4700**2*abs(np.fft.fftshift(np.fft.fft2(tri_dens[i, :, :])))**2
+
     fig2, ax2 =plt.subplots()
 
-    c = ax2.pcolormesh(X, Y, np.log(1/4000*np.abs(ff_tri)**2), cmap='viridis', shading="auto")
+    c = ax2.pcolormesh(X, Y, np.log(1/101*ff_tri[1:, 1:]), cmap='viridis', shading="auto")
     ax2.axis([X.min(), X.max(), Y.min(), Y.max()])
     fig2.colorbar(c, ax=ax2)
     plt.savefig("fft_test_1.pdf", dpi=100)
@@ -248,7 +257,59 @@ if index == 4:
     plt.savefig("tri_dist_0.1.pdf", dpi=100)
 
 
+if index == 6:
+    a = np.zeros(100*100)
+    k = np.zeros(100*100).reshape(100,100)
+
+    def co(i,j):
+        x = i - 50
+        y = j - 50
+        return x, y
+
+    for i in range(100):
+        for j in range(100):
+            x = co(i, j)[0]
+            y = co(i, j)[1]
+            if (np.sqrt((x-5)**2 + (y+7)**2) < 5):
+                a[i*100 + j] = 1
+            k[i,j] = a[i*100 + j]
+    
+    a.reshape(1, 100*100)
+    np.savetxt("circ.txt", a, delimiter=" ", newline=" ")
+    Y, X = np.meshgrid(np.arange(-50, 50, 1), np.arange(-50, 50, 1))
+    fig, ax = plt.subplots()
+    c = ax.pcolormesh(X, Y, k, cmap='viridis', shading="auto")
+    ax.axis([X.min(), X.max(), Y.min(), Y.max()])
+    fig.colorbar(c, ax=ax)
+    plt.savefig("circ.pdf", dpi=100)
+
+    fig, ax = plt.subplots()
+    c = ax.pcolormesh(X, Y, np.log(np.abs(np.fft.fftshift(np.fft.fft2(k)))**2), cmap='viridis', shading="auto")
+    ax.axis([X.min(), X.max(), Y.min(), Y.max()])
+    fig.colorbar(c, ax=ax)
+    plt.savefig("ff_circ1.pdf", dpi=100)
 
 
+    f1 = np.genfromtxt("circ_f.txt", delimiter=" ")
 
+    rs1 = np.ones(L*L).reshape(L, L)
+
+    #filling matrix
+    
+    for i in range(L):
+        for j in range(L):
+            rs1[i, j] = f1[L*i + j]
+
+    rs1 = rs1 * 1/(5500**2)
+
+    fig1, ax1 = plt.subplots()
+
+    c = ax1.pcolormesh(X, Y, rs1, cmap='viridis', shading="auto")
+    ax1.set_title('pcolormesh')
+    # set the limits of the plot to the limits of the data
+    ax1.axis([X.min(), X.max(), Y.min(), Y.max()])
+    fig1.colorbar(c, ax=ax1)
+
+    #plt.show()
+    plt.savefig("circ_f.pdf")
 

@@ -3612,7 +3612,7 @@ int main(int argc, char* argv[]) {
   string tumb = "alpha" + alpha_p;
   string dens = "phi" + phi_p;
   string size = "L" + std::to_string(P.L[0]);
-  string path = "./lars_sim/tumblerate/";
+  string path = "./lars_sim/Data/clustdist/";
   string txtoutput = path+lattice_type+"_"+tumb+"_"+ dens+"_"+size+"_"+occ_p+txt;
   string txtoutput_nr = path+lattice_type+"_nr"+"_"+tumb+"_"+ dens+"_"+size+"_"+occ_p+txt;
 
@@ -4271,8 +4271,11 @@ int main(int argc, char* argv[]) {
         }
       } 
       else if (output == "function"){
-        for(double n=1; t < burnin + until; n*=1.01) {
+        ofstream outfile;
+        outfile.open("./lars_sim/Data/motility/tri_long.txt");
+        for(unsigned n = 0; t < burnin + until; n++) {
             t = TL.run_until(burnin + n * every);
+            outfile << t << " " << TL.motility_fraction() << " " << double(TL.max_cluster_size_nr())/double(P.N) << endl;
         }
       }
       
@@ -5844,14 +5847,14 @@ int main(int argc, char* argv[]) {
         if(localaverage == 0) {
           hist_t sumhist;
           // We sum the histograms over all measurements
-          ofstream outfile_part;
-          outfile_part.open("./lars_sim/gif/hexagonal.txt");
+          //ofstream outfile_part;
+          //outfile_part.open("./lars_sim/gif/hexagonal.txt");
 
           for(unsigned n=0; t < burnin + until; ++n) {
             t = HL.run_until(burnin + n * every);
             hist_t hist = HL.cluster_distributions();
             // particle output for comparison
-            outfile_part << HexagonalParticleWriter(HL, outfile_part) << endl;
+            //outfile_part << HexagonalParticleWriter(HL, outfile_part) << endl;
             // Only area
             if(hist.size() > sumhist.size()) {
               hist[std::slice(0,sumhist.size(),1)] += sumhist;
