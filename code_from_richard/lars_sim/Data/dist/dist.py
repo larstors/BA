@@ -55,7 +55,7 @@ if index == 5:
         for j in range(L):
             rs1[i, j] = f1[L*i + j]
 
-    rs1 = rs1 * 1/(5500**2)
+    rs1 = rs1 * 1/(4700**2*m)
 
     fig1, ax1 = plt.subplots()
 
@@ -124,11 +124,11 @@ L = 100
 
 den_sq_3 = np.genfromtxt("square_dens_3.txt", delimiter=" ")
 #den_hx_3 = np.genfromtxt("hex_dens_3.txt", delimiter=" ")
-den_tr_3 = np.genfromtxt("tri_dens_3.txt", delimiter=" ")
+#den_tr_3 = np.genfromtxt("tri_dens_3.txt", delimiter=" ")
 
 den_sq_1 = np.genfromtxt("square_dens_1.txt", delimiter=" ")
 #den_hx_1 = np.genfromtxt("hex_dens_1.txt", delimiter=" ")
-den_tr_1 = np.genfromtxt("tri_dens_1.txt", delimiter=" ")
+#den_tr_1 = np.genfromtxt("tri_dens_1.txt", delimiter=" ")
 
 
 ind = 0
@@ -154,14 +154,18 @@ if index == 3:
     fig.colorbar(c, ax=ax)
     plt.savefig("test_3.pdf", dpi=100)
 
+    test = 1/4700**2*abs(np.fft.fftshift(np.fft.fft2(tri_dens[0, :, :])))**2
     ff_tri = 1/4700**2*abs(np.fft.fftshift(np.fft.fft2(tri_dens[0, :, :])))**2
-
+    ff_tri_n = 1/4700**2*abs(np.fft.fft2(tri_dens[0, :, :]))**2
     for i in range(1, len(tri_dens)):
         ff_tri += 1/4700**2*abs(np.fft.fftshift(np.fft.fft2(tri_dens[i, :, :])))**2
+        ff_tri_n += 1/4700**2*abs(np.fft.fft2(tri_dens[i, :, :]))**2
 
     fig2, ax2 =plt.subplots()
 
-    c = ax2.pcolormesh(X, Y, np.log(1/101*ff_tri[1:,1:]), cmap='viridis', shading="auto")
+    #c = ax2.pcolormesh(X, Y, np.log(1/101*ff_tri[1:,1:]), cmap='viridis', shading="auto")
+    c = ax2.pcolormesh(X, Y, np.log(test[1:, 1:]), cmap='viridis', shading="auto")
+    
     #ax2.axis([30, 70, 30, 70])
     fig2.colorbar(c, ax=ax2)
     plt.savefig("fft_test_3.pdf", dpi=100)
@@ -270,7 +274,8 @@ if index == 6:
         for j in range(100):
             x = co(i, j)[0]
             y = co(i, j)[1]
-            if (np.sqrt((x-5)**2 + (y+7)**2) < 5):
+            #if (np.sqrt((x-5)**2 + (y+7)**2) < 5):
+            if (np.abs(x) < 5 and np.abs(y) > 25):
                 a[i*100 + j] = 1
             k[i,j] = a[i*100 + j]
     
@@ -300,7 +305,7 @@ if index == 6:
         for j in range(L):
             rs1[i, j] = f1[L*i + j]
 
-    rs1 = rs1 * 1/(5500**2)
+    rs1 = rs1
 
     fig1, ax1 = plt.subplots()
 

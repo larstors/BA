@@ -37,7 +37,7 @@ std::vector<std::string> split(std::string text, char delim) {
     return vec;
 }
 
-vector<double> coor(unsigned n){
+vector<double> coor(int n){
     vector<double> c(2);
 
     c[0] = n%L - 50; // x
@@ -46,7 +46,7 @@ vector<double> coor(unsigned n){
     return c;
 }
 
-vector<double> rezcoor(unsigned n){
+vector<double> rezcoor(int n){
     vector <double> c(2);
 
     c[0] = -pi/double(L) + 2.0*pi/double(L*L) * (n%L);
@@ -55,7 +55,7 @@ vector<double> rezcoor(unsigned n){
     return c;
 }
 
-vector<double> rezcoor2(unsigned n, unsigned i){
+vector<double> rezcoor2(int n, int i){
     vector <double> c(2);
 
     c[0] = -pi/double(L) + 2.0*pi/double(L*L) * n;
@@ -64,7 +64,9 @@ vector<double> rezcoor2(unsigned n, unsigned i){
     return c;
 }
 
-vector<double> coor2(unsigned n, unsigned i){
+
+
+vector<double> coor2(int n, int i){
     vector<double> c(2);
 
     c[0] = n - 50; // x
@@ -124,12 +126,37 @@ int main(){
             }
             */
 
-            for (unsigned n = 0; n < L; n++){
-                for (unsigned k = 0; k < L; k++){
-                    for (unsigned l = 0; l < L; l++){
-                        for (unsigned i = 0; i < L; i++){
-                            re[n][k] += dens[l*L + i] * cos(2*pi*scalar(coor2(i, l), rezcoor2(k, n)));
-                            im[n][k] += dens[l*L + i] * sin(2*pi*scalar(coor2(i, l), rezcoor2(k, n)));
+            double x[L];
+            double q[L];
+            for (int i = 0; i < L; i++){
+                x[i] = -50 + i;
+                q[i] = - pi / double(L) + double(2*pi)/double(L*L) * i;
+            }
+
+            
+            int count = 0;
+
+           double d[L][L];
+           for (int n = 0; n < L; n++){
+                for (int k = 0; k < L; k++){
+                    if (sqrt(pow(coor2(n, k)[0], 2) + pow(coor2(n, k)[1], 2)) < 10){
+                        d[n][k] = 1;
+                        count++;
+                    }
+                    else d[n][k] = 0;
+                }
+            }
+
+
+
+
+            for (int n = 0; n < L; n++){
+                for (int k = 0; k < L; k++){
+                    for (int l = 0; l < L; l++){
+                        for (int i = 0; i < L; i++){
+                            re[n][k] += d[l][i] * cos(q[n] * x[l] + q[k] * x[i]);
+                            im[n][k] += d[l][i] * sin(q[n] * x[l] + q[k] * x[i]);
+                            
                         }
                     }
                 }
@@ -144,7 +171,10 @@ int main(){
 
             for (unsigned n = 0; n < L; n++){
                 for (unsigned k = 0; k < L; k++){
-                    res[n][k] += re[n][k]*re[n][k] + im[n][k]*im[n][k];
+                    
+                    res[n][k] = pow(re[n][k], 2) + pow(im[n][k], 2);//re[n][k]*re[n][k] + im[n][k]*im[n][k];
+                    
+                    res[n][k] *= 1.0 / double(count*count);
                 }
             }
 
