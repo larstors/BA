@@ -78,6 +78,7 @@ class Lattice {
         std::vector<direction_t> direction = std::vector<direction_t>(n_max); // Direction of last hop attempt
         std::vector<double> hoptime = std::vector<double>(n_max); // Time of last hop attempt
         unsigned present = 0; // Number of particles present at site. Has to be <= n_max
+        std::vector<double> last_jump = std::vector<double>(n_max); // time of last jump made
     };
 
   Parameters P; // A local copy of the model parameters
@@ -133,6 +134,7 @@ class Lattice {
     sites[n].id[index] = id;
     sites[n].direction[index] = d;
     sites[n].hoptime[index] = t;
+    sites[n].last_jump[index] = t;
     if(!sites[n].occupied[index]) {
       sites[n].occupied[index] = true;
       for(const auto&m: neighbours(n)) ++sites[m].neighbours;
@@ -1050,6 +1052,17 @@ public:
       return den;
     }
     
+    vec_d stopping(double t){ 
+      vec_d stopping_time;
+
+      for (unsigned n = 0; n < sites.size(); n++){
+        for (unsigned i = 0; i < P.n_max; i++){
+          if (sites[n].occupied[i] == true) stopping_time.push_back(t - sites[n].last_jump[i]);
+        }
+        
+      }
+      return stopping_time;
+    }
 };
 
 
@@ -1082,6 +1095,7 @@ class Triangle_lattice {
         std::vector<direction_t> direction = std::vector<direction_t>(n_max); // Direction of last hop attempt
         std::vector<double> hoptime = std::vector<double>(n_max); // Time of last hop attempt
         unsigned present = 0; // Number of particles present at site. Has to be <= n_max
+        std::vector<double> last_jump = std::vector<double>(n_max); // time of last jump made
     };
 
     std::vector<Site> sites; // Representation of the sites
@@ -1172,7 +1186,7 @@ class Triangle_lattice {
         sites[n].id[index] = id;
         sites[n].direction[index] = d;
         sites[n].hoptime[index] = t;
-        
+        sites[n].last_jump[index] = t;
         if (!sites[n].occupied[index]) {
             
             sites[n].occupied[index] = true;
@@ -2091,6 +2105,18 @@ public:
       
       return den;
     }
+
+    vec_d stopping(double t){ 
+      vec_d stopping_time;
+
+      for (unsigned n = 0; n < sites.size(); n++){
+        for (unsigned i = 0; i < P.n_max; i++){
+          if (sites[n].occupied[i] == true) stopping_time.push_back(t - sites[n].last_jump[i]);
+        }
+        
+      }
+      return stopping_time;
+    }
 };
 
 
@@ -2122,6 +2148,7 @@ class Hexagonal_lattice {
         std::vector<double> hoptime = std::vector<double>(2 * n_max); // Time of last hop attempt
         std::vector<int> present = std::vector<int>(2); // Number of particles present at each site in unit cell
         std::vector<unsigned> current_dir = std::vector<unsigned>(2*n_max); // Contains the lattice site it points at.
+        std::vector<double> last_jump = std::vector<double>(2*n_max); // time of last jump made
     };
 
     /*           0        5         2
@@ -2262,6 +2289,7 @@ class Hexagonal_lattice {
         sites[n].id[index] = id;
         sites[n].direction[index] = d;
         sites[n].hoptime[index] = t;
+        sites[n].last_jump[index] = t;
         if (!sites[n].occupied[index]) {
             sites[n].occupied[index] = true;
             for (const auto& m : neighbours(n, index%2)) ++sites[m].neighbours[(index+1)%2];
@@ -3329,6 +3357,17 @@ public:
       return den;
     }
 
+    vec_d stopping(double t){ 
+      vec_d stopping_time;
+
+      for (unsigned n = 0; n < sites.size(); n++){
+        for (unsigned i = 0; i < 2*P.n_max; i++){
+          if (sites[n].occupied[i] == true) stopping_time.push_back(t - sites[n].last_jump[i]);
+        }
+        
+      }
+      return stopping_time;
+    }
 };
 
 
@@ -3561,6 +3600,7 @@ int main(int argc, char* argv[]) {
   if(output[0] == 'p') output = "particles";
   else if(output[0] == 'v') output = "vacancies";
   else if(output[0] == 'c') output = "clusters";
+  else if(output[0] == 't') output = "stopping time"; // output for stopping time distribution
   else if(output[0] == 'd') output = "distribution"; // for distribution of neighbours (maybe also density?)
   else if(output[0] == 'l') output = "lagging"; // this is for output of hysteresis (l and lagging for greek roots of word)
   else if(output[0] == 'a') output = "area"; // for area/surface analysis
@@ -3930,7 +3970,7 @@ int main(int argc, char* argv[]) {
         string name = "./lars_sim/Data/motility/square_perc_low";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
-        for (double al = 0.0; al < 0.2 ; al+=0.005){
+        for (double al = 0.0; al < 0.05 ; al+=0.001){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1]  = al;
           Lattice LB(P, rng);
@@ -4117,6 +4157,17 @@ int main(int argc, char* argv[]) {
 
         }
       }
+      else if (output == "stopping time"){
+        ofstream outfile;
+        
+        outfile.open("./lars_sim/Data/stopping/square_"+occ_p+".txt");
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = L.run_until(burnin + n * every);
+          vec_d st = L.stopping(t);
+          for (const auto& m : st) outfile << m << " ";
+          outfile << endl;
+        }
+      }
       else {
         ofstream outfile;
         outfile.open("./lars_sim/gif/square.txt");
@@ -4278,7 +4329,17 @@ int main(int argc, char* argv[]) {
             outfile << t << " " << TL.motility_fraction() << " " << double(TL.max_cluster_size_nr())/double(P.N) << endl;
         }
       }
-      
+      else if (output == "stopping time"){
+        ofstream outfile;
+        
+        outfile.open("./lars_sim/Data/stopping/tri_"+occ_p+".txt");
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = TL.run_until(burnin + n * every);
+          vec_d st = TL.stopping(t);
+          for (const auto& m : st) outfile << m << " ";
+          outfile << endl;
+        }
+      }
       else if (output == "number"){
         ofstream outfile;
         string name = "./lars_sim/number/tri_";
@@ -4350,7 +4411,7 @@ int main(int argc, char* argv[]) {
         string name = "./lars_sim/Data/motility/triangular_perc_low";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
-        for (double al = 0.0; al < 0.2 ; al+=0.005){
+        for (double al = 0.0; al < 0.05 ; al+=0.001){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
           Triangle_lattice LB(P, rng);
@@ -4917,7 +4978,7 @@ int main(int argc, char* argv[]) {
         string name = "./lars_sim/Data/motility/hexagonal_perc_low";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
-        for (double al = 0.0; al < 0.2 ; al+=0.005){
+        for (double al = 0.0; al < 0.05 ; al+=0.001){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
           Hexagonal_lattice LB(P, rng);
@@ -5178,7 +5239,17 @@ int main(int argc, char* argv[]) {
         }
 
       }
-
+      else if (output == "stopping time"){
+        ofstream outfile;
+        
+        outfile.open("./lars_sim/Data/stopping/hex_"+occ_p+".txt");
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = HL.run_until(burnin + n * every);
+          vec_d st = HL.stopping(t);
+          for (const auto& m : st) outfile << m << " ";
+          outfile << endl;
+        }
+      }
       else if (output == "function"){
         ofstream outfile;
         outfile.open("./lars_sim/testing/hexagonal.txt");
@@ -5355,7 +5426,17 @@ int main(int argc, char* argv[]) {
           part << ParticleWriter(L, part) << endl;
         }
       }
-
+      else if (output == "stopping time"){
+        ofstream outfile;
+        
+        outfile.open("./lars_sim/Data/stopping/square_"+occ_p+".txt");
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = L.run_until(burnin + n * every);
+          vec_d st = L.stopping(t);
+          for (const auto& m : st) outfile << m << " ";
+          outfile << endl;
+        }
+      }
       else if (output == "number"){
         ofstream outfile;
         string name = "./lars_sim/number/square_";
@@ -5796,6 +5877,18 @@ int main(int argc, char* argv[]) {
         for (const auto& m : dist) outfile << m << " ";
         outfile << endl;
       }
+      
+      else if (output == "stopping time"){
+        ofstream outfile;
+        
+        outfile.open("./lars_sim/Data/stopping/tri_"+occ_p+".txt");
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = TL.run_until(burnin + n * every);
+          vec_d st = TL.stopping(t);
+          for (const auto& m : st) outfile << m << " ";
+          outfile << endl;
+        }
+      }
       else {
         ofstream outfile;
         outfile.open("./lars_sim/gif/triangle.txt");
@@ -6131,7 +6224,17 @@ int main(int argc, char* argv[]) {
         for (const auto& m : dist) outfile << m << " ";
         outfile << endl;
       }
-
+      else if (output == "stopping time"){
+        ofstream outfile;
+        
+        outfile.open("./lars_sim/Data/stopping/hex_"+occ_p+".txt");
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = HL.run_until(burnin + n * every);
+          vec_d st = HL.stopping(t);
+          for (const auto& m : st) outfile << m << " ";
+          outfile << endl;
+        }
+      }
 
     }
   }

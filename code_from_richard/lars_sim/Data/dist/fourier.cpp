@@ -91,7 +91,6 @@ int main(){
     unsigned oo = 0;
 
     vector<double> r(L*L);
-    vector<double> p(L*L);
     double res[L][L];
 
     for (unsigned n = 0; n < L; n++){
@@ -99,7 +98,15 @@ int main(){
             res[n][k] = 0;
         }
     }
-    std::ifstream file("circ.txt");
+
+    double p[L][L];
+
+    for (unsigned n = 0; n < L; n++){
+        for (unsigned k = 0; k < L; k++){
+            p[n][k] = 0;
+        }
+    }
+    std::ifstream file("square_dens_3.txt");
     if (file.is_open()) {
         std::string line;
         while (std::getline(file, line) && oo == 0) {
@@ -108,7 +115,7 @@ int main(){
             transform(density.begin(), density.end(), dens.begin(),
                 [](string const& val) {return stod(val);});
 
-            vector<complex<double>> fourier(dens.size());
+            //vector<complex<double>> fourier(dens.size());
             double re[L][L];
             double im[L][L];
             for (unsigned n = 0; n < L; n++){
@@ -117,8 +124,9 @@ int main(){
                     im[n][k] = 0;
                 }
             }
-            /*
+            
             complex<double> j(0,1);
+            /*
             for (unsigned n = 0; n < L*L; n++){
                 for (unsigned i = 0; i < L*L; i++){
                         fourier[n] += dens[i]*exp(-j * scalar(rezcoor(n), coor(i)));
@@ -126,11 +134,19 @@ int main(){
             }
             */
 
+           complex<double> fourier[L][L];
+
+           for (unsigned n = 0; n < L; n++){
+                for (unsigned k = 0; k < L; k++){
+                    fourier[n][k] = 0;
+                }
+            }
+
             double x[L];
             double q[L];
             for (int i = 0; i < L; i++){
                 x[i] = -50 + i;
-                q[i] = - pi / double(L) + double(2*pi)/double(L*L) * i;
+                q[i] = (- pi / double(L) + double(2*pi)/double(L*L) * i);
             }
 
             
@@ -139,11 +155,14 @@ int main(){
            double d[L][L];
            for (int n = 0; n < L; n++){
                 for (int k = 0; k < L; k++){
-                    if (sqrt(pow(coor2(n, k)[0], 2) + pow(coor2(n, k)[1], 2)) < 10){
+                    /*
+                    if (sqrt((x[n] + 1)*(x[n] + 1) + (x[k] + 1)*(x[k] + 1)) < 5){
                         d[n][k] = 1;
                         count++;
                     }
                     else d[n][k] = 0;
+                    */
+                   d[n][k] = dens[n*L + k];
                 }
             }
 
@@ -155,7 +174,8 @@ int main(){
                     for (int l = 0; l < L; l++){
                         for (int i = 0; i < L; i++){
                             re[n][k] += d[l][i] * cos(q[n] * x[l] + q[k] * x[i]);
-                            im[n][k] += d[l][i] * sin(q[n] * x[l] + q[k] * x[i]);
+                            im[n][k] -= d[l][i] * sin(q[n] * x[l] + q[k] * x[i]);
+                            //fourier[n][k] += d[l][i] * exp(-j * (q[n] * x[l] + q[k] * x[i]));
                             
                         }
                     }
@@ -171,11 +191,14 @@ int main(){
 
             for (unsigned n = 0; n < L; n++){
                 for (unsigned k = 0; k < L; k++){
+                    //p[n][k] = 1.0 / double(count*count)*pow(abs(fourier[n][k]), 2);
+                    res[n][k] += pow(re[n][k], 2) + pow(im[n][k], 2);//re[n][k]*re[n][k] + im[n][k]*im[n][k];
                     
-                    res[n][k] = pow(re[n][k], 2) + pow(im[n][k], 2);//re[n][k]*re[n][k] + im[n][k]*im[n][k];
-                    
-                    res[n][k] *= 1.0 / double(count*count);
+                    //res[n][k] *= 1.0 / double(count*count);
+                    //cout << p[n][k] << " " << res[n][k] << " ";
+                    //res[n][k] = d[n][k];
                 }
+                //cout << endl;
             }
 
             //oo = 1;
@@ -185,7 +208,7 @@ int main(){
     }
 
     ofstream outfile;
-    outfile.open("circ_f.txt");
+    outfile.open("fourier_sq_3.txt");
     //for (const auto& m : r) outfile << m << " ";
     for (unsigned n = 0; n < L; n++){
                 for (unsigned k = 0; k < L; k++){

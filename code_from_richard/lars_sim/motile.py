@@ -631,6 +631,7 @@ if True:
     #ax[0, 0].set_yscale("log")
     ax[0, 0].legend()
     ax[0, 0].grid()
+    ax[0, 0].axis([-0.005, 0.055, -0.005, 1.005])
 
     ax[0, 1].errorbar(data_squ_2[:, 0], data_squ_2[:, 1], yerr=np.sqrt(data_squ_2[:, 2]), fmt="s", color="red", label=r"$J$")
     ax[0, 1].errorbar(data_squ_2[:, 0], data_squ_2[:, 3], yerr=np.sqrt(data_squ_2[:, 4]), fmt="o", color="blue", label=r"$M$")
