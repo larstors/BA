@@ -514,3 +514,198 @@ if what == 3:
     
     plt.savefig("snapshot_hx_n_3_a_0.01.pdf", dpi=200)
 
+
+
+
+
+# plot for 0.2 density ratio
+if what == 4:
+    # hex 1
+    f = open("hex_sv_low1.txt")
+    h1 = []
+    for line in f:
+        h1.append(np.loadtxt(StringIO(line), dtype=int))
+    
+    # hex 2
+    f = open("hex_sv_low2.txt")
+    h2 = []
+    for line in f:
+        h2.append(np.loadtxt(StringIO(line), dtype=int))
+
+    # hex 3
+    f = open("hex_sv_low3.txt")
+    h3 = []
+    for line in f:
+        h3.append(np.loadtxt(StringIO(line), dtype=int))
+
+    
+    # tri 1
+    f = open("tri_sv_low1.txt")
+    t1 = []
+    for line in f:
+        t1.append(np.loadtxt(StringIO(line), dtype=int))
+
+    # tri 2
+    f = open("tri_sv_low2.txt")
+    t2 = []
+    for line in f:
+        t2.append(np.loadtxt(StringIO(line), dtype=int))
+    
+    # tri 3
+    f = open("tri_sv_low3.txt")
+    t3 = []
+    for line in f:
+        t3.append(np.loadtxt(StringIO(line), dtype=int))
+
+    # squ 1
+    f = open("square_sv_low1.txt")
+    s1 = []
+    for line in f:
+        s1.append(np.loadtxt(StringIO(line), dtype=int))
+    
+    # squ 2
+    f = open("square_sv_low2.txt")
+    s2 = []
+    for line in f:
+        s2.append(np.loadtxt(StringIO(line), dtype=int))
+    
+    # squ 3
+    f = open("square_sv_low3.txt")
+    s3 = []
+    for line in f:
+        s3.append(np.loadtxt(StringIO(line), dtype=int))
+
+    
+
+    def fill(a):
+        s = []
+        v = []
+        for i in range(len(a)):
+            for j in range(1, len(a[i]), 2):
+                s.append(a[i][j])
+                v.append(a[i][j-1])
+        return s, v
+
+    print(np.shape(s1))
+
+
+    # square 1 plot
+    if True:
+        ps1 = opt.curve_fit(fit_func, fill(s1)[0], fill(s1)[1])[0]
+        fig1, ax1 = plt.subplots()
+        ax1.plot(np.linspace(1, max(fill(s1)[0])), fit_func(np.linspace(1, max(fill(s1)[0])), ps1[0]), "k-", label=r"$x^{%g}$" % ps1[0])
+        for i in range(6):
+            ax1.plot(s1[i*16][1::2], s1[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
+        ax1.set_xlabel(r"Surface $S$")
+        ax1.set_ylabel(r"Volume $V$")
+        ax1.grid()
+        ax1.legend()
+        plt.savefig("./plotsurf/sn1.pdf", dpi=150)
+
+    # square 2 plot
+    if True:
+        ps2 = opt.curve_fit(fit_func, fill(s2)[0], fill(s2)[1])[0]
+        fig1, ax1 = plt.subplots()
+        ax1.plot(np.linspace(1, max(fill(s2)[0])), fit_func(np.linspace(1, max(fill(s2)[0])), ps2[0]), "k-", label=r"$x^{%g}$" % ps2[0])
+        for i in range(6):
+            ax1.plot(s2[i*16][1::2], s2[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
+        ax1.set_xlabel(r"Surface $S$")
+        ax1.set_ylabel(r"Volume $V$")
+        ax1.grid()
+        ax1.legend()
+        plt.savefig("./plotsurf/sn2.pdf", dpi=150)
+    
+    # square 3 plot
+    if True:
+        ps3 = opt.curve_fit(fit_func, fill(s3)[0], fill(s3)[1])[0]
+        fig1, ax1 = plt.subplots()
+        ax1.plot(np.linspace(1, max(fill(s3)[0])), fit_func(np.linspace(1, max(fill(s3)[0])), ps3[0]), "k-", label=r"$x^{%g}$" % ps3[0])
+        for i in range(6):
+            ax1.plot(s3[i*16][1::2], s3[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
+        ax1.set_xlabel(r"Surface $S$")
+        ax1.set_ylabel(r"Volume $V$")
+        ax1.grid()
+        ax1.legend()
+        plt.savefig("./plotsurf/sn3.pdf", dpi=150)
+    
+    # tri 1 plot
+    if True:
+        pt1 = opt.curve_fit(fit_func, fill(t1)[0], fill(t1)[1])[0]
+        fig1, ax1 = plt.subplots()
+        ax1.plot(np.linspace(1, max(fill(t1)[0])), fit_func(np.linspace(1, max(fill(t1)[0])), pt1[0]), "k-", label=r"$x^{%g}$" % pt1[0])
+        for i in range(6):
+            ax1.plot(t1[i*16][1::2], t1[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
+        ax1.set_xlabel(r"Surface $S$")
+        ax1.set_ylabel(r"Volume $V$")
+        ax1.grid()
+        ax1.legend()
+        plt.savefig("./plotsurf/tn1.pdf", dpi=150)
+    
+    # tri 2 plot
+    if True:
+        pt2 = opt.curve_fit(fit_func, fill(t2)[0], fill(t2)[1])[0]
+        fig1, ax1 = plt.subplots()
+        ax1.plot(np.linspace(1, max(fill(t2)[0])), fit_func(np.linspace(1, max(fill(t2)[0])), pt2[0]), "k-", label=r"$x^{%g}$" % pt2[0])
+        for i in range(6):
+            ax1.plot(t2[i*16][1::2], t2[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
+        ax1.set_xlabel(r"Surface $S$")
+        ax1.set_ylabel(r"Volume $V$")
+        ax1.grid()
+        ax1.legend()
+        plt.savefig("./plotsurf/tn2.pdf", dpi=150)
+    
+    # tri 3 plot
+    if True:
+        pt3 = opt.curve_fit(fit_func, fill(t3)[0], fill(t3)[1])[0]
+        fig1, ax1 = plt.subplots()
+        ax1.plot(np.linspace(1, max(fill(t3)[0])), fit_func(np.linspace(1, max(fill(t3)[0])), pt3[0]), "k-", label=r"$x^{%g}$" % pt3[0])
+        for i in range(6):
+            ax1.plot(t3[i*16][1::2], t3[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
+        ax1.set_xlabel(r"Surface $S$")
+        ax1.set_ylabel(r"Volume $V$")
+        ax1.grid()
+        ax1.legend()
+        plt.savefig("./plotsurf/tn3.pdf", dpi=150)
+    
+    # hex 1 plot
+    if True:
+        ph1 = opt.curve_fit(fit_func, fill(h1)[0], fill(h1)[1])[0]
+        fig1, ax1 = plt.subplots()
+        ax1.plot(np.linspace(1, max(fill(h1)[0])), fit_func(np.linspace(1, max(fill(h1)[0])), ph1[0]), "k-", label=r"$x^{%g}$" % ph1[0])
+        for i in range(6):
+            ax1.plot(h1[i*16][1::2], h1[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
+        ax1.set_xlabel(r"Surface $S$")
+        ax1.set_ylabel(r"Volume $V$")
+        ax1.grid()
+        ax1.legend()
+        plt.savefig("./plotsurf/hn1.pdf", dpi=150)
+    
+    # hex 2 plot
+    if True:
+        ph2 = opt.curve_fit(fit_func, fill(h2)[0], fill(h2)[1])[0]
+        fig1, ax1 = plt.subplots()
+        ax1.plot(np.linspace(1, max(fill(h2)[0])), fit_func(np.linspace(1, max(fill(h2)[0])), ph2[0]), "k-", label=r"$x^{%g}$" % ph2[0])
+        for i in range(6):
+            ax1.plot(h2[i*16][1::2], h2[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
+        ax1.set_xlabel(r"Surface $S$")
+        ax1.set_ylabel(r"Volume $V$")
+        ax1.grid()
+        ax1.legend()
+        plt.savefig("./plotsurf/hn2.pdf", dpi=150)
+    
+    # hex 3 plot
+    if True:
+        ph3 = opt.curve_fit(fit_func, fill(h3)[0], fill(h3)[1])[0]
+        fig1, ax1 = plt.subplots()
+        ax1.plot(np.linspace(1, max(fill(h3)[0])), fit_func(np.linspace(1, max(fill(h3)[0])), ph3[0]), "k-", label=r"$x^{%g}$" % ph3[0])
+        for i in range(6):
+            ax1.plot(h3[i*16][1::2], h3[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
+        ax1.set_xlabel(r"Surface $S$")
+        ax1.set_ylabel(r"Volume $V$")
+        ax1.grid()
+        ax1.legend()
+        plt.savefig("./plotsurf/hn3.pdf", dpi=150)
+    
+
+
+

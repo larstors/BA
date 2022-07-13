@@ -4124,10 +4124,10 @@ int main(int argc, char* argv[]) {
       }
       else if (output=="area"){
         ofstream surf, part, clust, border;
-        surf.open("./lars_sim/Data/surf/square_sv.txt");
-        part.open("./lars_sim/Data/surf/square_part.txt");
-        clust.open("./lars_sim/Data/surf/square_clust.txt");
-        border.open("./lars_sim/Data/surf/square_border.txt");
+        surf.open("./lars_sim/Data/surf/square_sv_low"+occ_p+".txt");
+        part.open("./lars_sim/Data/surf/square_part_low"+occ_p+".txt");
+        clust.open("./lars_sim/Data/surf/square_clust_low"+occ_p+".txt");
+        border.open("./lars_sim/Data/surf/square_border_low"+occ_p+".txt");
 
         // unsigned so only one cluster each gets printed
         unsigned check_1 = 0;
@@ -4514,20 +4514,23 @@ int main(int argc, char* argv[]) {
         }
       }
       else if (output=="area"){
-        ofstream surf, part, clust;
-        surf.open("./lars_sim/Data/surf/tri_sv.txt");
-        part.open("./lars_sim/Data/surf/tri_part.txt");
-        clust.open("./lars_sim/Data/surf/tri_clust.txt");
+        ofstream surf, part, clust, border;
+        surf.open("./lars_sim/Data/surf/tri_sv_low"+occ_p+".txt");
+        part.open("./lars_sim/Data/surf/tri_part_low"+occ_p+".txt");
+        clust.open("./lars_sim/Data/surf/tri_clust_low"+occ_p+".txt");
+        border.open("./lars_sim/Data/surf/tri_border_low"+occ_p+".txt");
         // unsigned so only one cluster each gets printed
-        unsigned check_1 = 0;
-        unsigned check_2 = 0;
+        //unsigned check_1 = 0;
+        //unsigned check_2 = 0;
         for(unsigned n=0; t < burnin + until; ++n) {
           t = TL.run_until(burnin + n * every);
           vec a = TL.surface_volume();
           for (const auto& k : a) surf << k << " ";
           surf << endl;
           part << TriangleParticleWriter(TL, part) << endl;
-
+          for (const auto& n : TL.cluster_surface()) border << n << " ";
+          border << endl;
+          /*
           if (TL.clust_size(8, 10) == 1 && check_1 == 0){
             vec n = TL.single_cluster(8, 10);
             for (const auto& m : n) clust << m << " ";
@@ -4541,7 +4544,7 @@ int main(int argc, char* argv[]) {
             clust << endl;
             check_2++;
           }
-
+          */
         }
       }
       else if (output == "lagging"){
@@ -5116,10 +5119,10 @@ int main(int argc, char* argv[]) {
       }
       else if (output=="area"){
         ofstream surf, part, clust, border;
-        surf.open("./lars_sim/Data/surf/hex_sv.txt");
-        part.open("./lars_sim/Data/surf/hex_part.txt");
-        //clust.open("./lars_sim/Data/surf/hex_clust.txt");
-        border.open("./lars_sim/Data/surf/hex_border.txt");
+        surf.open("./lars_sim/Data/surf/hex_sv_low"+occ_p+".txt");
+        part.open("./lars_sim/Data/surf/hex_part_low"+occ_p+".txt");
+        //clust.open("./lars_sim/Data/surf/hex_clust_low"+occ_p+".txt");
+        border.open("./lars_sim/Data/surf/hex_border_low"+occ_p+".txt");
         // unsigned so only one cluster each gets printed
         //unsigned check_1 = 0;
         //unsigned check_2 = 0;
@@ -5360,10 +5363,10 @@ int main(int argc, char* argv[]) {
       }
       else if (output=="area"){
         ofstream surf, part, clust, border;
-        surf.open("./lars_sim/Data/surf/square_sv.txt");
-        part.open("./lars_sim/Data/surf/square_part.txt");
-        clust.open("./lars_sim/Data/surf/square_clust.txt");
-        border.open("./lars_sim/Data/surf/square_border.txt");
+        surf.open("./lars_sim/Data/surf/square_sv_low"+occ_p+".txt");
+        part.open("./lars_sim/Data/surf/square_part_low"+occ_p+".txt");
+        clust.open("./lars_sim/Data/surf/square_clust_low"+occ_p+".txt");
+        border.open("./lars_sim/Data/surf/square_border_low"+occ_p+".txt");
 
         // unsigned so only one cluster each gets printed
         unsigned check_1 = 0;
@@ -5665,10 +5668,10 @@ int main(int argc, char* argv[]) {
       }
       else if (output=="area"){
         ofstream surf, part, clust, border;
-        surf.open("./lars_sim/Data/surf/tri_sv.txt");
-        part.open("./lars_sim/Data/surf/tri_part.txt");
-        clust.open("./lars_sim/Data/surf/tri_clust.txt");
-        border.open("./lars_sim/Data/surf/tri_border.txt");
+        surf.open("./lars_sim/Data/surf/tri_sv_low"+occ_p+".txt");
+        part.open("./lars_sim/Data/surf/tri_part_low"+occ_p+".txt");
+        clust.open("./lars_sim/Data/surf/tri_clust_low"+occ_p+".txt");
+        border.open("./lars_sim/Data/surf/tri_border_low"+occ_p+".txt");
         // unsigned so only one cluster each gets printed
         unsigned check_1 = 0;
         unsigned check_2 = 0;
@@ -5986,10 +5989,10 @@ int main(int argc, char* argv[]) {
       } 
       else if (output=="area"){
         ofstream surf, part, clust, border;
-        surf.open("./lars_sim/Data/surf/hex_sv.txt");
-        part.open("./lars_sim/Data/surf/hex_part.txt");
-        clust.open("./lars_sim/Data/surf/hex_clust.txt");
-        border.open("./lars_sim/Data/surf/hex_border.txt");
+        surf.open("./lars_sim/Data/surf/hex_sv_low"+occ_p+".txt");
+        part.open("./lars_sim/Data/surf/hex_part_low"+occ_p+".txt");
+        clust.open("./lars_sim/Data/surf/hex_clust_low"+occ_p+".txt");
+        border.open("./lars_sim/Data/surf/hex_border_low"+occ_p+".txt");
         // unsigned so only one cluster each gets printed
         unsigned check_1 = 0;
         unsigned check_2 = 0;
