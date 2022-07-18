@@ -115,6 +115,14 @@ int main(){
             transform(density.begin(), density.end(), dens.begin(),
                 [](string const& val) {return stod(val);});
 
+
+            double rho = 0;
+
+            for (const auto& m : dens) rho += m;
+
+            rho = rho / double(dens.size());
+
+
             //vector<complex<double>> fourier(dens.size());
             double re[L][L];
             double im[L][L];
@@ -124,15 +132,16 @@ int main(){
                     im[n][k] = 0;
                 }
             }
-            
-            complex<double> j(0,1);
+
             /*
+            complex<double> j(0,1);
+            
             for (unsigned n = 0; n < L*L; n++){
                 for (unsigned i = 0; i < L*L; i++){
                         fourier[n] += dens[i]*exp(-j * scalar(rezcoor(n), coor(i)));
                 }
             }
-            */
+            
 
            complex<double> fourier[L][L];
 
@@ -141,12 +150,13 @@ int main(){
                     fourier[n][k] = 0;
                 }
             }
+            */
 
             double x[L];
             double q[L];
             for (int i = 0; i < L; i++){
                 x[i] = -50 + i;
-                q[i] = (- pi / double(L) + double(2*pi)/double(L*L) * i);
+                q[i] = L*(- pi / double(L) + double(2*pi)/double(L*L) * i);
             }
 
             
@@ -162,7 +172,7 @@ int main(){
                     }
                     else d[n][k] = 0;
                     */
-                   d[n][k] = dens[n*L + k];
+                   d[n][k] = (dens[n*L + k]-rho);
                 }
             }
 

@@ -16,17 +16,17 @@ fig.colorbar(c, ax=ax)
 plt.show()
 """
 den_sq_3 = np.genfromtxt("square_dens_3.txt", delimiter=" ")
-den_hx_3 = np.genfromtxt("hex_dens_3.txt", delimiter=" ")
+#den_hx_3 = np.genfromtxt("hex_dens_3.txt", delimiter=" ")
 den_tr_3 = np.genfromtxt("tri_dens_3.txt", delimiter=" ")
 
 den_sq_1 = np.genfromtxt("square_dens_1.txt", delimiter=" ")
-den_hx_1 = np.genfromtxt("hex_dens_1.txt", delimiter=" ")
-den_tr_1 = np.genfromtxt("tri_dens_1.txt", delimiter=" ")
+#den_hx_1 = np.genfromtxt("hex_dens_1.txt", delimiter=" ")
+#den_tr_1 = np.genfromtxt("tri_dens_1.txt", delimiter=" ")
 
 m_sq = len(den_sq_3)
 if index == 5:
     L = 100
-    X, Y = np.meshgrid(np.linspace(0, L, L), np.linspace(0, L, L))
+    X, Y = np.meshgrid(np.linspace(-np.pi, np.pi, L), np.linspace(-np.pi, np.pi, L))
     m = m_sq
     """
     f = np.genfromtxt("fourier_sq_3.txt", delimiter=" ")
@@ -63,7 +63,7 @@ if index == 5:
         for j in range(L):
             rs1[i, j] = f1[L*i + j]
 
-    rs1 = rs1 * 1/(5800**2*m)
+    rs1 = rs1 * 1/(5800*m)
 
     fig1, ax1 = plt.subplots()
 
@@ -77,16 +77,16 @@ if index == 5:
     plt.savefig("ff_sq_n_3.pdf")
 
     fig1, ax1 = plt.subplots()
-    """
-    c = ax1.pcolormesh(X, Y, rs/rs1, cmap='viridis', shading="auto")
+
+    c = ax1.pcolormesh(X, Y, np.log(rs1), cmap='viridis', shading="auto")
     ax1.set_title('pcolormesh')
     # set the limits of the plot to the limits of the data
     ax1.axis([X.min(), X.max(), Y.min(), Y.max()])
     fig1.colorbar(c, ax=ax1)
+    c.set_clim(-10.0, 0)
 
     #plt.show()
-    plt.savefig("test3.pdf")
-    """
+    plt.savefig("ff_sq_n_3_log.pdf")
     print(rs1.max())
 
 

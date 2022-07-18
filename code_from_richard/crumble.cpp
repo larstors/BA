@@ -438,6 +438,47 @@ public:
         return dists;
     }
 
+    map<unsigned, std::list<unsigned>> clusters() const {
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof_nr(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof_nr.begin(), memberof_nr.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters_nr;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          if (sites[n].present == 0) clusters_nr[n] = std::list<unsigned>(1, n);
+          else clusters_nr[n] = std::list<unsigned>(sites[n].present, n);
+
+        }
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize_nr = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof_nr[n], small = memberof_nr[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters_nr[large].size() < clusters_nr[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters_nr[small]) memberof_nr[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters_nr[large].splice(clusters_nr[large].end(), clusters_nr[small]);
+                    // Remove the smaller cluster from the map
+                    clusters_nr.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize_nr = std::max(maxsize_nr, clusters_nr[large].size());
+                }
+            }
+        }
+
+        return clusters_nr;
+    }
 
     hist_t cluster_distribution_particle_number() const {
         // Lookup table of cluster membership by lattice site
@@ -487,7 +528,7 @@ public:
         return dists_nr;
     }
 
-
+    
     // Function to determine the size of largest cluster. Note that we will only regard particle clusters here 
     // (at least so far)
     size_t max_cluster_size(){
@@ -828,6 +869,37 @@ public:
         return output;
     }
 
+    vec surface_volume_nr(){
+        std::map<unsigned, std::list<unsigned>> clusters = clusters();
+
+        // vector for output of surface and volume of clusters
+        // the index 2i is for volume and 2i+1 is for surface
+        vec output;
+        
+        for (const auto& kv : clusters) {
+            // variable for surface and check 
+            unsigned surf = 0;
+            unsigned check = 0;
+            // check whether particle cluster
+            if (sites[kv.first].present > 0) { 
+              for (const auto& n : kv.second){
+                check = 0;
+                for (const auto& m : neighbours(n)){
+                  if (sites[m].present == 0){
+                    check++;
+                    continue;
+                  }
+                }
+                if (check > 0) surf += sites[n].present;
+              }
+              //std::cout << surf << " " << kv.second.size() << endl;
+              output.push_back(kv.second.size());
+              output.push_back(surf);
+            }
+        }
+
+        return output;
+    }
     vec cluster_surface(){
       // Lookup table of cluster membership by lattice site
         std::vector<unsigned> memberof(sites.size());
@@ -1062,6 +1134,29 @@ public:
         
       }
       return stopping_time;
+    }
+
+    // function for returning perimeter order parameter (see thesis)
+    double perimeter(){
+      // get distribution and surface-volume 
+      hist_t dist = cluster_distribution_particle_number();
+      vec sv = surface_volume_nr();
+
+
+      double second_moment = 0;
+      double first_moment = 0;
+
+      // calculate appropriate stuff
+      for (unsigned i = 0; i < dist.size(); i+=2){
+        for (unsigned k = 0; k < sv.size(); k+=2){
+          if (sv[k] == ((i+2)/2)){
+            second_moment += ((i+2)/2) * sv[k+1];
+          }
+        }
+        first_moment += dist[i] * ((i+2)/2);
+        
+      }
+      return second_moment/first_moment;
     }
 };
 
@@ -3610,6 +3705,7 @@ int main(int argc, char* argv[]) {
   else if(output[0] == 'n') output = "number"; // this is for output of time evolution of cluster number and mean cluster size
   else if(output[0] == 'f') output = "function"; // this output is for testing different features. It is not static, as of now, so one should not uses this  without proper inspection of what it does
   else if(output[0] == 'h') output = "heatmap"; // this is for heatmap of clustersizes
+  else if(output[0] == 'x') output = "perimeter"; // (first?) output for perimeter order parameter
   else output = "snapshots";
 
   if(lattice_type[0] == 's') lattice_type = "square";
