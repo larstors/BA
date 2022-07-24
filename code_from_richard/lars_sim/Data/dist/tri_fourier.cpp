@@ -37,54 +37,6 @@ std::vector<std::string> split(std::string text, char delim) {
     return vec;
 }
 
-vector<double> coor(int n){
-    vector<double> c(2);
-
-    c[0] = n%L - 50; // x
-    c[1] = n/L - 50; // y
-
-    return c;
-}
-
-vector<double> rezcoor(int n){
-    vector <double> c(2);
-
-    c[0] = -pi/double(L) + 2.0*pi/double(L*L) * (n%L);
-    c[1] = -pi/double(L) + 2.0*pi/double(L*L) * n/L;
-
-    return c;
-}
-
-vector<double> rezcoor2(int n, int i){
-    vector <double> c(2);
-
-    c[0] = -pi/double(L) + 2.0*pi/double(L*L) * n;
-    c[1] = -pi/double(L) + 2.0*pi/double(L*L) * i;
-
-    return c;
-}
-
-
-
-vector<double> coor2(int n, int i){
-    vector<double> c(2);
-
-    c[0] = n - 50; // x
-    c[1] = i - 50; // y
-
-    return c;
-}
-
-
-double scalar(vector<double> a, vector<double> b){
-    int l = a.size();
-    double sca = 0;
-    for (unsigned i = 0; i < l; i++){
-        sca += a[i] * b[i];
-    }
-    return sca;
-}
-
 
 
 int main(){
@@ -97,6 +49,18 @@ int main(){
         for (unsigned k = 0; k < L; k++){
             res[n][k] = 0;
         }
+    }
+
+    double x[L*L];
+    double y[L];
+    double qy[L*L];
+    double qx[L];
+    for (int i = 0; i < L; i++){
+        for (int k = 0; k < L; k++) x[L*i + k] = k - 0.5*i -25;
+        y[i] = -sqrt(3.0)/2.0 * 50 + sqrt(3.0)/2.0 * i;
+
+        qx[i] = 4*(-pi + 2.0*pi*double(i)/double(L));
+        for (int k = 0; k < L; k++) qy[L*i + k] = 4*(-pi + 2.0*pi*double(i)/double(L));
     }
 
     double p[L][L];
@@ -123,7 +87,7 @@ int main(){
             rho = rho / double(dens.size());
 
 
-            //vector<complex<double>> fourier(dens.size());
+
             double re[L][L];
             double im[L][L];
             for (unsigned n = 0; n < L; n++){
@@ -133,31 +97,8 @@ int main(){
                 }
             }
 
-            /*
-            complex<double> j(0,1);
+
             
-            for (unsigned n = 0; n < L*L; n++){
-                for (unsigned i = 0; i < L*L; i++){
-                        fourier[n] += dens[i]*exp(-j * scalar(rezcoor(n), coor(i)));
-                }
-            }
-            
-
-           complex<double> fourier[L][L];
-
-           for (unsigned n = 0; n < L; n++){
-                for (unsigned k = 0; k < L; k++){
-                    fourier[n][k] = 0;
-                }
-            }
-            */
-
-            double x[L];
-            double q[L];
-            for (int i = 0; i < L; i++){
-                x[i] = -50 + i;
-                q[i] = L*(- pi / double(L) + double(2*pi)/double(L*L) * i);
-            }
 
             
             int count = 0;
@@ -165,13 +106,6 @@ int main(){
            double d[L][L];
            for (int n = 0; n < L; n++){
                 for (int k = 0; k < L; k++){
-                    /*
-                    if (sqrt((x[n] + 1)*(x[n] + 1) + (x[k] + 1)*(x[k] + 1)) < 5){
-                        d[n][k] = 1;
-                        count++;
-                    }
-                    else d[n][k] = 0;
-                    */
                    d[n][k] = (dens[n*L + k]-rho);
                 }
             }
@@ -183,30 +117,18 @@ int main(){
                 for (int k = 0; k < L; k++){
                     for (int l = 0; l < L; l++){
                         for (int i = 0; i < L; i++){
-                            re[n][k] += d[l][i] * cos(q[n] * x[l] + q[k] * x[i]);
-                            im[n][k] -= d[l][i] * sin(q[n] * x[l] + q[k] * x[i]);
-                            //fourier[n][k] += d[l][i] * exp(-j * (q[n] * x[l] + q[k] * x[i]));
+                            re[n][k] += d[n][k] * cos(qx[k] * x[l*L + i] + qy[n*L + k] * y[l]);
+                            im[n][k] -= d[n][k] * sin(qx[k] * x[l*L + i] + qy[n*L + k] * y[l]);
                             
                         }
                     }
                 }
             }
             
-            /*
-            for (unsigned n = 0; n < L*L; n++){
-                r[n] += pow(abs(fourier[n]), 2);
-                //p[n] += abs(fourier[n]);
-            }
-            */
 
             for (unsigned n = 0; n < L; n++){
                 for (unsigned k = 0; k < L; k++){
-                    //p[n][k] = 1.0 / double(count*count)*pow(abs(fourier[n][k]), 2);
-                    res[n][k] += pow(re[n][k], 2) + pow(im[n][k], 2);//re[n][k]*re[n][k] + im[n][k]*im[n][k];
-                    
-                    //res[n][k] *= 1.0 / double(count*count);
-                    //cout << p[n][k] << " " << res[n][k] << " ";
-                    //res[n][k] = d[n][k];
+                    res[n][k] += pow(re[n][k], 2) + pow(im[n][k], 2);
                 }
                 //cout << endl;
             }
@@ -217,9 +139,9 @@ int main(){
         file.close();
     }
 
-    ofstream outfile;
+    ofstream outfile, coor;
     outfile.open("fourier_tr_3.txt");
-    //for (const auto& m : r) outfile << m << " ";
+    coor.open("tri_coor.txt");
     for (unsigned n = 0; n < L; n++){
                 for (unsigned k = 0; k < L; k++){
                     outfile << res[n][k] << " ";
@@ -227,8 +149,36 @@ int main(){
     }
     outfile << endl;
 
-    //for (const auto& m : r) outfile1 << m << " ";
-    //outfile1 << endl;
+    unsigned count = 0;
+    for (const auto& m : y){
+        for (unsigned o = 0; o < L; o++){
+            coor << m << " ";
+        }
+    }
+    coor << endl;
+
+    cout << count << endl;
+    count = 0;
+
+    for (const auto& m : x){
+        coor << m << " ";
+    }
+    coor << endl;
+    cout << count << endl;
+    count = 0;
+    
+    for (const auto& m : qy){
+        coor << m << " ";
+    }
+    coor << endl;
+    
+    for (const auto& m : qx){
+        for (unsigned o = 0; o < L; o++){
+            coor << m << " ";
+        }
+    }
+    coor << endl;
+    
 
 }
 

@@ -23,7 +23,7 @@ den_sq_1 = np.genfromtxt("square_dens_1.txt", delimiter=" ")
 #den_hx_1 = np.genfromtxt("hex_dens_1.txt", delimiter=" ")
 #den_tr_1 = np.genfromtxt("tri_dens_1.txt", delimiter=" ")
 
-m_sq = len(den_sq_3)
+m_sq = len(den_sq_1)
 if index == 5:
     L = 100
     X, Y = np.meshgrid(np.linspace(-np.pi, np.pi, L), np.linspace(-np.pi, np.pi, L))
@@ -53,7 +53,7 @@ if index == 5:
     """
 
 
-    f1 = np.genfromtxt("fourier_sq_3.txt", delimiter=" ")
+    f1 = np.genfromtxt("fourier_sq_1.txt", delimiter=" ")
 
     rs1 = np.ones(L*L).reshape(L, L)
 
@@ -63,7 +63,7 @@ if index == 5:
         for j in range(L):
             rs1[i, j] = f1[L*i + j]
 
-    rs1 = rs1 * 1/(5800*m)
+    rs1 = rs1 * 1/(4700*m)
 
     fig1, ax1 = plt.subplots()
 
@@ -74,7 +74,7 @@ if index == 5:
     fig1.colorbar(c, ax=ax1)
 
     #plt.show()
-    plt.savefig("ff_sq_n_3.pdf")
+    plt.savefig("ff_sq_n_1.pdf")
 
     fig1, ax1 = plt.subplots()
 
@@ -86,7 +86,7 @@ if index == 5:
     c.set_clim(-10.0, 0)
 
     #plt.show()
-    plt.savefig("ff_sq_n_3_log.pdf")
+    plt.savefig("ff_sq_n_1_log.pdf")
     print(rs1.max())
 
 

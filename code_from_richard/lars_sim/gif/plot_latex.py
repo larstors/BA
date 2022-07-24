@@ -41,7 +41,7 @@ def tri_conv(n):
         x = []
         y = []
         for i in n:
-            x.append(i % L - 0.5 * int(i / L))
+            x.append(i % L - 0.5 * int(i / L) - L/4)
             y.append(int(i/L) * np.sqrt(3)/2)
         
         return x, y
@@ -73,9 +73,9 @@ triang = trian()
 fig1 = plt.figure()
 plt.triplot(triang, 'r-', alpha=1, linewidth=0.5, zorder=1)
 plt.scatter(tri_conv(n_tr)[0], tri_conv(n_tr)[1], c=p_tr, cmap="Greens", s=100, vmin=0, vmax=3, marker="s", zorder=2)
-plt.axis("off")
-plt.savefig("tri_ex.pdf", dpi=100)
-
+#plt.axis("off")
+#plt.savefig("tri_ex.pdf", dpi=100)
+plt.show()
 
 def hex_cor(n, j):
     """function that converts the index n and site index j into coordinates x and y, with x being horisontal.

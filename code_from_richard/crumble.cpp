@@ -438,7 +438,7 @@ public:
         return dists;
     }
 
-    map<unsigned, std::list<unsigned>> clusters() const {
+    map<unsigned, std::list<unsigned>> cluster() const {
       // Lookup table of cluster membership by lattice site
         std::vector<unsigned> memberof_nr(sites.size());
         // Initially, this is just the site id as each site is its own cluster
@@ -870,7 +870,7 @@ public:
     }
 
     vec surface_volume_nr(){
-        std::map<unsigned, std::list<unsigned>> clusters = clusters();
+        std::map<unsigned, std::list<unsigned>> clusters = cluster();
 
         // vector for output of surface and volume of clusters
         // the index 2i is for volume and 2i+1 is for surface
