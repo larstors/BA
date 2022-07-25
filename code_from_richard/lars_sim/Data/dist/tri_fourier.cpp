@@ -56,7 +56,7 @@ int main(){
     double qy[L*L];
     double qx[L];
     for (int i = 0; i < L; i++){
-        for (int k = 0; k < L; k++) x[L*i + k] = k - 0.5*i -25;
+        for (int k = 0; k < L; k++) x[L*i + k] = k - 0.5*i - 25;
         y[i] = -sqrt(3.0)/2.0 * 50 + sqrt(3.0)/2.0 * i;
 
         qx[i] = 4*(-pi + 2.0*pi*double(i)/double(L));
@@ -70,6 +70,8 @@ int main(){
             p[n][k] = 0;
         }
     }
+    ofstream wow;
+    wow.open("tri_wtf.txt");
     std::ifstream file("tri_dens_3.txt");
     if (file.is_open()) {
         std::string line;
@@ -84,8 +86,8 @@ int main(){
 
             for (const auto& m : dens) rho += m;
 
-            rho = rho / double(dens.size());
 
+            rho = rho / double(dens.size());
 
 
             double re[L][L];
@@ -98,7 +100,15 @@ int main(){
             }
 
 
+            complex<double> j(0,1);
             
+            complex<double> fourier[L][L];
+
+           for (unsigned n = 0; n < L; n++){
+                for (unsigned k = 0; k < L; k++){
+                    fourier[n][k] = 0;
+                }
+            }
 
             
             int count = 0;
@@ -106,20 +116,21 @@ int main(){
            double d[L][L];
            for (int n = 0; n < L; n++){
                 for (int k = 0; k < L; k++){
-                   d[n][k] = (dens[n*L + k]-rho);
+                   d[n][k] = (dens[n*L + k] - rho);
+                   wow << dens[n*L + k] << " ";
                 }
             }
 
-
-
+            wow << endl;
 
             for (int n = 0; n < L; n++){
                 for (int k = 0; k < L; k++){
                     for (int l = 0; l < L; l++){
                         for (int i = 0; i < L; i++){
-                            re[n][k] += d[n][k] * cos(qx[k] * x[l*L + i] + qy[n*L + k] * y[l]);
-                            im[n][k] -= d[n][k] * sin(qx[k] * x[l*L + i] + qy[n*L + k] * y[l]);
                             
+                            re[n][k] += d[l][i] * cos(qx[k] * x[l*L + i] + qy[n*L + k] * y[l]);
+                            im[n][k] -= d[l][i] * sin(qx[k] * x[l*L + i] + qy[n*L + k] * y[l]);
+                            fourier[n][k] += d[l][i] * exp(-j * (qx[k] * x[l*L + i] + qy[n*L + k] * y[l]));
                         }
                     }
                 }
@@ -129,11 +140,13 @@ int main(){
             for (unsigned n = 0; n < L; n++){
                 for (unsigned k = 0; k < L; k++){
                     res[n][k] += pow(re[n][k], 2) + pow(im[n][k], 2);
+                    //cout << res[n][k] << " " << pow(abs(fourier[n][k]), 2) << endl;
+                    //if (pow(re[n][k], 2) + pow(im[n][k], 2) > 4700) cout << pow(re[n][k], 2) << " " << pow(im[n][k], 2) << endl;
                 }
                 //cout << endl;
             }
 
-            //oo = 1;
+            oo = 1;
 
         }
         file.close();
@@ -157,14 +170,13 @@ int main(){
     }
     coor << endl;
 
-    cout << count << endl;
     count = 0;
 
     for (const auto& m : x){
         coor << m << " ";
     }
     coor << endl;
-    cout << count << endl;
+
     count = 0;
     
     for (const auto& m : qy){
@@ -172,8 +184,9 @@ int main(){
     }
     coor << endl;
     
-    for (const auto& m : qx){
-        for (unsigned o = 0; o < L; o++){
+    
+    for (unsigned o = 0; o < L; o++){
+        for (const auto& m : qx){
             coor << m << " ";
         }
     }

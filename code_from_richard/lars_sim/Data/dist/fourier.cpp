@@ -120,7 +120,7 @@ int main(){
 
             for (const auto& m : dens) rho += m;
 
-            rho = rho / double(dens.size());
+            rho = rho / (3.0*double(dens.size()));
 
 
             //vector<complex<double>> fourier(dens.size());

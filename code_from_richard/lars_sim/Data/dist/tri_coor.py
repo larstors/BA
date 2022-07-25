@@ -17,11 +17,32 @@ f = np.genfromtxt("fourier_tr_3.txt", delimiter=" ")
 plt.scatter(x=c[1,:], y =c[0,:])
 plt.show()
 """
-f = f/4700*1/101
-sc = plt.scatter(x=c[1,:], y =c[0,:], s = 4, vmin = -10, marker="s", c=f, cmap='viridis')
-plt.colorbar(sc)
-plt.show()
 
-sc = plt.scatter(x=c[1,:], y =c[0,:], s = 4, vmin = -6, marker="s", c=np.log(f), cmap='viridis')
+
+
+fig = plt.figure()
+f = f/(4700)#*1/101
+sc = plt.scatter(x=c[3,:], y =c[2,:], s = 4, vmin = -10, marker="s", c=f, cmap='viridis')
 plt.colorbar(sc)
-plt.show()
+#plt.show()
+plt.savefig("x.pdf")
+
+fig2 = plt.figure()
+sc = plt.scatter(x=c[3,:], y =c[2,:], s = 4, vmin = -6, marker="s", c=np.log(f), cmap='viridis')
+plt.colorbar(sc)
+#plt.show()
+plt.savefig("xlog.pdf")
+
+
+
+"""
+wtf = np.genfromtxt("tri_wtf.txt", delimiter=" ")
+
+w = wtf[0, :]
+fig3 = plt.figure()
+plt.hist(w, bins=20)
+plt.savefig("xwtf.pdf")
+
+for i in range(len(wtf)):
+    print(np.sum(wtf[i, :]))
+"""

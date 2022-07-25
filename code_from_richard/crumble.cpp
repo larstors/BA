@@ -870,13 +870,13 @@ public:
     }
 
     vec surface_volume_nr(){
-        std::map<unsigned, std::list<unsigned>> clusters = cluster();
+        std::map<unsigned, std::list<unsigned>> cluster = clusters();
 
         // vector for output of surface and volume of clusters
         // the index 2i is for volume and 2i+1 is for surface
         vec output;
         
-        for (const auto& kv : clusters) {
+        for (const auto& kv : cluster) {
             // variable for surface and check 
             unsigned surf = 0;
             unsigned check = 0;
@@ -1153,6 +1153,24 @@ public:
             second_moment += ((i+2)/2) * sv[k+1];
           }
         }
+        first_moment += dist[i] * ((i+2)/2);
+        
+      }
+      return second_moment/first_moment;
+    }
+
+    // function for returning w(_N) order parameter (see thesis)
+    double w_N(){
+      // get distribution and surface-volume 
+      hist_t dist = cluster_distribution_particle_number();
+
+
+      double second_moment = 0;
+      double first_moment = 0;
+
+      // calculate appropriate stuff
+      for (unsigned i = 0; i < dist.size(); i+=2){
+        second_moment += dist[i] * ((i+2)/2) * ((i+2)/2);
         first_moment += dist[i] * ((i+2)/2);
         
       }
@@ -1515,6 +1533,47 @@ public:
         return S.time();
     }
 
+    map<unsigned, std::list<unsigned>> clusters() const {
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof_nr(sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof_nr.begin(), memberof_nr.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters_nr;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          if (sites[n].present == 0) clusters_nr[n] = std::list<unsigned>(1, n);
+          else clusters_nr[n] = std::list<unsigned>(sites[n].present, n);
+
+        }
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize_nr = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+            for (const auto& m : forward_neighbours(n)) {
+                unsigned large = memberof_nr[n], small = memberof_nr[m];
+                // continue on if they are part of the same cluster
+                if (small == large) continue;
+                // continue on if they are vacant - not vacant and vise versa
+                else if (sites[n].present == 0 && sites[m].present != 0) continue;
+                else if (sites[n].present != 0 && sites[m].present == 0) continue;
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters_nr[large].size() < clusters_nr[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters_nr[small]) memberof_nr[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters_nr[large].splice(clusters_nr[large].end(), clusters_nr[small]);
+                    // Remove the smaller cluster from the map
+                    clusters_nr.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize_nr = std::max(maxsize_nr, clusters_nr[large].size());
+                }
+            }
+        }
+
+        return clusters_nr;
+    }
     // Sample all particle directions from the distribution that applies at the current instant
     // (This is needed if you want "realistic" snapshots, rather than the state at a mixture of times)
     void realise_directions() {
@@ -2212,6 +2271,78 @@ public:
       }
       return stopping_time;
     }
+
+    vec surface_volume_nr(){
+        std::map<unsigned, std::list<unsigned>> cluster = clusters();
+
+        // vector for output of surface and volume of clusters
+        // the index 2i is for volume and 2i+1 is for surface
+        vec output;
+        
+        for (const auto& kv : cluster) {
+            // variable for surface and check 
+            unsigned surf = 0;
+            unsigned check = 0;
+            // check whether particle cluster
+            if (sites[kv.first].present > 0) { 
+              for (const auto& n : kv.second){
+                check = 0;
+                for (const auto& m : neighbours(n)){
+                  if (sites[m].present == 0){
+                    check++;
+                    continue;
+                  }
+                }
+                if (check > 0) surf += sites[n].present;
+              }
+              //std::cout << surf << " " << kv.second.size() << endl;
+              output.push_back(kv.second.size());
+              output.push_back(surf);
+            }
+        }
+
+        return output;
+    }
+    // function for returning perimeter order parameter (see thesis)
+    double perimeter(){
+      // get distribution and surface-volume 
+      hist_t dist = cluster_distributions_particle_numbers();
+      vec sv = surface_volume_nr();
+
+
+      double second_moment = 0;
+      double first_moment = 0;
+
+      // calculate appropriate stuff
+      for (unsigned i = 0; i < dist.size(); i+=2){
+        for (unsigned k = 0; k < sv.size(); k+=2){
+          if (sv[k] == ((i+2)/2)){
+            second_moment += ((i+2)/2) * sv[k+1];
+          }
+        }
+        first_moment += dist[i] * ((i+2)/2);
+        
+      }
+      return second_moment/first_moment;
+    }
+
+        // function for returning w(_N) order parameter (see thesis)
+    double w_N(){
+      // get distribution and surface-volume 
+      hist_t dist = cluster_distributions_particle_numbers();
+
+
+      double second_moment = 0;
+      double first_moment = 0;
+
+      // calculate appropriate stuff
+      for (unsigned i = 0; i < dist.size(); i+=2){
+        second_moment += dist[i] * ((i+2)/2) * ((i+2)/2);
+        first_moment += dist[i] * ((i+2)/2);
+        
+      }
+      return second_moment/first_moment;
+    }
 };
 
 
@@ -2818,7 +2949,60 @@ public:
         return dists_nr;
     }
 
+    map<unsigned, std::list<unsigned>> clusters() const {
+      // Lookup table of cluster membership by lattice site
+        std::vector<unsigned> memberof_nr(2 * sites.size());
+        // Initially, this is just the site id as each site is its own cluster
+        std::iota(memberof_nr.begin(), memberof_nr.end(), 0);
+        // Create also a map of clusters each containing a list of its members
+        std::map<unsigned, std::list<unsigned>> clusters_nr;
+        for (unsigned n = 0; n < sites.size(); ++n){
+          for (unsigned i = 0; i < 2; i++){
+            if (sites[n].present[i] == 0) clusters_nr[2*n + i] = std::list<unsigned>(1, 2*n + i);
+            else {
+              clusters_nr[2*n + i] = std::list<unsigned>(sites[n].present[i], 2*n+i);
+              /*
+              for (unsigned k = 0; k < sites[n].present[i]; k++){
+                pres[k] = 2*n + i;
+              }
+              clusters_nr[2*n + i] = pres;
+              */
+            }
+          }
+        }
+        // Keep track of the size of the largest cluster
+        std::size_t maxsize_nr = 1;
 
+        for (unsigned n = 0; n < sites.size(); ++n) {
+            // Loop over neigbours m in one direction only so we visit each bond once
+          for (unsigned i = 0; i < 2; i++){
+            // TODO figure out why forward neighbour makes algorithm not work
+            for (const auto& m : neighbours(n, i)) {
+                unsigned large = memberof_nr[2*n + i], small = memberof_nr[2*m + (i+1)%2];
+                // If they are in the same cluster we can move on
+                if (small == large) continue;
+                // If one of them is empty but the other isn't we move on
+                else if (sites[n].present[i] == 0 && sites[m].present[(i+1)%2] != 0) continue;
+                else if (sites[n].present[i] != 0 && sites[m].present[(i+1)%2] == 0) continue;
+                // merge clusters
+                else {
+                    // Ensure we have large and small the right way round (this makes the algorithm slightly more efficient)
+                    if (clusters_nr[large].size() < clusters_nr[small].size()) std::swap(large, small);
+                    // Update the cluster number for all sites in the smaller one
+                    for (const auto& site : clusters_nr[small]) memberof_nr[site] = large;
+                    // Add the members of the smaller cluster onto the end of the larger one
+                    clusters_nr[large].splice(clusters_nr[large].end(), clusters_nr[small]);
+                    // Remove the smaller cluster from the map
+                    clusters_nr.erase(small);
+                    // Keep track of the largest cluster
+                    maxsize_nr = std::max(maxsize_nr, clusters_nr[large].size());
+                }
+            }
+          }
+        }
+
+        return clusters_nr;
+    }
     
     size_t max_cluster_size(){
         
@@ -3210,7 +3394,28 @@ public:
 
         return output;
     }
+    vec surface_volume_nr(){
+        std::map<unsigned, std::list<unsigned>> cluster = clusters();
+        vec output; 
+        for (const auto& kv : cluster) {
+            unsigned surf = 0;
+            unsigned check = 0;
+            // instead of occupied we check whether there are any particles present
+            if (sites[(kv.first - kv.first%2)/2].present[kv.first%2] > 0) { 
+              for (const auto& n : kv.second){
+                check = 0;
+                for (const auto& m: neighbours((n-n%2)/2, n%2)){
+                  if (sites[m].present[(n+1)%2] == 0) check++;
+                }
+                if (check > 0) surf+=sites[(n-n%2)/2].present[n%2];
+              }
+              output.push_back(kv.second.size());
+              output.push_back(surf);
+            }
+        }
 
+        return output;
+    }
     vec cluster_surface(){
       // Lookup table of cluster membership by lattice site
         std::vector<unsigned> memberof(2 * sites.size());
@@ -3462,6 +3667,49 @@ public:
         
       }
       return stopping_time;
+    }
+
+    // function for returning perimeter order parameter (see thesis)
+    double perimeter(){
+      // get distribution and surface-volume 
+      hist_t dist = cluster_distribution_particle_number();
+      
+      vec sv = surface_volume_nr();
+      
+
+      double second_moment = 0;
+      double first_moment = 0;
+
+      // calculate appropriate stuff
+      for (unsigned i = 0; i < dist.size(); i+=2){
+        for (unsigned k = 0; k < sv.size(); k+=2){
+          if (sv[k] == ((i+2)/2)){
+            
+            second_moment += ((i+2)/2) * sv[k+1];
+          }
+        }
+        first_moment += dist[i] * ((i+2)/2);
+      }
+      
+      return second_moment/first_moment;
+    }
+
+        // function for returning w(_N) order parameter (see thesis)
+    double w_N(){
+      // get distribution and surface-volume 
+      hist_t dist = cluster_distribution_particle_number();
+
+
+      double second_moment = 0;
+      double first_moment = 0;
+
+      // calculate appropriate stuff
+      for (unsigned i = 0; i < dist.size(); i+=2){
+        second_moment += dist[i] * ((i+2)/2) * ((i+2)/2);
+        first_moment += dist[i] * ((i+2)/2);
+        
+      }
+      return second_moment/first_moment;
     }
 };
 
@@ -4220,10 +4468,10 @@ int main(int argc, char* argv[]) {
       }
       else if (output=="area"){
         ofstream surf, part, clust, border;
-        surf.open("./lars_sim/Data/surf/square_sv_low"+occ_p+".txt");
-        part.open("./lars_sim/Data/surf/square_part_low"+occ_p+".txt");
-        clust.open("./lars_sim/Data/surf/square_clust_low"+occ_p+".txt");
-        border.open("./lars_sim/Data/surf/square_border_low"+occ_p+".txt");
+        surf.open("./lars_sim/Data/surf/square_sv"+occ_p+".txt");
+        part.open("./lars_sim/Data/surf/square_part"+occ_p+".txt");
+        clust.open("./lars_sim/Data/surf/square_clust"+occ_p+".txt");
+        border.open("./lars_sim/Data/surf/square_border"+occ_p+".txt");
 
         // unsigned so only one cluster each gets printed
         unsigned check_1 = 0;
@@ -4264,6 +4512,58 @@ int main(int argc, char* argv[]) {
           outfile << endl;
         }
       }
+      else if (output == "perimeter"){
+        ofstream outfile, pars; 
+        outfile.open("./lars_sim/Data/perimeter/square_"+occ_p+".txt");
+        pars.open("./lars_sim/Data/perimeter/square_pars_"+occ_p+".txt");
+        unsigned check = 0;
+        for (double alp = 1e-3; alp <= 1.0; alp*=1.5){
+          for (double dens = 0.001; dens <= 0.59; dens+=.034){
+            Parameters P_h;
+            P_h.N = unsigned(P.L[0]*P.L[0]*P.n_max*dens);
+            P_h.alpha[0] = P.alpha[1] = alp;
+            P_h.L = P.L;
+            P_h.n_max = P.n_max;
+            Lattice LB(P_h, rng);
+            t = 0;
+
+            //output for parameters (curious to see the values)
+            if (check < 7){
+              pars << P_h.N << endl;
+              check ++;
+            }
+            // jamming, max cl size, perimeter, weighted mean cl size
+            double j = 0;
+            double m = 0;
+            double s = 0;
+            double w = 0;
+
+            // count for mean vals
+            double count = 0;
+            for(unsigned n=0; t < burnin + until; ++n){
+              t = LB.run_until(burnin + n * every);
+              j += LB.motility_fraction();
+              m += LB.max_cluster_size_nr();
+              s += LB.perimeter();
+              w += LB.w_N();
+              count++;
+            }
+
+            j = j / count;
+            m = m / count;
+            s = s / count;
+            w = w / count;
+
+            m = m / double(P_h.N);
+            s = s / double(P_h.N);
+            w = w / double(P_h.N);
+
+            outfile << j << " " << m << " " << s << " " << w << " ";
+          }
+          outfile << endl;
+        }
+      }
+      
       else {
         ofstream outfile;
         outfile.open("./lars_sim/gif/square.txt");
@@ -4611,10 +4911,10 @@ int main(int argc, char* argv[]) {
       }
       else if (output=="area"){
         ofstream surf, part, clust, border;
-        surf.open("./lars_sim/Data/surf/tri_sv_low"+occ_p+".txt");
-        part.open("./lars_sim/Data/surf/tri_part_low"+occ_p+".txt");
-        clust.open("./lars_sim/Data/surf/tri_clust_low"+occ_p+".txt");
-        border.open("./lars_sim/Data/surf/tri_border_low"+occ_p+".txt");
+        surf.open("./lars_sim/Data/surf/tri_sv"+occ_p+".txt");
+        part.open("./lars_sim/Data/surf/tri_part"+occ_p+".txt");
+        clust.open("./lars_sim/Data/surf/tri_clust"+occ_p+".txt");
+        border.open("./lars_sim/Data/surf/tri_border"+occ_p+".txt");
         // unsigned so only one cluster each gets printed
         //unsigned check_1 = 0;
         //unsigned check_2 = 0;
@@ -4800,6 +5100,58 @@ int main(int argc, char* argv[]) {
         
         for (const auto& m : dist) outfile << m << " ";
         outfile << endl;
+      }
+      else if (output == "perimeter"){
+        ofstream outfile, pars; 
+        outfile.open("./lars_sim/Data/perimeter/tri_"+occ_p+".txt");
+        pars.open("./lars_sim/Data/perimeter/tri_pars_"+occ_p+".txt");
+        unsigned check = 0;
+        for (double alp = 1e-3; alp <= 1.0; alp*=1.5){
+          for (double dens = 0.001; dens <= 0.5; dens+=.03){
+            Parameters P_h;
+            P_h.N = unsigned(P.L[0]*P.L[0]*P.n_max*dens);
+            P_h.alpha[0] = P.alpha[1] = P.alpha[2] = alp;
+            P_h.L = P.L;
+            P_h.n_max = P.n_max;
+            Triangle_lattice LB(P_h, rng);
+            t = 0;
+
+            //output for parameters (curious to see the values)
+            if (check < 7){
+              pars << P_h.N << endl;
+              check ++;
+            }
+
+            // jamming, max cl size, perimeter, weighted mean cl size
+            double j = 0;
+            double m = 0;
+            double s = 0;
+            double w = 0;
+
+            // count for mean vals
+            double count = 0;
+            for(unsigned n=0; t < burnin + until; ++n){
+              t = LB.run_until(burnin + n * every);
+              j += LB.motility_fraction();
+              m += LB.max_cluster_size_nr();
+              s += LB.perimeter();
+              w += LB.w_N();
+              count++;
+            }
+
+            j = j / count;
+            m = m / count;
+            s = s / count;
+            w = w / count;
+
+            m = m / double(P_h.N);
+            s = s / double(P_h.N);
+            w = w / double(P_h.N);
+
+            outfile << j << " " << m << " " << s << " " << w << " ";
+          }
+          outfile << endl;
+        }
       }
       else {
         ofstream outfile;
@@ -5070,7 +5422,60 @@ int main(int argc, char* argv[]) {
           c++;
         }
       }
+      else if (output == "perimeter"){
+        ofstream outfile, pars; 
+        outfile.open("./lars_sim/Data/perimeter/hex_"+occ_p+".txt");
+        pars.open("./lars_sim/Data/perimeter/hex_pars_"+occ_p+".txt");
+        unsigned check = 0;
+        for (double alp = 1e-3; alp <= 1.0; alp*=3.9){
+          for (double dens = 0.001; dens <= 0.69; dens+=.15){
+            Parameters P_h;
+            P_h.N = unsigned(P.L[0]*P.L[0]*P.n_max*2*dens);
+            P_h.alpha[0] = P.alpha[1] = P.alpha[2] = alp;
+            P_h.L = P.L;
+            P_h.n_max = P.n_max;
+            Hexagonal_lattice LB(P_h, rng);
+            t = 0;
 
+            //output for parameters (curious to see the values)
+            if (check < 7){
+              pars << P_h.N << endl;
+              check ++;
+            }
+
+            // jamming, max cl size, perimeter, weighted mean cl size
+            double j = 0;
+            double m = 0;
+            double s = 0;
+            double w = 0;
+            // count for mean vals
+            double count = 0;
+            for(unsigned n=0; t < burnin + until; ++n){
+              t = LB.run_until(burnin + n * every);
+              j += LB.motility_fraction();
+              m += LB.max_cluster_size_nr();
+              
+              s += LB.perimeter();
+              w += LB.w_N();
+              
+              count++;
+            }
+
+            j = j / count;
+            m = m / count;
+            s = s / count;
+            w = w / count;
+
+            m = m / double(P_h.N);
+            s = s / double(P_h.N);
+            w = w / double(P_h.N);
+            
+
+            outfile << j << " " << m << " " << s << " " << w << " ";
+          }
+          outfile << endl;
+        }
+      }
       else if (output == "motility"){
         if (details==0){
         ofstream outfile;
@@ -5215,10 +5620,10 @@ int main(int argc, char* argv[]) {
       }
       else if (output=="area"){
         ofstream surf, part, clust, border;
-        surf.open("./lars_sim/Data/surf/hex_sv_low"+occ_p+".txt");
-        part.open("./lars_sim/Data/surf/hex_part_low"+occ_p+".txt");
+        surf.open("./lars_sim/Data/surf/hex_sv"+occ_p+".txt");
+        part.open("./lars_sim/Data/surf/hex_part"+occ_p+".txt");
         //clust.open("./lars_sim/Data/surf/hex_clust_low"+occ_p+".txt");
-        border.open("./lars_sim/Data/surf/hex_border_low"+occ_p+".txt");
+        border.open("./lars_sim/Data/surf/hex_border"+occ_p+".txt");
         // unsigned so only one cluster each gets printed
         //unsigned check_1 = 0;
         //unsigned check_2 = 0;
@@ -5459,10 +5864,10 @@ int main(int argc, char* argv[]) {
       }
       else if (output=="area"){
         ofstream surf, part, clust, border;
-        surf.open("./lars_sim/Data/surf/square_sv_low"+occ_p+".txt");
-        part.open("./lars_sim/Data/surf/square_part_low"+occ_p+".txt");
-        clust.open("./lars_sim/Data/surf/square_clust_low"+occ_p+".txt");
-        border.open("./lars_sim/Data/surf/square_border_low"+occ_p+".txt");
+        surf.open("./lars_sim/Data/surf/square_sv"+occ_p+".txt");
+        part.open("./lars_sim/Data/surf/square_part"+occ_p+".txt");
+        clust.open("./lars_sim/Data/surf/square_clust"+occ_p+".txt");
+        border.open("./lars_sim/Data/surf/square_border"+occ_p+".txt");
 
         // unsigned so only one cluster each gets printed
         unsigned check_1 = 0;
@@ -5679,6 +6084,58 @@ int main(int argc, char* argv[]) {
         for (const auto& m : dist) outfile << m << " ";
         outfile << endl;
       }
+      else if (output == "perimeter"){
+        ofstream outfile, pars; 
+        outfile.open("./lars_sim/Data/perimeter/square_"+occ_p+".txt");
+        pars.open("./lars_sim/Data/perimeter/square_pars_"+occ_p+".txt");
+        unsigned check = 0;
+        for (double alp = 1e-3; alp <= 1.0; alp*=3.9){
+          for (double dens = 0.001; dens <= 0.59; dens+=.13){
+            Parameters P_h;
+            P_h.N = unsigned(P.L[0]*P.L[0]*P.n_max*dens);
+            P_h.alpha[0] = P.alpha[1] = alp;
+            P_h.L = P.L;
+            P_h.n_max = P.n_max;
+            Lattice LB(P_h, rng);
+            t = 0;
+
+            //output for parameters (curious to see the values)
+            if (check < 7){
+              pars << P_h.N << endl;
+              check ++;
+            }
+
+            // jamming, max cl size, perimeter, weighted mean cl size
+            double j = 0;
+            double m = 0;
+            double s = 0;
+            double w = 0;
+
+            // count for mean vals
+            double count = 0;
+            for(unsigned n=0; t < burnin + until; ++n){
+              t = LB.run_until(burnin + n * every);
+              j += LB.motility_fraction();
+              m += LB.max_cluster_size_nr();
+              s += LB.perimeter();
+              w += LB.w_N();
+              count++;
+            }
+
+            j = j / count;
+            m = m / count;
+            s = s / count;
+            w = w / count;
+
+            m = m / double(P_h.N);
+            s = s / double(P_h.N);
+            w = w / double(P_h.N);
+
+            outfile << j << " " << m << " " << s << " " << w << " ";
+          }
+          outfile << endl;
+        }
+      }
       else {
         ofstream outfile;
         outfile.open("./lars_sim/gif/square.txt");
@@ -5764,10 +6221,10 @@ int main(int argc, char* argv[]) {
       }
       else if (output=="area"){
         ofstream surf, part, clust, border;
-        surf.open("./lars_sim/Data/surf/tri_sv_low"+occ_p+".txt");
-        part.open("./lars_sim/Data/surf/tri_part_low"+occ_p+".txt");
-        clust.open("./lars_sim/Data/surf/tri_clust_low"+occ_p+".txt");
-        border.open("./lars_sim/Data/surf/tri_border_low"+occ_p+".txt");
+        surf.open("./lars_sim/Data/surf/tri_sv"+occ_p+".txt");
+        part.open("./lars_sim/Data/surf/tri_part"+occ_p+".txt");
+        clust.open("./lars_sim/Data/surf/tri_clust"+occ_p+".txt");
+        border.open("./lars_sim/Data/surf/tri_border"+occ_p+".txt");
         // unsigned so only one cluster each gets printed
         unsigned check_1 = 0;
         unsigned check_2 = 0;
@@ -5976,7 +6433,58 @@ int main(int argc, char* argv[]) {
         for (const auto& m : dist) outfile << m << " ";
         outfile << endl;
       }
-      
+      else if (output == "perimeter"){
+        ofstream outfile, pars; 
+        outfile.open("./lars_sim/Data/perimeter/tri_"+occ_p+".txt");
+        pars.open("./lars_sim/Data/perimeter/tri_pars_"+occ_p+".txt");
+        unsigned check = 0;
+        for (double alp = 1e-3; alp <= 1.0; alp*=3.9){
+          for (double dens = 0.001; dens <= 0.5; dens+=.12){
+            Parameters P_h;
+            P_h.N = unsigned(P.L[0]*P.L[0]*P.n_max*dens);
+            P_h.alpha[0] = P.alpha[1] = P.alpha[2] = alp;
+            P_h.L = P.L;
+            P_h.n_max = P.n_max;
+            Triangle_lattice LB(P_h, rng);
+            t = 0;
+
+            //output for parameters (curious to see the values)
+            if (check < 7){
+              pars << P_h.N << endl;
+              check ++;
+            }
+
+            // jamming, max cl size, perimeter, weighted mean cl size
+            double j = 0;
+            double m = 0;
+            double s = 0;
+            double w = 0;
+
+            // count for mean vals
+            double count = 0;
+            for(unsigned n=0; t < burnin + until; ++n){
+              t = LB.run_until(burnin + n * every);
+              j += LB.motility_fraction();
+              m += LB.max_cluster_size_nr();
+              s += LB.perimeter();
+              w += LB.w_N();
+              count++;
+            }
+
+            j = j / count;
+            m = m / count;
+            s = s / count;
+            w = w / count;
+
+            m = m / double(P_h.N);
+            s = s / double(P_h.N);
+            w = w / double(P_h.N);
+
+            outfile << j << " " << m << " " << s << " " << w << " ";
+          }
+          outfile << endl;
+        }
+      }
       else if (output == "stopping time"){
         ofstream outfile;
         
@@ -6085,10 +6593,10 @@ int main(int argc, char* argv[]) {
       } 
       else if (output=="area"){
         ofstream surf, part, clust, border;
-        surf.open("./lars_sim/Data/surf/hex_sv_low"+occ_p+".txt");
-        part.open("./lars_sim/Data/surf/hex_part_low"+occ_p+".txt");
-        clust.open("./lars_sim/Data/surf/hex_clust_low"+occ_p+".txt");
-        border.open("./lars_sim/Data/surf/hex_border_low"+occ_p+".txt");
+        surf.open("./lars_sim/Data/surf/hex_sv"+occ_p+".txt");
+        part.open("./lars_sim/Data/surf/hex_part"+occ_p+".txt");
+        clust.open("./lars_sim/Data/surf/hex_clust"+occ_p+".txt");
+        border.open("./lars_sim/Data/surf/hex_border"+occ_p+".txt");
         // unsigned so only one cluster each gets printed
         unsigned check_1 = 0;
         unsigned check_2 = 0;
@@ -6185,7 +6693,58 @@ int main(int argc, char* argv[]) {
         }
       
       }
-      
+      else if (output == "perimeter"){
+        ofstream outfile, pars; 
+        outfile.open("./lars_sim/Data/perimeter/hex_"+occ_p+".txt");
+        pars.open("./lars_sim/Data/perimeter/hex_pars_"+occ_p+".txt");
+        unsigned check = 0;
+        for (double alp = 1e-3; alp <= 1.0; alp*=3.9){
+          for (double dens = 0.001; dens <= 0.69; dens+=.15){
+            Parameters P_h;
+            P_h.N = unsigned(P.L[0]*P.L[0]*P.n_max*dens*2);
+            P_h.alpha[0] = P.alpha[1] = P.alpha[2]= alp;
+            P_h.L = P.L;
+            P_h.n_max = P.n_max;
+            Hexagonal_lattice LB(P_h, rng);
+            t = 0;
+
+            //output for parameters (curious to see the values)
+            if (check < 7){
+              pars << P_h.N << endl;
+              check ++;
+            }
+
+            // jamming, max cl size, perimeter, weighted mean cl size
+            double j = 0;
+            double m = 0;
+            double s = 0;
+            double w = 0;
+
+            // count for mean vals
+            double count = 0;
+            for(unsigned n=0; t < burnin + until; ++n){
+              t = LB.run_until(burnin + n * every);
+              j += LB.motility_fraction();
+              m += LB.max_cluster_size_nr();
+              s += LB.perimeter();
+              w += LB.w_N();
+              count++;
+            }
+
+            j = j / count;
+            m = m / count;
+            s = s / count;
+            w = w / count;
+
+            m = m / double(P_h.N);
+            s = s / double(P_h.N);
+            w = w / double(P_h.N);
+
+            outfile << j << " " << m << " " << s << " " << w << " ";
+          }
+          outfile << endl;
+        }
+      }
       else if (output == "number"){
         ofstream outfile;
         string name = "./lars_sim/number/hex_";

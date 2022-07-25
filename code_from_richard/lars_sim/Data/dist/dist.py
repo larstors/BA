@@ -19,6 +19,10 @@ den_sq_3 = np.genfromtxt("square_dens_3.txt", delimiter=" ")
 #den_hx_3 = np.genfromtxt("hex_dens_3.txt", delimiter=" ")
 den_tr_3 = np.genfromtxt("tri_dens_3.txt", delimiter=" ")
 
+den_sq_2 = np.genfromtxt("square_dens_2.txt", delimiter=" ")
+den_hx_2 = np.genfromtxt("hex_dens_2.txt", delimiter=" ")
+den_tr_2 = np.genfromtxt("tri_dens_2.txt", delimiter=" ")
+
 den_sq_1 = np.genfromtxt("square_dens_1.txt", delimiter=" ")
 #den_hx_1 = np.genfromtxt("hex_dens_1.txt", delimiter=" ")
 #den_tr_1 = np.genfromtxt("tri_dens_1.txt", delimiter=" ")
@@ -68,7 +72,7 @@ if index == 5:
     fig1, ax1 = plt.subplots()
 
     c = ax1.pcolormesh(X, Y, rs1, cmap='viridis', shading="auto")
-    ax1.set_title('pcolormesh')
+    ax1.set_title('sq 3')
     # set the limits of the plot to the limits of the data
     ax1.axis([X.min(), X.max(), Y.min(), Y.max()])
     fig1.colorbar(c, ax=ax1)
@@ -77,9 +81,8 @@ if index == 5:
     plt.savefig("ff_sq_n_1.pdf")
 
     fig1, ax1 = plt.subplots()
-
     c = ax1.pcolormesh(X, Y, np.log(rs1), cmap='viridis', shading="auto")
-    ax1.set_title('pcolormesh')
+    ax1.set_title('sq 3')
     # set the limits of the plot to the limits of the data
     ax1.axis([X.min(), X.max(), Y.min(), Y.max()])
     fig1.colorbar(c, ax=ax1)
