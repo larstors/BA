@@ -11,7 +11,7 @@ from matplotlib import rcParams
 
 L = 100
 c = np.genfromtxt("tri_coor.txt", delimiter=" ")
-f = np.genfromtxt("fourier_tr_3.txt", delimiter=" ")
+f = np.genfromtxt("fourier_hx_3.txt", delimiter=" ")
 """
 plt.scatter(x=c[1,:], y =c[0,:])
 plt.show()
@@ -19,18 +19,19 @@ plt.show()
 
 
 
+
 fig = plt.figure()
-f = 2*f/(4700**2)#*1/101
+f = f/(14100)#*1/101
 sc = plt.scatter(x=c[3,:], y =c[2,:], s = 4, vmin = 0, marker="s", c=f, cmap='viridis')
 plt.colorbar(sc)
 #plt.show()
-plt.savefig("x.pdf")
+plt.savefig("hx.pdf")
 
 fig2 = plt.figure()
 sc = plt.scatter(x=c[3,:], y =c[2,:], s = 4, vmin = -6, marker="s", c=np.log(f), cmap='viridis')
 plt.colorbar(sc)
 #plt.show()
-plt.savefig("xlog.pdf")
+plt.savefig("hxlog.pdf")
 
 
 fig3 = plt.figure()

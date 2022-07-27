@@ -438,7 +438,7 @@ public:
         return dists;
     }
 
-    map<unsigned, std::list<unsigned>> cluster() const {
+    map<unsigned, std::list<unsigned>> clusters() const {
       // Lookup table of cluster membership by lattice site
         std::vector<unsigned> memberof_nr(sites.size());
         // Initially, this is just the site id as each site is its own cluster
@@ -3644,7 +3644,6 @@ public:
 
     vec_d density(){
       vec_d den;
-
       for (unsigned n = 0; n < sites.size(); n++){
         for (unsigned i = 0; i < 2; i++){
           double local = 0.5 * double(sites[n].present[i]);
@@ -4504,7 +4503,7 @@ int main(int argc, char* argv[]) {
       else if (output == "stopping time"){
         ofstream outfile;
         
-        outfile.open("./lars_sim/Data/stopping/square_"+occ_p+".txt");
+        outfile.open("./lars_sim/Data/stopping/square_"+occ_p+"_"+alpha_p+".txt");
         for(unsigned n=0; t < burnin + until; ++n) {
           t = L.run_until(burnin + n * every);
           vec_d st = L.stopping(t);
@@ -4728,7 +4727,7 @@ int main(int argc, char* argv[]) {
       else if (output == "stopping time"){
         ofstream outfile;
         
-        outfile.open("./lars_sim/Data/stopping/tri_"+occ_p+".txt");
+        outfile.open("./lars_sim/Data/stopping/tri_"+occ_p+"_"+alpha_p+".txt");
         for(unsigned n=0; t < burnin + until; ++n) {
           t = TL.run_until(burnin + n * every);
           vec_d st = TL.stopping(t);
@@ -5746,7 +5745,7 @@ int main(int argc, char* argv[]) {
       else if (output == "stopping time"){
         ofstream outfile;
         
-        outfile.open("./lars_sim/Data/stopping/hex_"+occ_p+".txt");
+        outfile.open("./lars_sim/Data/stopping/hex_"+occ_p+"_"+alpha_p+".txt");
         for(unsigned n=0; t < burnin + until; ++n) {
           t = HL.run_until(burnin + n * every);
           vec_d st = HL.stopping(t);
@@ -5933,7 +5932,7 @@ int main(int argc, char* argv[]) {
       else if (output == "stopping time"){
         ofstream outfile;
         
-        outfile.open("./lars_sim/Data/stopping/square_"+occ_p+".txt");
+        outfile.open("./lars_sim/Data/stopping/square_"+occ_p+"_"+alpha_p+".txt");
         for(unsigned n=0; t < burnin + until; ++n) {
           t = L.run_until(burnin + n * every);
           vec_d st = L.stopping(t);
@@ -6488,7 +6487,7 @@ int main(int argc, char* argv[]) {
       else if (output == "stopping time"){
         ofstream outfile;
         
-        outfile.open("./lars_sim/Data/stopping/tri_"+occ_p+".txt");
+        outfile.open("./lars_sim/Data/stopping/tri_"+occ_p+"_"+alpha_p+".txt");
         for(unsigned n=0; t < burnin + until; ++n) {
           t = TL.run_until(burnin + n * every);
           vec_d st = TL.stopping(t);
@@ -6885,7 +6884,7 @@ int main(int argc, char* argv[]) {
       else if (output == "stopping time"){
         ofstream outfile;
         
-        outfile.open("./lars_sim/Data/stopping/hex_"+occ_p+".txt");
+        outfile.open("./lars_sim/Data/stopping/hex_"+occ_p+"_"+alpha_p+".txt");
         for(unsigned n=0; t < burnin + until; ++n) {
           t = HL.run_until(burnin + n * every);
           vec_d st = HL.stopping(t);

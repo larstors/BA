@@ -24,6 +24,8 @@ Program to calculate the fourier transform (and maybe the structure factor as we
 
 const unsigned L = 100;
 const double pi = std::acos(-1);
+const double c30 = cos(pi/6.0);
+const double s30 = sin(pi/6.0);
 
 using namespace std;
 
@@ -35,6 +37,25 @@ std::vector<std::string> split(std::string text, char delim) {
         vec.push_back(line);
     }
     return vec;
+}
+
+
+vector<double> trafo(int n, int i){
+    vector <double> coor;
+    int y = n/L;
+    int x = 2 * (n%L) + i - y;
+    x += 1;
+    coor.push_back(x*c30);
+    if (y%2 == 1){
+        if (x%2 == 1) coor.push_back(y * (1 + s30));
+        else coor.push_back((y * 3 + 1)/2);
+    }
+    else {
+        if (x%2 == 1) coor.push_back(1.5 * y + 0.5);
+        else coor.push_back(1.5 * y);
+    }
+
+    return coor;
 }
 
 
@@ -51,16 +72,20 @@ int main(){
         }
     }
 
-    double x[L*L];
-    double y[L];
-    double qy[L*L];
+    double x[L*L][2];
+    double y[L*L][2];
+    double qy[L];
     double qx[L];
-    for (int i = 0; i < L; i++){
-        for (int k = 0; k < L; k++) x[L*i + k] = k - 0.5*i - 25;
-        y[i] = -sqrt(3.0)/2.0 * 50 + sqrt(3.0)/2.0 * i;
 
-        qx[i] = (-pi + 2.0*pi*double(i)/double(L));
-        for (int k = 0; k < L; k++) qy[L*i + k] = (-pi + 2.0*pi*double(i)/double(L));
+    for (int n = 0; n < L*L; n++){
+        for (int i = 0; i < 2; i++){
+            x[n][i] = trafo(n, i)[0];
+            y[n][i] = trafo(n, i)[1];
+        }
+    }
+    for (int n = 0; n < L; n++){
+        qx[n] = 3*(-pi + 2.0*pi*double(n)/double(L));
+        qy[n] = 3*(-pi + 2.0*pi*double(n)/double(L));
     }
 
     double p[L][L];
@@ -70,9 +95,7 @@ int main(){
             p[n][k] = 0;
         }
     }
-    ofstream wow;
-    wow.open("tri_wtf.txt");
-    std::ifstream file("tri_dens_3.txt");
+    std::ifstream file("hex_dens_3.txt");
     if (file.is_open()) {
         std::string line;
         while (std::getline(file, line) && oo == 0) {
@@ -99,7 +122,7 @@ int main(){
                 }
             }
 
-
+            /*
             complex<double> j(0,1);
             
             complex<double> fourier[L][L];
@@ -109,28 +132,25 @@ int main(){
                     fourier[n][k] = 0;
                 }
             }
-
+            */
             
             int count = 0;
 
-           double d[L][L];
-           for (int n = 0; n < L; n++){
-                for (int k = 0; k < L; k++){
-                   d[n][k] = (dens[n*L + k] - rho);
-                   wow << dens[n*L + k] << " ";
+           double d[L*L][2];
+           for (int n = 0; n < L*L; n++){
+                for (int k = 0; k < 2; k++){
+                   d[n][k] = (dens[2*n + k] - rho);
                 }
             }
 
-            wow << endl;
 
             for (int n = 0; n < L; n++){
                 for (int k = 0; k < L; k++){
-                    for (int l = 0; l < L; l++){
-                        for (int i = 0; i < L; i++){
-                            
-                            re[n][k] += d[l][i] * cos(qx[k] * x[l*L + i] + qy[n*L + k] * y[l]);
-                            im[n][k] -= d[l][i] * sin(qx[k] * x[l*L + i] + qy[n*L + k] * y[l]);
-                            fourier[n][k] += d[l][i] * exp(-j * (qx[k] * x[l*L + i] + qy[n*L + k] * y[l]));
+                    for (int l = 0; l < L*L; l++){
+                        for (int i = 0; i < 2; i++){
+                            re[n][k] += d[l][i] * cos(qx[k] * x[l][i] + qy[n] * y[l][i]);
+                            im[n][k] -= d[l][i] * sin(qx[k] * x[l][i] + qy[n] * y[l][i]);
+                            //fourier[n][k] += d[l][i] * exp(-j * (qx[k] * x[l*L + i] + qy[n*L + k] * y[l]));
                         }
                     }
                 }
@@ -153,8 +173,8 @@ int main(){
     }
 
     ofstream outfile, coor;
-    outfile.open("fourier_tr_3.txt");
-    coor.open("tri_coor.txt");
+    outfile.open("fourier_hx_3.txt");
+    coor.open("hex_coor.txt");
     for (unsigned n = 0; n < L; n++){
                 for (unsigned k = 0; k < L; k++){
                     outfile << res[n][k] << " ";

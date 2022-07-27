@@ -106,7 +106,7 @@ int main(){
             p[n][k] = 0;
         }
     }
-    std::ifstream file("tri_dens_3.txt");
+    std::ifstream file("square_dens_3.txt");
     if (file.is_open()) {
         std::string line;
         while (std::getline(file, line) && oo == 0) {
@@ -120,7 +120,7 @@ int main(){
 
             for (const auto& m : dens) rho += m;
 
-            rho = rho / (3.0*double(dens.size()));
+            rho = rho / (double(dens.size()));
 
 
             //vector<complex<double>> fourier(dens.size());
@@ -211,14 +211,14 @@ int main(){
                 //cout << endl;
             }
 
-            //oo = 1;
+            oo = 1;
 
         }
         file.close();
     }
 
     ofstream outfile;
-    outfile.open("fourier_tr_3.txt");
+    outfile.open("fourier_sq_3.txt");
     //for (const auto& m : r) outfile << m << " ";
     for (unsigned n = 0; n < L; n++){
                 for (unsigned k = 0; k < L; k++){
