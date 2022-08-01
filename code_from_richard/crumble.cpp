@@ -448,10 +448,13 @@ public:
         for (unsigned n = 0; n < sites.size(); ++n){
           if (sites[n].present == 0) clusters_nr[n] = std::list<unsigned>(1, n);
           else clusters_nr[n] = std::list<unsigned>(sites[n].present, n);
-
         }
         // Keep track of the size of the largest cluster
         std::size_t maxsize_nr = 1;
+
+        for (unsigned n = 0; n < sites.size(); ++n){
+          if (sites[n].present != 0 &&  sites[n].present != clusters_nr[n].size()) cout << "wtf" << endl;
+        }
 
         for (unsigned n = 0; n < sites.size(); ++n) {
             // Loop over neigbours m in one direction only so we visit each bond once
@@ -875,6 +878,22 @@ public:
         // vector for output of surface and volume of clusters
         // the index 2i is for volume and 2i+1 is for surface
         vec output;
+        int i = 0;
+        for (const auto& kv : cluster) {
+            // variable for surface and check 
+            unsigned check = 0;
+            // check whether particle cluster
+            if (sites[kv.first].present > 0) { 
+              if (i == 0){
+              for (const auto& n : kv.second){
+                check += sites[n].present;
+                cout << n << " " << sites[n].present << endl;
+              }
+              cout << "size?" << check << " " << kv.second.size() << endl;
+              i++;
+              }
+            }
+        }
         
         for (const auto& kv : cluster) {
             // variable for surface and check 
@@ -887,17 +906,18 @@ public:
                 for (const auto& m : neighbours(n)){
                   if (sites[m].present == 0){
                     check++;
-                    continue;
                   }
                 }
                 if (check > 0) surf += sites[n].present;
               }
-              //std::cout << surf << " " << kv.second.size() << endl;
+              //std::cout << "surface and stuff " << surf << " " << kv.second.size() << endl;
               output.push_back(kv.second.size());
               output.push_back(surf);
             }
         }
-
+        //cout << "array ";
+        //for (const auto & m : output) cout << m << " ";
+        //cout << endl;
         return output;
     }
     vec cluster_surface(){
@@ -1148,13 +1168,16 @@ public:
 
       // calculate appropriate stuff
       for (unsigned i = 0; i < dist.size(); i+=2){
+        double count = 0;
         for (unsigned k = 0; k < sv.size(); k+=2){
           if (sv[k] == ((i+2)/2)){
             second_moment += ((i+2)/2) * sv[k+1];
+            //std::cout << sv[k] << " " << sv[k+1] << " " << (i+2)/2 << endl;
+            count++;
           }
         }
         first_moment += dist[i] * ((i+2)/2);
-        
+        //if (count != 0) std::cout << "See if these are the same" << count << " " << dist[i] << endl;
       }
       return second_moment/first_moment;
     }
@@ -1175,6 +1198,14 @@ public:
         
       }
       return second_moment/first_moment;
+    }
+
+    vec occ_array(){
+      vec output;
+      for (unsigned i = 0; i < sites.size(); i++){
+        output.push_back(sites[i].present);
+      }
+      return output;
     }
 };
 
@@ -2342,6 +2373,14 @@ public:
         
       }
       return second_moment/first_moment;
+    }
+
+    vec occ_array(){
+      vec output;
+      for (unsigned i = 0; i < sites.size(); i++){
+        output.push_back(sites[i].present);
+      }
+      return output;
     }
 };
 
@@ -3710,6 +3749,15 @@ public:
       }
       return second_moment/first_moment;
     }
+    vec occ_array(){
+      vec output;
+      for (unsigned n = 0; n < sites.size(); n++){
+        for (unsigned i = 0; i < 2; i++){
+          output.push_back(sites[n].present[i]);
+        }
+      }
+      return output;
+    }
 };
 
 
@@ -3953,6 +4001,7 @@ int main(int argc, char* argv[]) {
   else if(output[0] == 'f') output = "function"; // this output is for testing different features. It is not static, as of now, so one should not uses this  without proper inspection of what it does
   else if(output[0] == 'h') output = "heatmap"; // this is for heatmap of clustersizes
   else if(output[0] == 'x') output = "perimeter"; // (first?) output for perimeter order parameter
+  else if(output[0] == 'y') output = "correlation"; // data for overlap function, see site-site correlation in thesis
   else output = "snapshots";
 
   if(lattice_type[0] == 's') lattice_type = "square";
@@ -4562,7 +4611,37 @@ int main(int argc, char* argv[]) {
           outfile << endl;
         }
       }
-      
+      else if (output == "correlation"){
+        ofstream outfile;
+        outfile.open("./lars_sim/Data/corr/square_"+occ_p+"_"+alpha_p+".txt");
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = L.run_until(burnin + n * every);
+          vec output = L.occ_array();
+          for (const auto& m : output) outfile << m << " ";
+          outfile << endl;
+        }
+
+      }
+      else if (output == "function"){
+        // jamming, max cl size, perimeter, weighted mean cl size
+        ofstream outfile; 
+        outfile.open("./lars_sim/Data/perimeter/square_particles.txt");
+        double s = 0;
+
+        // count for mean vals
+        double count = 0;
+        for(unsigned n=0; t < burnin + until; ++n){
+            t = L.run_until(burnin + n * every);
+            s += L.perimeter();
+            count++;
+            outfile << ParticleWriter(L, outfile) << endl;
+          }
+          s = s / count;
+
+          s = s / double(P.N);
+          std::cout << "test " << s << endl;
+          }
+
       else {
         ofstream outfile;
         outfile.open("./lars_sim/gif/square.txt");
@@ -4717,12 +4796,49 @@ int main(int argc, char* argv[]) {
         }
       } 
       else if (output == "function"){
-        ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/tri_long.txt");
-        for(unsigned n = 0; t < burnin + until; n++) {
-            t = TL.run_until(burnin + n * every);
-            outfile << t << " " << TL.motility_fraction() << " " << double(TL.max_cluster_size_nr())/double(P.N) << endl;
-        }
+        ofstream outfile; 
+        outfile.open("./lars_sim/Data/perimeter/tri_"+occ_p+"test.txt");
+        //pars.open("./lars_sim/Data/perimeter/tri_pars_"+occ_p+"test.txt");
+        for (double alp = 1e-3; alp <= 100; alp*=1.8){
+          Parameters P_h;
+          P_h.N = unsigned(P.L[0]*P.L[0]*P.n_max*0.579);
+          P_h.alpha[0] = P.alpha[1] = P.alpha[2] = alp;
+          P_h.L = P.L;
+          P_h.n_max = P.n_max;
+          Triangle_lattice LB(P_h, rng);
+          t = 0;
+
+          std::cout << P_h.N << endl;
+
+          // jamming, max cl size, perimeter, weighted mean cl size
+          double j = 0;
+          double m = 0;
+          double s = 0;
+          double w = 0;
+
+          // count for mean vals
+          double count = 0;
+          for(unsigned n=0; t < burnin + until; ++n){
+            t = LB.run_until(burnin + n * every);
+            j += LB.motility_fraction();
+            m += LB.max_cluster_size_nr();
+            s += LB.perimeter();
+            w += LB.w_N();
+            count++;
+          }
+
+          j = j / count;
+          m = m / count;
+          s = s / count;
+          w = w / count;
+
+          m = m / double(P_h.N);
+          s = s / double(P_h.N);
+          w = w / double(P_h.N);
+
+          outfile << alp << " " << j << " " << m << " " << s << " " << w << " ";
+          outfile << endl;
+          }
       }
       else if (output == "stopping time"){
         ofstream outfile;
@@ -5152,6 +5268,17 @@ int main(int argc, char* argv[]) {
           outfile << endl;
         }
       }
+      else if (output == "correlation"){
+        ofstream outfile;
+        outfile.open("./lars_sim/Data/corr/tri_"+occ_p+"_"+alpha_p+".txt");
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = TL.run_until(burnin + n * every);
+          vec output = TL.occ_array();
+          for (const auto& m : output) outfile << m << " ";
+          outfile << endl;
+        }
+
+      }
       else {
         ofstream outfile;
         outfile.open("./lars_sim/gif/triangle.txt");
@@ -5426,8 +5553,8 @@ int main(int argc, char* argv[]) {
         outfile.open("./lars_sim/Data/perimeter/hex_"+occ_p+".txt");
         pars.open("./lars_sim/Data/perimeter/hex_pars_"+occ_p+".txt");
         unsigned check = 0;
-        for (double alp = 1e-3; alp <= 1.0; alp*=3.9){
-          for (double dens = 0.001; dens <= 0.69; dens+=.15){
+        for (double alp = 1e-3; alp <= 100.0; alp*=1.78){
+          for (double dens = 0.001; dens < 1.0; dens+=.05){
             Parameters P_h;
             P_h.N = unsigned(P.L[0]*P.L[0]*P.n_max*2*dens);
             P_h.alpha[0] = P.alpha[1] = P.alpha[2] = alp;
@@ -5789,7 +5916,17 @@ int main(int argc, char* argv[]) {
         for (const auto& m : dist) outfile << m << " ";
         outfile << endl;
       }
+      else if (output == "correlation"){
+        ofstream outfile;
+        outfile.open("./lars_sim/Data/corr/hex_"+occ_p+"_"+alpha_p+".txt");
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = HL.run_until(burnin + n * every);
+          vec output = HL.occ_array();
+          for (const auto& m : output) outfile << m << " ";
+          outfile << endl;
+        }
 
+      }
     }
   } else{
     // Depending on what lattice, the output may be different
@@ -6134,6 +6271,17 @@ int main(int argc, char* argv[]) {
           }
           outfile << endl;
         }
+      }
+      else if (output == "correlation"){
+        ofstream outfile;
+        outfile.open("./lars_sim/Data/corr/square_"+occ_p+"_"+alpha_p+".txt");
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = L.run_until(burnin + n * every);
+          vec output = L.occ_array();
+          for (const auto& m : output) outfile << m << " ";
+          outfile << endl;
+        }
+
       }
       else {
         ofstream outfile;
@@ -6494,6 +6642,17 @@ int main(int argc, char* argv[]) {
           for (const auto& m : st) outfile << m << " ";
           outfile << endl;
         }
+      }
+      else if (output == "correlation"){
+        ofstream outfile;
+        outfile.open("./lars_sim/Data/corr/tri_"+occ_p+"_"+alpha_p+".txt");
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = TL.run_until(burnin + n * every);
+          vec output = TL.occ_array();
+          for (const auto& m : output) outfile << m << " ";
+          outfile << endl;
+        }
+
       }
       else {
         ofstream outfile;
@@ -6892,7 +7051,17 @@ int main(int argc, char* argv[]) {
           outfile << endl;
         }
       }
+      else if (output == "correlation"){
+        ofstream outfile;
+        outfile.open("./lars_sim/Data/corr/hex_"+occ_p+"_"+alpha_p+".txt");
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = HL.run_until(burnin + n * every);
+          vec output = HL.occ_array();
+          for (const auto& m : output) outfile << m << " ";
+          outfile << endl;
+        }
 
+      }
     }
   }
   // maybe do other lattices as well ?

@@ -4,30 +4,40 @@ import matplotlib.pyplot as plt
 import scipy.optimize as opt
 from numba import *
 from matplotlib import rcParams
+from scipy.special import i0e
 plt.rcParams.update({'font.size': 35})
 
 
-sq_data = np.genfromtxt("sq....", delimiter=" ")
+tr_data = np.genfromtxt("tri_1_1.000.txt", delimiter=" ")
 
 L = 100
-N = 5800
-n = 3
+N = 4000
+n = 1
 rho2 = N**2/(L**4*n**2)
-K = 100000
+K = 1001
 
-kappa0 = 1/(K*L**2*n**2)*np.sum(sq_data[:K]*sq_data[:K])
+kappa0 = 1/(K*L**2*n**2)*np.sum(tr_data[:K]*tr_data[:K])
 
-Tmax = 1000000
+Tmax = 10000
 corr = np.ones(Tmax)
 
-t = np.arange(0, Tmax)*0.1
+t = np.arange(0, Tmax)*100
 
-@njit(parallel=True, nopython=True)
+#@njit(parallel=True, nopython=True)
 def calc():
     for t in range(Tmax):
-        psi = 1/(K*L**2*n**2)*np.sum(sq_data[:K]*sq_data[t:(K+t)]) - rho2
+        psi = 1/(K*L**2*n**2)*np.sum(tr_data[:K]*tr_data[t:(K+t)]) - rho2
         corr[t] = psi / (kappa0 - rho2)
+
     
+calc()
+
+plt.plot(t, corr)
+plt.plot(t, i0e(t))
+plt.plot(t, corr/i0e(t))
+plt.xscale("log")
+plt.yscale("log")
+plt.savefig("1.pdf")
 
 
 
