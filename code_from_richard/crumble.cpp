@@ -878,23 +878,7 @@ public:
         // vector for output of surface and volume of clusters
         // the index 2i is for volume and 2i+1 is for surface
         vec output;
-        int i = 0;
-        for (const auto& kv : cluster) {
-            // variable for surface and check 
-            unsigned check = 0;
-            // check whether particle cluster
-            if (sites[kv.first].present > 0) { 
-              if (i == 0){
-              for (const auto& n : kv.second){
-                check += sites[n].present;
-                cout << n << " " << sites[n].present << endl;
-              }
-              cout << "size?" << check << " " << kv.second.size() << endl;
-              i++;
-              }
-            }
-        }
-        
+        vec index;
         for (const auto& kv : cluster) {
             // variable for surface and check 
             unsigned surf = 0;
@@ -902,22 +886,26 @@ public:
             // check whether particle cluster
             if (sites[kv.first].present > 0) { 
               for (const auto& n : kv.second){
+                // for duplicate index
+                unsigned dup = 0;
+                for (const auto & m : index){
+                  if (m == n) dup++;
+                }
+                index.push_back(n);
                 check = 0;
+                if (dup == 0){
                 for (const auto& m : neighbours(n)){
-                  if (sites[m].present == 0){
-                    check++;
+                    if (sites[m].present == 0){
+                      check++;
+                    }
                   }
                 }
                 if (check > 0) surf += sites[n].present;
               }
-              //std::cout << "surface and stuff " << surf << " " << kv.second.size() << endl;
               output.push_back(kv.second.size());
               output.push_back(surf);
             }
         }
-        //cout << "array ";
-        //for (const auto & m : output) cout << m << " ";
-        //cout << endl;
         return output;
     }
     vec cluster_surface(){
@@ -1177,7 +1165,6 @@ public:
           }
         }
         first_moment += dist[i] * ((i+2)/2);
-        //if (count != 0) std::cout << "See if these are the same" << count << " " << dist[i] << endl;
       }
       return second_moment/first_moment;
     }
@@ -2309,7 +2296,7 @@ public:
         // vector for output of surface and volume of clusters
         // the index 2i is for volume and 2i+1 is for surface
         vec output;
-        
+        vec index;
         for (const auto& kv : cluster) {
             // variable for surface and check 
             unsigned surf = 0;
@@ -2317,21 +2304,26 @@ public:
             // check whether particle cluster
             if (sites[kv.first].present > 0) { 
               for (const auto& n : kv.second){
+                // for duplicate index
+                unsigned dup = 0;
+                for (const auto & m : index){
+                  if (m == n) dup++;
+                }
+                index.push_back(n);
                 check = 0;
+                if (dup == 0){
                 for (const auto& m : neighbours(n)){
-                  if (sites[m].present == 0){
-                    check++;
-                    continue;
+                    if (sites[m].present == 0){
+                      check++;
+                    }
                   }
                 }
                 if (check > 0) surf += sites[n].present;
               }
-              //std::cout << surf << " " << kv.second.size() << endl;
               output.push_back(kv.second.size());
               output.push_back(surf);
             }
         }
-
         return output;
     }
     // function for returning perimeter order parameter (see thesis)
@@ -2544,10 +2536,6 @@ class Hexagonal_lattice {
         return nbs;
     }
 
-
-
-    
-
     // Place a particle with given direction and hop time at site n;
     // neighbouring sites will be accordingly adjusted
     void place(unsigned n, unsigned id, direction_t d, double t, unsigned index, unsigned dir) {
@@ -2562,7 +2550,6 @@ class Hexagonal_lattice {
         sites[n].present[index%2]++;
         sites[n].current_dir[index] = dir;
     }
-
 
     // Schedule a hop event for a particle at site n
     void schedule(unsigned n, unsigned index) {
@@ -2663,7 +2650,6 @@ class Hexagonal_lattice {
         sites[n].active[index] = true;
         // std::cout << "Scheduled "; decode(n); std::cout << std::endl;
     }
-
 
     // For testing
     void decode(unsigned n) {
@@ -3434,19 +3420,30 @@ public:
         return output;
     }
     vec surface_volume_nr(){
+        // vector for output of surface and volume of clusters
+        // the index 2i is for volume and 2i+1 is for surface
         std::map<unsigned, std::list<unsigned>> cluster = clusters();
         vec output; 
+        vec index;
         for (const auto& kv : cluster) {
             unsigned surf = 0;
             unsigned check = 0;
             // instead of occupied we check whether there are any particles present
             if (sites[(kv.first - kv.first%2)/2].present[kv.first%2] > 0) { 
               for (const auto& n : kv.second){
+                unsigned dup = 0;
+                for (const auto & m : index){
+                  if (m == (n-n%2)/2) dup++;
+                }
+                index.push_back((n-n%2)/2);
                 check = 0;
-                for (const auto& m: neighbours((n-n%2)/2, n%2)){
-                  if (sites[m].present[(n+1)%2] == 0) check++;
+                if (dup == 0){
+                  for (const auto& m: neighbours((n-n%2)/2, n%2)){
+                    if (sites[m].present[(n+1)%2] == 0) check++;
+                  }
                 }
                 if (check > 0) surf+=sites[(n-n%2)/2].present[n%2];
+                
               }
               output.push_back(kv.second.size());
               output.push_back(surf);
@@ -3854,7 +3851,6 @@ public:
 
 };
 
-
 template<typename Engine>
 class TriangleParticleWriter {
   const Triangle_lattice<Engine>& L;
@@ -3951,8 +3947,6 @@ public:
 };
 
 
-
-
 int main(int argc, char* argv[]) {
 
   // Load up default parameters
@@ -4047,6 +4041,10 @@ int main(int argc, char* argv[]) {
   string path = "./lars_sim/Data/clustdist/";
   string txtoutput = path+lattice_type+"_"+tumb+"_"+ dens+"_"+size+"_"+occ_p+txt;
   string txtoutput_nr = path+lattice_type+"_nr"+"_"+tumb+"_"+ dens+"_"+size+"_"+occ_p+txt;
+
+
+  std::cout << "# lattice = " << lattice_type << std::endl;
+
 
   if (P.n_max > 1){
     // Depending on what lattice, the output may be different
@@ -4518,7 +4516,7 @@ int main(int argc, char* argv[]) {
         ofstream surf, part, clust, border;
         surf.open("./lars_sim/Data/surf/square_sv"+occ_p+".txt");
         part.open("./lars_sim/Data/surf/square_part"+occ_p+".txt");
-        clust.open("./lars_sim/Data/surf/square_clust"+occ_p+".txt");
+        //clust.open("./lars_sim/Data/surf/square_clust"+occ_p+".txt");
         border.open("./lars_sim/Data/surf/square_border"+occ_p+".txt");
 
         // unsigned so only one cluster each gets printed
@@ -5281,7 +5279,7 @@ int main(int argc, char* argv[]) {
       }
       else {
         ofstream outfile;
-        outfile.open("./lars_sim/gif/triangle.txt");
+        outfile.open("./lars_sim/Data/for_latex/triangle_"+occ_p+".txt");
         //outfile << "# L = [ ";
         //for(const auto& L: P.L) outfile << L << " ";
         //outfile << "]" << endl;
@@ -6656,7 +6654,7 @@ int main(int argc, char* argv[]) {
       }
       else {
         ofstream outfile;
-        outfile.open("./lars_sim/gif/triangle.txt");
+        outfile.open("./lars_sim/Data/for_latex/triangle_"+occ_p+".txt");
         //outfile << "# L = [ ";
         //for(const auto& L: P.L) outfile << L << " ";
         //outfile << "]" << endl;

@@ -8,7 +8,14 @@ from scipy.special import i0e
 plt.rcParams.update({'font.size': 35})
 
 
-tr_data = np.genfromtxt("tri_1_1.000.txt", delimiter=" ")
+# ! think 0.1 step size is to small, unreasonably small even. yes, it leads to 200gb files, so have to find a different solution
+# ! maybe do logarithmic step sizes, problem here is just the averaging over t. maybe I do something like logarithmic step size
+# ! with additinal five/ten normal steps at each step. 
+
+# if we do 0.1 step size and have up to 10^6, we get 10^7 steps, but we need to average over a time.
+# if b=1 000 000 and u=1 100 000, we have a total of 100 000 extra steps to average over, this should work
+
+sq_data = np.genfromtxt("sq....", delimiter=" ")
 
 L = 100
 N = 4000
@@ -41,6 +48,4 @@ plt.savefig("1.pdf")
 
 
 
-# if we do 0.1 step size and have up to 10^6, we get 10^7 steps, but we need to average over a time.
-# if b=1 000 000 and u=1 100 000, we have a total of 100 000 extra steps to average over, this should work
 

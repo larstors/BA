@@ -1,3 +1,4 @@
+from wsgiref.headers import tspecials
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.optimize as opt
@@ -11,7 +12,7 @@ from matplotlib import rcParams
 from io import StringIO
 import matplotlib.tri as mtri
 
-#plt.rcParams.update({'font.size': 22})
+plt.rcParams.update({'font.size': 15})
 
 L = 100
 
@@ -28,22 +29,22 @@ def fit_func(x, a):
 
 # square
 if what == 1:
-    f = open("square_part.txt")
+    f = open("square_part1.txt")
     square_part = []
     for line in f:
         square_part.append(np.loadtxt(StringIO(line), dtype=int))
 
-    f = open("square_sv.txt")
+    f = open("square_sv1.txt")
     square_sv = []
     for line in f:
         square_sv.append(np.loadtxt(StringIO(line), dtype=int))
     
-    f = open("square_clust.txt")
+    f = open("square_clust1.txt")
     square_cl = []
     for line in f:
         square_cl.append(np.loadtxt(StringIO(line), dtype=int))
 
-    f = open("square_border.txt")
+    f = open("square_border1.txt")
     square_int = []
     for line in f:
         square_int.append(np.loadtxt(StringIO(line), dtype=int))
@@ -80,39 +81,33 @@ if what == 1:
 
     par = opt.curve_fit(fit_func, s, v)[0]
     print(par)
-    """
-    x_small = conv(small[2:])[0]
-    y_small = conv(small[2:])[1]
 
-    x_big = np.asarray(conv(big[2:])[0])
-    y_big = conv(big[2:])[1]
+
+    ts = []
+    tv = []
+    for i in range(len(s)):
+        if (s[i] > 20 and s[i] < 100):
+            ts.append(s[i])
+            tv.append(v[i])
+
+    tpar = opt.curve_fit(fit_func, ts, tv)[0]
+    print(tpar)
+
+    ks = []
+    kv = []
+    for i in range(len(s)):
+        if (s[i] < 10):
+            ks.append(s[i])
+            kv.append(v[i])
+
+    kpar = opt.curve_fit(fit_func, ks, kv)[0]
+    print(kpar)
+
     
-    k = np.argwhere(x_big[:] < 0)
-    for i in k:
-        x_big[i] += 100
-    """
 
     
     fig1, ax1 = plt.subplots()
-    """
-    left, bottom, width, height = [0.15, 0.4, 0.3, 0.3]
-    ax2 = fig1.add_axes([left, bottom, width, height])
-    ax2.scatter(x=x_small, y=y_small, marker="s", color="black", s=30)
-    ax2.axis([min(x_small) - 5, max(x_small) + 5, min(y_small) - 5, max(y_small) + 5])
-    ax2.set_xticks([])
-    ax2.set_yticks([])
-    ax2.spines[:].set_color('green')  
-    
-    left, bottom, width, height = [0.6, 0.2, 0.3, 0.3]
-    ax3 = fig1.add_axes([left, bottom, width, height])
-    ax3.scatter(x=x_big, y=y_big, marker="s", color="black", s=1e-1)
-    ax3.axis([min(x_big) - 1, max(x_big) + 1, min(y_big) - 5, max(y_big) + 5])
-    ax3.set_xticks([])
-    ax3.set_yticks([])
-    ax3.spines[:].set_color('blue')  
-    """
 
-    #plt.plot(np.linspace(1, 140), func(np.linspace(1, 140)))
     ax1.plot(np.linspace(1, max(s)), fit_func(np.linspace(1, max(s)), par[0]), "k-", label=r"$x^{%g}$" % par[0])
     for i in range(6):
         ax1.plot(square_sv[i*16][1::2], square_sv[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
@@ -122,56 +117,43 @@ if what == 1:
     ax1.set_ylabel(r"Volume $V$")
     ax1.grid()
     ax1.legend()
-    plt.savefig("sq_n_3.pdf", dpi=150)
+    plt.savefig("sq_n_1.pdf", dpi=150)
     #plt.show()
 
 
 
     fig2, ax1 = plt.subplots()
-    """
-    left, bottom, width, height = [0.15, 0.4, 0.3, 0.3]
-    ax2 = fig2.add_axes([left, bottom, width, height])
-    ax2.scatter(x=x_small, y=y_small, marker="s", color="black", s=30)
-    ax2.axis([min(x_small) - 5, max(x_small) + 5, min(y_small) - 5, max(y_small) + 5])
-    ax2.set_xticks([])
-    ax2.set_yticks([])
-    ax2.spines[:].set_color('green')  
-    
-    left, bottom, width, height = [0.6, 0.2, 0.3, 0.3]
-    ax3 = fig2.add_axes([left, bottom, width, height])
-    ax3.scatter(x=x_big, y=y_big, marker="s", color="black", s=1)
-    ax3.axis([min(x_big) - 1, max(x_big) + 1, min(y_big) - 5, max(y_big) + 5])
-    ax3.set_xticks([])
-    ax3.set_yticks([])
-    ax3.spines[:].set_color('blue')  
-    """
+ 
 
-    #plt.plot(np.linspace(1, 140), func(np.linspace(1, 140)))
-    ax1.plot(np.linspace(1, max(s)), fit_func(np.linspace(1, max(s)), par[0]), "k-", label=r"$x^{%g}$" % par[0])
-    for i in range(6):
+    ax1.plot(np.linspace(1, max(s)), fit_func(np.linspace(1, max(s)), par[0]), "k-", label=r"$\beta=%g$" % par[0])
+    ax1.plot(np.linspace(min(ts), max(ts)), fit_func(np.linspace(min(ts), max(ts)), tpar[0]), "k--", label=r"$\beta^\prime=%g$" % tpar[0])
+    ax1.plot(np.linspace(min(ks), max(ks)), fit_func(np.linspace(min(ks), max(ks)), kpar[0]), "k-.", label=r"$\beta^{\prime\prime}=%g$" % kpar[0])
+
+    for i in range(4):
         ax1.plot(square_sv[i*16][1::2], square_sv[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
     #ax1.plot(small[1], small[0], "gs")
     #ax1.plot(big[1], big[0], "bs")
-    ax1.set_xlabel(r"Surface $S$")
+    ax1.set_xlabel(r"Surface $I$")
     ax1.set_ylabel(r"Volume $V$")
     ax1.set_xscale("log")
     ax1.set_yscale("log")
     ax1.grid()
     ax1.legend()
-    plt.savefig("sq_n_3_log.pdf", dpi=150)
+    plt.savefig("sq_n_1_log.pdf", dpi=150, bbox_inches="tight")
     #plt.show()
 
-    fig3, ax = plt.subplots(nrows=3, ncols=2, figsize=(20, 20))
+    fig3, ax = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
     plt.tight_layout()
-    for i in range(6):
-        ax[i//2,i%2].set_title(r"$t=%d\cdot 10^3$" % (16*i))
-        ax[i//2,i%2].scatter(x=conv(square_part[16*i][::2])[0], y=conv(square_part[16*i][::2])[1], marker="s", color="black", s=4)
-        ax[i//2,i%2].set_xticks([])
-        ax[i//2,i%2].set_yticks([])
-        ax[i//2,i%2].scatter(x=conv(square_int[16*i][:])[0], y=conv(square_int[16*i][:])[1], marker="s", color="red", s=4)
+    for i in range(2):
+        #ax[i].set_title(r"$t=%d\cdot 10^3$" % (16*i))
+        ax[i].scatter(x=conv(square_part[5*16*i][::2])[0], y=conv(square_part[5*16*i][::2])[1], marker="s", color="black", s=4)
+        ax[i].set_xticks([])
+        ax[i].set_yticks([])
+        ax[i].scatter(x=conv(square_int[5*16*i][:])[0], y=conv(square_int[5*16*i][:])[1], marker="s", color="red", s=4)
+        ax[i].axis([min(conv(square_part[5*16*i][:])[0]), max(conv(square_part[5*16*i][:])[0]), min(conv(square_part[5*16*i][:])[1]), max(conv(square_int[5*16*i][:])[1])])
 
     #plt.show()
-    plt.savefig("snapshot_sq_n_3.pdf", dpi=200)
+    plt.savefig("snapshot_sq_n_1.pdf", dpi=200)
 
 
 #tri
