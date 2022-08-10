@@ -41,6 +41,7 @@ struct Parameters {
   std::vector<double> alpha {1.0};  // Scaled tumble rate in each dimension (actual rate is alpha/d)
   // ! Addition by Lars
   unsigned                n_max=1;  // Max occupation number on each lattice site
+  unsigned                tagged=0; // boolean for tagged particle, by default 0 (so no tagged)
 };
 
 // We need to forward declare these so the compiler can cope with the friend declarations
@@ -79,6 +80,9 @@ class Lattice {
         std::vector<double> hoptime = std::vector<double>(n_max); // Time of last hop attempt
         unsigned present = 0; // Number of particles present at site. Has to be <= n_max
         std::vector<double> last_jump = std::vector<double>(n_max); // time of last jump made
+        std::vector<bool> tagged = std::vector<bool>(n_max); // for tagged particle
+        std::vector<int> per_hop = std::vector<int>(n_max); // for how many times particle jumped periodic boundary. 
+                                                            //+1 for pos, -1 for neg direction
     };
 
   Parameters P; // A local copy of the model parameters
@@ -130,7 +134,7 @@ class Lattice {
 
   // Place a particle with given direction and hop time at site n;
   // neighbouring sites will be accordingly adjusted
-  void place(unsigned n, unsigned id, direction_t d, double t, unsigned index) {
+  void place(unsigned n, unsigned id, direction_t d, double t, unsigned index, bool tag, int per) {
     sites[n].id[index] = id;
     sites[n].direction[index] = d;
     sites[n].hoptime[index] = t;
@@ -140,6 +144,8 @@ class Lattice {
       for(const auto&m: neighbours(n)) ++sites[m].neighbours;
     }
     sites[n].present++;
+    sites[n].tagged[i] = tag;
+    sites[n].per_hop[i] = per;
   }
 
   // Schedule a hop event for a particle at site n
@@ -180,12 +186,18 @@ class Lattice {
                     
                     // Place a particle on the target site; it has the same direction and hoptime as the departing particle
                     // std::cout << "Moving to "; decode(dnbs[sites[n].direction]); std::cout << " placing" << std::endl;
-                    place(dnbs[sites[n].direction[index]], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index], k);
+                    place(dnbs[sites[n].direction[index]], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index], k, sites[n].tagged[index]);
                     
                     // Move the vacancy id onto the departure site
                     sites[n].id[index] = vid;
                     
-                    
+                    // check whether it goes across periodic boundary. We only check in x direction (so horisontally)
+                    if (sites[n].tagged[index]){
+                      // if it is on right border and move "over" to left border increase per_hop by one
+                      if ((n+1)%P.L[0] == 0 && dnbs[sites[n].direction[index]]%P.L[0]==0) sites[n].per_hop[index]++;
+                      // however, if it is on left border and hops "over" to the right border, decrease per_hop by one
+                      else if (n%P.L[0] == 0 && dnbs[sites[n].direction[index]]%P.L[0]==(P.L[0] - 1)) sites[n].per_hop[index]--;
+                    }
                     // Now go through the neighbours of the departure site, update neighbour count and activate any
                     // that can now move. Note the particle this is at the target site is included in this list
                     // and will be activated accordingly
@@ -288,15 +300,11 @@ public:
         unsigned id = 0;
         while (unplaced > 0){
           unsigned index = std::uniform_int_distribution<unsigned>(0, possibilities)(rng);
-          
           unsigned l = position[index];
-
-
           unsigned n = l%sites.size();
           unsigned i = l/sites.size();
-
-          place(n, id, initial(rng), 0.0, i);
-
+          
+          place(n, id, initial(rng), 0.0, i, false, 0);
           position.erase(position.begin()+index);
           position.push_back(l);
           
@@ -313,33 +321,27 @@ public:
             }
           }
         }
-      /*
-      // Place particles on the lattice
-      unsigned unplaced = P.N; // Current number of particles remaining to be placed
-      unsigned id_vac = P.N;
-      for (unsigned index = 0; index < P.n_max; index++){
-        for (unsigned n = 0; n < sites.size(); ++n) {
-            // Number of remaining sites where partcles could be placed is sites.size()-n, unplaced of which need to be filled
-            if (std::uniform_int_distribution<unsigned>(1, sites.size() - n)(rng) <= unplaced) {
-                // For ease we only place one particle per site in the initial configuration
-                place(n, P.N - unplaced, anyway(rng), 0.0, index);
-                --unplaced;
-            }
-            // vacancies
-            else {
-              sites[n].id[index] = id_vac;
-              id_vac++;
-            }
-        }
-      }
-      assert(unplaced == 0);
-      */
-        // Activate particles that can move, and schedule a hop accordingly
+
+     
+      // Activate particles that can move, and schedule a hop accordingly
       for (unsigned n = 0; n < sites.size(); ++n) {
         for (unsigned k = 0; k < P.n_max; ++k){
         if (sites[n].occupied[k] && sites[n].neighbours < 4 * P.n_max) schedule(n, k);
         }
       }
+
+      if (P.tagged == 1){
+        int placed = 1;
+        while (placed == 1){
+          unsigned index = std::uniform_int_distribution<unsigned>(0, position.size())(rng);
+          unsigned l = position[index];
+          if (sites[l%sites.size()].occupied[l/sites.size()]){
+            sites[l%sites.size()].tagged[l/sites.size()] = true;
+            placed = 0;
+          }
+        }
+      }
+
       assert(consistent());
 
 
@@ -4038,7 +4040,7 @@ int main(int argc, char* argv[]) {
   string tumb = "alpha" + alpha_p;
   string dens = "phi" + phi_p;
   string size = "L" + std::to_string(P.L[0]);
-  string path = "./lars_sim/Data/clustdist/";
+  string path = "./lars_sim/Data/cdf/";
   string txtoutput = path+lattice_type+"_"+tumb+"_"+ dens+"_"+size+"_"+occ_p+txt;
   string txtoutput_nr = path+lattice_type+"_nr"+"_"+tumb+"_"+ dens+"_"+size+"_"+occ_p+txt;
 
@@ -5990,7 +5992,7 @@ int main(int argc, char* argv[]) {
               }
             }
             ofstream outfile, outfile_nr;
-            outfile.open(txtoutput);
+            outfile.open(txtoutput_nr);
             for(const auto& k: sumhist) outfile << k << " ";
             outfile << endl;
           }
@@ -6358,7 +6360,7 @@ int main(int argc, char* argv[]) {
               }
             }
             ofstream outfile, outfile_nr;
-            outfile.open(txtoutput);
+            outfile.open(txtoutput_nr);
             for(const auto& k: sumhist) outfile << k << " ";
             outfile << endl;
           }
@@ -6741,7 +6743,7 @@ int main(int argc, char* argv[]) {
               }
             }
             ofstream outfile;
-            outfile.open("./lars_sim/hexdist.txt");
+            outfile.open(txtoutput_nr);
             for(const auto& k: sumhist) outfile << k << " ";
             outfile << endl;
           }
