@@ -84,8 +84,8 @@ int main(){
         }
     }
     for (int n = 0; n < L; n++){
-        qx[n] = 3*(-pi + 2.0*pi*double(n)/double(L));
-        qy[n] = 3*(-pi + 2.0*pi*double(n)/double(L));
+        qx[n] = (-pi + 2.0*pi*double(n)/double(L));
+        qy[n] = (-pi + 2.0*pi*double(n)/double(L));
     }
 
     double p[L][L];
@@ -95,7 +95,7 @@ int main(){
             p[n][k] = 0;
         }
     }
-    std::ifstream file("hex_dens_3.txt");
+    std::ifstream file("hex_dens_1.txt");
     if (file.is_open()) {
         std::string line;
         while (std::getline(file, line) && oo == 0) {
@@ -173,7 +173,7 @@ int main(){
     }
 
     ofstream outfile, coor;
-    outfile.open("fourier_hx_3.txt");
+    outfile.open("fourier_hx_1.txt");
     coor.open("hex_coor.txt");
     for (unsigned n = 0; n < L; n++){
                 for (unsigned k = 0; k < L; k++){

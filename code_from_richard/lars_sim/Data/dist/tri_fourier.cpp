@@ -72,7 +72,7 @@ int main(){
     }
     ofstream wow;
     wow.open("tri_wtf.txt");
-    std::ifstream file("tri_dens_3.txt");
+    std::ifstream file("tri_dens_1.txt");
     if (file.is_open()) {
         std::string line;
         while (std::getline(file, line) && oo == 0) {
@@ -153,7 +153,7 @@ int main(){
     }
 
     ofstream outfile, coor;
-    outfile.open("fourier_tr_3.txt");
+    outfile.open("fourier_tr_1.txt");
     coor.open("tri_coor.txt");
     for (unsigned n = 0; n < L; n++){
                 for (unsigned k = 0; k < L; k++){
