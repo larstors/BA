@@ -158,34 +158,23 @@ if what == 1:
 
 #tri
 if what == 2:
-    f = open("tri_part.txt")
+    f = open("tri_part3.txt")
     square_part = []
     for line in f:
         square_part.append(np.loadtxt(StringIO(line), dtype=int))
 
-    f = open("tri_sv.txt")
+    f = open("tri_sv3.txt")
     square_sv = []
     for line in f:
         square_sv.append(np.loadtxt(StringIO(line), dtype=int))
 
-    f = open("tri_clust.txt")
-    square_cl = []
-    for line in f:
-        square_cl.append(np.loadtxt(StringIO(line), dtype=int))
     
-    f = open("tri_border.txt")
+    f = open("tri_border3.txt")
     square_int = []
     for line in f:
         square_int.append(np.loadtxt(StringIO(line), dtype=int))
 
-    # finding out which is the smaller cluster (as this is not done automatically by the c++ algorithm)
-    if (len(square_cl[0]) > len(square_cl[1])):
-        big = square_cl[0]
-        small = square_cl[1]
-    else:
-        big = square_cl[1]
-        small = square_cl[0]
-    
+
 
     def tri_conv(n):
     
@@ -229,12 +218,28 @@ if what == 2:
 
     par = opt.curve_fit(fit_func, s, v)[0]
     print(par)
-    
-    x_small = tri_conv(small[2:])[0]
-    y_small = tri_conv(small[2:])[1]
 
-    x_big = np.asarray(tri_conv(big[2:])[0])
-    y_big = tri_conv(big[2:])[1]
+
+    ts = []
+    tv = []
+    for i in range(len(s)):
+        if (s[i] > 20 and s[i] < 100):
+            ts.append(s[i])
+            tv.append(v[i])
+
+    tpar = opt.curve_fit(fit_func, ts, tv)[0]
+    print(tpar)
+
+    ks = []
+    kv = []
+    for i in range(len(s)):
+        if (s[i] < 10):
+            ks.append(s[i])
+            kv.append(v[i])
+
+    kpar = opt.curve_fit(fit_func, ks, kv)[0]
+    print(kpar)
+    
     """
     k = np.argwhere(x_big[:] < 0)
     for i in k:
@@ -272,35 +277,19 @@ if what == 2:
     ax1.set_ylabel(r"Volume $V$")
     ax1.grid()
     ax1.legend()
-    plt.savefig("tr_n_1.pdf", dpi=150)
+    plt.savefig("tr_n_3.pdf", dpi=150)
     #plt.show()
 
 
 
     fig2, ax1 = plt.subplots()
-    """
-    left, bottom, width, height = [0.15, 0.4, 0.3, 0.3]
-    ax2 = fig2.add_axes([left, bottom, width, height])
-    ax2.triplot(triang, 'r-', alpha=0.3, linewidth=0.1)
-    ax2.scatter(x=x_small, y=y_small, marker="s", color="black", s=30)
-    ax2.axis([min(x_small) - 5, max(x_small) + 5, min(y_small) - 5, max(y_small) + 5])
-    ax2.set_xticks([])
-    ax2.set_yticks([])
-    ax2.spines[:].set_color('green')  
     
-    left, bottom, width, height = [0.6, 0.2, 0.3, 0.3]
-    ax3 = fig2.add_axes([left, bottom, width, height])
-    ax3.triplot(triang, 'r-', alpha=0.3, linewidth=0.1)
-    ax3.scatter(x=x_big, y=y_big, marker="s", color="black", s=1)
-    ax3.axis([min(x_big) - 1, max(x_big) + 1, min(y_big) - 5, max(y_big) + 5])
-    ax3.set_xticks([])
-    ax3.set_yticks([])
-    ax3.spines[:].set_color('blue')  
-    """
 
-    #plt.plot(np.linspace(1, 140), func(np.linspace(1, 140)))
-    ax1.plot(np.linspace(1, max(s)), fit_func(np.linspace(1, max(s)), par[0]), "k-", label=r"$x^{%g}$" % par[0])
-    for i in range(6):
+    ax1.plot(np.linspace(1, max(s)), fit_func(np.linspace(1, max(s)), par[0]), "k-", label=r"$\beta=%g$" % par[0])
+    #ax1.plot(np.linspace(min(ts), max(ts)), fit_func(np.linspace(min(ts), max(ts)), tpar[0]), "k--", label=r"$\beta^\prime=%g$" % tpar[0])
+    ax1.plot(np.linspace(min(ks), max(ks)), fit_func(np.linspace(min(ks), max(ks)), kpar[0]), "k-.", label=r"$\beta^{\prime\prime}=%g$" % kpar[0])
+
+    for i in range(4):
         ax1.plot(square_sv[i*16][1::2], square_sv[i*16][::2], "o", label=r"$t=%d\cdot 10^4$" % (16*i))
     #ax1.plot(small[1], small[0], "gs")
     #ax1.plot(big[1], big[0], "bs")
@@ -310,21 +299,21 @@ if what == 2:
     ax1.set_yscale("log")
     ax1.grid()
     ax1.legend()
-    plt.savefig("tr_n_1_log.pdf", dpi=150)
+    plt.savefig("tr_n_3_log.pdf", dpi=150)
     #plt.show()
 
+    
 
-
-    fig3, ax = plt.subplots(nrows=3, ncols=2, figsize=(20, 20))
+    fig3, ax = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
     plt.tight_layout()
-    for i in range(6):
-        ax[i//2,i%2].set_title(r"$t=%d\cdot 10^4$" % (16*i))
-        ax[i//2,i%2].scatter(x=tri_conv(square_part[16*i][1::3])[0], y=tri_conv(square_part[16*i][1::3])[1], marker="s", color="black", s=4)
-        ax[i//2,i%2].set_xticks([])
-        ax[i//2,i%2].set_yticks([])
-        ax[i//2,i%2].scatter(x=tri_conv(square_int[16*i][:])[0], y=tri_conv(square_int[16*i][:])[1], marker="s", color="red", s=4)
+    for i in range(2):
+        ax[i].set_title(r"$t=%d\cdot 10^4$" % (16*i*5))
+        ax[i].scatter(x=tri_conv(square_part[16*i*5][1::3])[0], y=tri_conv(square_part[16*i*5][1::3])[1], marker="s", color="black", s=2)
+        ax[i].set_xticks([])
+        ax[i].set_yticks([])
+        ax[i].scatter(x=tri_conv(square_int[16*i*5][:])[0], y=tri_conv(square_int[16*i*5][:])[1], marker="s", color="red", s=2)
 
-    plt.savefig("snapshot_tri_n_1.pdf", dpi=200)
+    plt.savefig("snapshot_tri_n_3.pdf", dpi=200)
     
 
 
@@ -485,7 +474,7 @@ if what == 3:
 
 
 
-    fig3, ax = plt.subplots(nrows=3, ncols=2, figsize=(20, 20))
+    fig3, ax = plt.subplots(nrows=3, ncols=2, figsize=(10, 5))
     plt.tight_layout()
     for i in range(6):
         ax[i//2,i%2].set_title(r"$t=%d\cdot 10^4$" % (16*i))

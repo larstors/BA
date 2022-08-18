@@ -19,7 +19,7 @@ plt.show()
 
 
 
-
+"""
 fig = plt.figure()
 f = f/(13200)*1/101
 sc = plt.scatter(x=c[3,:], y =c[2,:], s = 4, vmin = 0, marker="s", c=f, cmap='viridis')
@@ -40,7 +40,7 @@ plt.savefig("hex_across_2.pdf")
 
 print(f[50*100+99])
 
-"""
+
 wtf = np.genfromtxt("tri_wtf.txt", delimiter=" ")
 
 w = wtf[0, :]
@@ -50,4 +50,28 @@ plt.savefig("xwtf.pdf")
 
 for i in range(len(wtf)):
     print(np.sum(wtf[i, :]))
+
+
+fig3 = plt.figure()
+plt.plot(np.linspace(0, max(x), len(f[50*100 + 50: 50*100+100])), f[50*100 + 50: 50*100+100])
+#plt.savefig("squ_across_3.pdf")
+plt.show()
 """
+
+
+f1 = np.genfromtxt("fourier_hx_1.txt", delimiter=" ")
+f2 = np.genfromtxt("fourier_hx_2.txt", delimiter=" ")
+f3 = np.genfromtxt("fourier_hx_3.txt", delimiter=" ")
+
+
+Sq = np.asarray(f1[50*100 + 50: 50*100+100])
+i = np.argmax(Sq)
+print(i)
+
+Sq = np.asarray(f2[50*100 + 50: 50*100+100])
+i = np.argmax(Sq)
+print(i)
+
+Sq = np.asarray(f3[50*100 + 50: 50*100+100])
+i = np.argmax(Sq)
+print(i)

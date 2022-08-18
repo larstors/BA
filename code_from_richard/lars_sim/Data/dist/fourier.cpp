@@ -106,7 +106,7 @@ int main(){
             p[n][k] = 0;
         }
     }
-    std::ifstream file("square_dens_1.txt");
+    std::ifstream file("square_dens_3_special.txt");
     if (file.is_open()) {
         std::string line;
         while (std::getline(file, line) && oo == 0) {
@@ -218,7 +218,7 @@ int main(){
     }
 
     ofstream outfile;
-    outfile.open("fourier_sq_1.txt");
+    outfile.open("fourier_sq_3_special.txt");
     //for (const auto& m : r) outfile << m << " ";
     for (unsigned n = 0; n < L; n++){
                 for (unsigned k = 0; k < L; k++){

@@ -125,6 +125,30 @@ if lat == "t":
     plt.yscale("log")
     plt.xscale("log")
     plt.savefig("stop_tri_fit.pdf", dpi=150, bbox_inches="tight")
+
+    alp = np.asarray(alp)
+
+    par1 = opt.curve_fit(fit, np.log10(1/alp), np.array(Tstop[0]))[0]
+    par2 = opt.curve_fit(fit, np.log10(1/alp), np.array(Tstop[1]))[0]
+    par3 = opt.curve_fit(fit, np.log10(1/alp), np.array(Tstop[2]))[0]
+    
+    print(par1[0], par2[0], par3[0])
+
+    t = np.linspace(min(1/alp), max(1/alp))
+    fig5 = plt.figure(figsize=(10, 5))
+    plt.plot(t, p(10,fit(np.log10(t), *par1)), "r--", label=r"$\sim \alpha^{%.2f}$" % par1[0])
+    plt.plot(t, p(10,fit(np.log10(t), *par2)), "b--", label=r"$\sim \alpha^{%.2f}$" % par2[0])
+    plt.plot(t, p(10,fit(np.log10(t), *par3)), "g--", label=r"$\sim \alpha^{%.2f}$" % par3[0])
+    plt.plot(1/alp, p(10, np.array(Tstop[0])), "ro", label=r"$n_\mathrm{max}=1$")
+    plt.plot(1/alp, p(10, np.array(Tstop[1])), "bo", label=r"$n_\mathrm{max}=2$")
+    plt.plot(1/alp, p(10, np.array(Tstop[2])), "go", label=r"$n_\mathrm{max}=3$")
+    plt.legend()
+    plt.ylabel(r"${T_\mathrm{stop}^\alpha}$")
+    plt.xlabel(r"${\alpha}$")
+    plt.grid()
+    plt.yscale("log")
+    plt.xscale("log")
+    plt.savefig("stop_tri_fit_inv.pdf", dpi=150, bbox_inches="tight")
     
 
 

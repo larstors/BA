@@ -85,6 +85,7 @@ class Lattice {
         std::vector<bool> tagged = std::vector<bool>(n_max); // for tagged particle
         std::vector<int> per_hop = std::vector<int>(n_max); // for how many times particle jumped periodic boundary. 
                                                             //+1 for pos, -1 for neg direction
+        std::vector<int> x_coor = std::vector<int>(n_max); // x coordinate (that actually just counts steps in each direction)
     };
 
   Parameters P; // A local copy of the model parameters
@@ -136,7 +137,7 @@ class Lattice {
 
   // Place a particle with given direction and hop time at site n;
   // neighbouring sites will be accordingly adjusted
-  void place(unsigned n, unsigned id, direction_t d, double t, unsigned index, bool tag, int per) {
+  void place(unsigned n, unsigned id, direction_t d, double t, unsigned index, bool tag, int per, double x) {
     sites[n].id[index] = id;
     sites[n].direction[index] = d;
     sites[n].hoptime[index] = t;
@@ -148,6 +149,7 @@ class Lattice {
     sites[n].present++;
     sites[n].tagged[index] = tag;
     sites[n].per_hop[index] = per;
+    sites[n].x_coor[index] = x;
   }
 
   // Schedule a hop event for a particle at site n
@@ -186,21 +188,33 @@ class Lattice {
                     // as it moves from n, we have one less present at n
                     sites[n].present--;
                     assert(sites[n].present >= 0);
+
+                    // ONLY FOR TAGGED PARTICLE. check whether it goes across periodic boundary. We only check in x direction (so horisontally)
+                    if (sites[n].tagged[index]){
+                      // if it looks to the right add 1
+                      if (sites[n].direction[index] == 0){
+                        sites[n].x_coor[index]++;
+                      }
+                      // if it looks to the left remove 1
+                      else if (sites[n].direction[index] == 1){
+                        sites[n].x_coor[index]--;
+                      }
+                      // if it is on right border and move "over" to left border increase per_hop by one
+                      if ((n+1)%P.L[0] == 0 && dnbs[sites[n].direction[index]]%P.L[0]==0){
+                         sites[n].per_hop[index]++;
+                      }
+                      // however, if it is on left border and hops "over" to the right border, decrease per_hop by one
+                      else if (n%P.L[0] == 0 && dnbs[sites[n].direction[index]]%P.L[0]==(P.L[0] - 1)){
+                        sites[n].per_hop[index]--;
+                      }
+                    }
                     
                     // Place a particle on the target site; it has the same direction, hoptime etc. as the departing particle
-                    place(dnbs[sites[n].direction[index]], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index], k, sites[n].tagged[index], sites[n].per_hop[index]);
+                    place(dnbs[sites[n].direction[index]], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index], k, sites[n].tagged[index], sites[n].per_hop[index], sites[n].x_coor[index]);
                     
                     // Move the vacancy id onto the departure site
                     sites[n].id[index] = vid;
                     
-                    // ONLY FOR TAGGED PARTICLE. check whether it goes across periodic boundary. We only check in x direction (so horisontally)
-                    if (sites[n].tagged[index]){
-                      // if it is on right border and move "over" to left border increase per_hop by one
-                      if ((n+1)%P.L[0] == 0 && dnbs[sites[n].direction[index]]%P.L[0]==0) sites[n].per_hop[index]++;
-                      // however, if it is on left border and hops "over" to the right border, decrease per_hop by one
-                      else if (n%P.L[0] == 0 && dnbs[sites[n].direction[index]]%P.L[0]==(P.L[0] - 1)) sites[n].per_hop[index]--;
-                    }
-
 
                     // Now go through the neighbours of the departure site, update neighbour count and activate any
                     // that can now move. Note the particle this is at the target site is included in this list
@@ -314,7 +328,7 @@ public:
           unsigned n = l%sites.size();
           unsigned i = l/sites.size();
           
-          place(n, id, initial(rng), 0.0, i, false, 0);
+          place(n, id, initial(rng), 0.0, i, false, 0, 0);
           // put used index at end of vector
           //cout << "here?" << endl;
           //cout << "index " << index << " len " << position.size() << " possi " << possibilities << endl;
@@ -1040,15 +1054,27 @@ public:
     // x coordinate of tagged particle. Double so I can copy paste to Tri and Hex ^^
     double x_coor(){
       double x = 0;
-      for (unsigned n = 0; n < sites.size(); n++){
+      for (int n = 0; n < sites.size(); n++){
         for (unsigned i = 0; i < P.n_max; i++){
-          if (sites[n].occupied[i] && sites[n].tagged[i]) x = n%P.L[0] + sites[n].per_hop[i] * P.L[0];
+          if (sites[n].occupied[i] && sites[n].tagged[i]) x = double(n%P.L[0]) + sites[n].per_hop[i] * int(P.L[0]);
+        }
+      }
+      return x;
+    }
+
+    // x coordinate of tagged particle. Double so I can copy paste to Tri and Hex ^^
+    double x_coor_2(){
+      double x = 0;
+      for (int n = 0; n < sites.size(); n++){
+        for (unsigned i = 0; i < P.n_max; i++){
+          if (sites[n].occupied[i] && sites[n].tagged[i]) {
+            x = sites[n].x_coor[i];
+          }
         }
       }
       return x;
     }
 };
-
 
 // ! Following classes are additions by Lars. Note that in the triangular case it is just the one as above with some very slight adjustments
 // ! while the one for the hexagonal lattice has more drastic changes. 
@@ -1080,6 +1106,9 @@ class Triangle_lattice {
         std::vector<double> hoptime = std::vector<double>(n_max); // Time of last hop attempt
         unsigned present = 0; // Number of particles present at site. Has to be <= n_max
         std::vector<double> last_jump = std::vector<double>(n_max); // time of last jump made
+        std::vector<bool> tagged = std::vector<bool>(n_max); // for tagged particle
+        std::vector<int> per_hop = std::vector<int>(n_max); // for how many times particle jumped periodic boundary. 
+                                                            //+1 for pos, -1 for neg direction
     };
 
     std::vector<Site> sites; // Representation of the sites
@@ -2226,6 +2255,17 @@ public:
         output.push_back(sites[i].present);
       }
       return output;
+    }
+
+    // x coordinate of tagged particle. Double so I can copy paste to Tri and Hex ^^
+    double x_coor(){
+      double x = 0;
+      for (int n = 0; n < sites.size(); n++){
+        for (unsigned i = 0; i < P.n_max; i++){
+          if (sites[n].occupied[i] && sites[n].tagged[i]) x = double(n%P.L[0]) + sites[n].per_hop[i] * int(P.L[0]);
+        }
+      }
+      return x;
     }
 };
 
@@ -4064,10 +4104,10 @@ int main(int argc, char* argv[]) {
       } 
       else if (output == "lagging"){
         ofstream outfile, backward;
-        string name = "./lars_sim/Data/motility/square_perc_fhyst";
+        string name = "./lars_sim/Data/phase/square_perc_fhyst";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
-        name = "./lars_sim/Data/motility/square_perc_bhyst";
+        name = "./lars_sim/Data/phase/square_perc_bhyst";
         outputname = name+"_"+occ_p+".txt";
         backward.open(outputname);
         // foward hysteresis, i.e. start below critical point and move up
@@ -4081,11 +4121,13 @@ int main(int argc, char* argv[]) {
           std::vector<double> values_mot;
           std::vector<double> values_mas;
           std::vector<double> values_wei;
+          std::vector<double> values_per;
           double mean = 0;
           double rel_mass = 0;
           double count = 0;
           double weighted = 0;
           double cov_w = 0;
+          double s = 0;
           for(unsigned n=0; t < (c+1)*tmax; ++n) {
             t = LB.run_until(burnin + n * every + c*tmax);
 
@@ -4093,6 +4135,8 @@ int main(int argc, char* argv[]) {
             values_mot.push_back(LB.motility_fraction());
             rel_mass += double(LB.max_cluster_size_nr())/double(P.N);
             mean += LB.motility_fraction();
+            values_per.push_back(LB.perimeter()/double(P.N));
+            s += LB.perimeter()/double(P.N);
             count++;
             //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
 
@@ -4108,10 +4152,10 @@ int main(int argc, char* argv[]) {
             weighted += second_moment / first_moment * 1.0/double(P.N);
           
           }
-           mean = mean / count;
+          mean = mean / count;
           rel_mass = rel_mass / count;
           weighted = weighted / count;
-
+          s = s / count;
 
           double cov_mot = 0;
           for (auto& val : values_mot){
@@ -4130,8 +4174,14 @@ int main(int argc, char* argv[]) {
           }
           cov_w = cov_w/(values_wei.size() - 1);
           
+          double cov_s = 0;
+          for (auto& val : values_per){
+            cov_s += pow(val - s, 2);
+          }
+          cov_s = cov_s/(values_per.size() - 1);
+          
 
-          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << " " << weighted << " " << cov_w << endl;
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << " " << weighted << " " << cov_w  << " " << s << " " << cov_s << endl;
           c++;
         }
 
@@ -4150,6 +4200,8 @@ int main(int argc, char* argv[]) {
           double count_b = 0;
           double weighted_b = 0;
           double cov_w_b = 0;
+          double s_b = 0;
+          std::vector<double> values_per_b;
           for(unsigned n=0; t < (c+1)*tmax; ++n) {
             t = LT.run_until(burnin + n * every + c*tmax);
 
@@ -4157,6 +4209,8 @@ int main(int argc, char* argv[]) {
             values_mot_b.push_back(LT.motility_fraction());
             rel_mass_b += double(LT.max_cluster_size_nr())/double(P.N);
             mean_b += LT.motility_fraction();
+            values_per_b.push_back(LB.perimeter()/double(P.N));
+            s_b += LB.perimeter()/double(P.N);
             count_b++;
             //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
 
@@ -4175,6 +4229,7 @@ int main(int argc, char* argv[]) {
            mean_b = mean_b / count_b;
           rel_mass_b = rel_mass_b / count_b;
           weighted_b= weighted_b / count_b;
+          s_b = s_b / count_b;
 
 
           double cov_mot_b = 0;
@@ -4194,7 +4249,14 @@ int main(int argc, char* argv[]) {
           }
           cov_w_b = cov_w_b/(values_wei_b.size() - 1);
 
-          backward << al << " " << mean_b << " " << cov_mot_b << " " << rel_mass_b << " " << cov_mas_b << " " << weighted_b << " " << cov_w_b << endl;
+          double cov_s_b = 0;
+          for (auto& val : values_per_b){
+            cov_s_b += pow(val - s_b, 2);
+          }
+          cov_s_b = cov_s_b/(values_per_b.size() - 1);
+          
+
+          backward << al << " " << mean_b << " " << cov_mot_b << " " << rel_mass_b << " " << cov_mas_b << " " << weighted_b << " " << cov_w_b  << " " << s_b << " " << cov_s_b << endl;
           c++;
         }
       }
@@ -4342,8 +4404,8 @@ int main(int argc, char* argv[]) {
       }
       else if (output == "distribution"){
         ofstream outfile, outfile2;
-        outfile.open("./lars_sim/Data/dist/square_"+occ_p+".txt");
-        outfile2.open("./lars_sim/Data/dist/square_dens_"+occ_p+".txt");
+        outfile.open("./lars_sim/Data/dist/square_"+occ_p+"_special.txt");
+        outfile2.open("./lars_sim/Data/dist/square_dens_"+occ_p+"_special.txt");
         hist_t dist(5);
         for(double n = 0; t < burnin + until; n++) {
           t = L.run_until(burnin + n * every);
@@ -4356,7 +4418,7 @@ int main(int argc, char* argv[]) {
         for (const auto& m : dist) outfile << m << " ";
         outfile << endl;
       }
-      else if (output=="area"){
+      else if (output == "area"){
         ofstream surf, part, clust, border;
         surf.open("./lars_sim/Data/surf/square_sv"+occ_p+".txt");
         part.open("./lars_sim/Data/surf/square_part"+occ_p+".txt");
@@ -4465,43 +4527,87 @@ int main(int argc, char* argv[]) {
 
       }
       else if (output == "function"){
-        // jamming, max cl size, perimeter, weighted mean cl size
-        ofstream outfile; 
-        outfile.open("./lars_sim/Data/perimeter/square_particles.txt");
-        double s = 0;
-
-        // count for mean vals
-        double count = 0;
-        for(unsigned n=0; t < burnin + until; ++n){
-            t = L.run_until(burnin + n * every);
-            s += L.perimeter();
-            count++;
-            outfile << ParticleWriter(L, outfile) << endl;
-          }
-          s = s / count;
-
-          s = s / double(P.N);
-          std::cout << "test " << s << endl;
-          }
-      else if (output == "tagged"){
         ofstream varkur, dist;
-        varkur.open("./lars_sim/Data/displacement/sq_varkur_rho_05_"+occ_p+".txt");
-        dist.open("./lars_sim/Data/displacement/sq_dist_rho_05_"+occ_p+".txt");
+        varkur.open("./lars_sim/Data/displacement/sq_varkur_rho_25_"+occ_p+"_test.txt");
+        
         // number of configurations
         unsigned nr_configuration = 25000;
         // vector for variance and kurtosis
         vector<long double> variance;
         vector<long double> kurtosis;
-        vector<unsigned> dist_time = {51, 151, 201, 501, 1001, 3001};
+        vector<long double> variance2;
+        vector<long double> kurtosis2;
         // map of every position
-        std::map<unsigned, std::vector<double>> pos;
+        //std::map<unsigned, std::vector<double>> pos;
+        double count = 0;
+        for (unsigned k = 0; t < until; ++k){
+          
+          t = L.run_until(k * every);
+          if (k > 0){
+            variance.push_back(0);
+            kurtosis.push_back(0);
+            variance2.push_back(0);
+            kurtosis2.push_back(0);
+          }
+          //pos.insert(pair<unsigned, vector<double>> (k, {}));
+        }
+
+        for (unsigned k = 0; k < nr_configuration; k++){
+          count++;
+          // yes, I really just made myself a progress bar
+          if (k%(nr_configuration/10) == 0){
+            cout << "[";
+            for (unsigned o = 0; o <= k / (nr_configuration/10); o++){
+              cout << "#"; 
+            }
+            for (unsigned o = k / (nr_configuration/10); o < 10; o++){
+              cout << " ";
+            }
+            cout << "]" << endl;
+          }
+          Lattice L(P, rng);
+          t = 0;
+          double x_0 = L.x_coor();
+          for(unsigned n=1; t < until; ++n){
+              t = L.run_until(n * every);
+              double x = L.x_coor();
+              
+              variance[n-1] += pow(x - x_0, 2);
+              kurtosis[n-1] += pow(x - x_0, 4);
+              variance2[n-1] += pow(L.x_coor_2(), 2);
+              kurtosis2[n-1] += pow(L.x_coor_2(), 4);
+          }
+          dist << endl;
+        }
+        cout << count << " " << nr_configuration << endl;
+        for (unsigned n = 0; n < variance.size(); n++){
+          variance[n] = variance[n] / double(nr_configuration);
+          kurtosis[n] = kurtosis[n] / (double(nr_configuration) * pow(variance[n], 2));
+          variance2[n] = variance2[n] / double(nr_configuration);
+          kurtosis2[n] = kurtosis2[n] / (double(nr_configuration) * pow(variance2[n], 2));
+          varkur << (n+1) * every << " " << variance[n] << " " << kurtosis[n] << " " << variance2[n] << " " << kurtosis2[n] <<  endl;
+        }
+        
+      }
+      else if (output == "tagged"){
+        ofstream varkur, dist;
+        varkur.open("./lars_sim/Data/displacement/sq_varkur_rho_05_"+occ_p+"_long.txt");
+        dist.open("./lars_sim/Data/displacement/sq_dist_rho_05_"+occ_p+"_long.txt");
+        // number of configurations
+        unsigned nr_configuration = 25000;
+        // vector for variance and kurtosis
+        vector<long double> variance;
+        vector<long double> kurtosis;
+        vector<unsigned> dist_time = {51, 151, 201, 501, 1001, unsigned(until)-1};
+        // map of every position
+        //std::map<unsigned, std::vector<double>> pos;
         for (unsigned k = 0; t < until; ++k){
           t = L.run_until(k * every);
           if (k > 0){
             variance.push_back(0);
             kurtosis.push_back(0);
           }
-          pos.insert(pair<unsigned, vector<double>> (k, {}));
+          //pos.insert(pair<unsigned, vector<double>> (k, {}));
         }
 
         for (unsigned k = 0; k < nr_configuration; k++){
@@ -4518,21 +4624,27 @@ int main(int argc, char* argv[]) {
           }
           Lattice L(P, rng);
           t = 0;
-          pos[0].push_back(L.x_coor());
+          double x_0 = L.x_coor();
+          dist << x_0 << " ";
           for(unsigned n=1; t < until; ++n){
               t = L.run_until(n * every);
-              pos[n].push_back(L.x_coor());
-              variance[n-1] += pow(pos[n][k] - pos[0][k], 2);
-              kurtosis[n-1] += pow(pos[n][k] - pos[0][k], 4);
+              double x = L.x_coor();
+              for (unsigned p = 0; p < dist_time.size(); p++){
+                if (dist_time[p] == n) dist << x << " ";  
+              }
+              variance[n-1] += pow(x - x_0, 2);
+              kurtosis[n-1] += pow(x - x_0, 4);
           }
+          dist << endl;
         }
-
+        /*
         for (unsigned p = 0; p < dist_time.size(); p++){
           for (unsigned k = 0; k < nr_configuration; k++){
             dist << pos[dist_time[p]][k] << " ";
           }
           dist << endl;
         }
+        */
 
         for (unsigned n = 0; n < variance.size(); n++){
           variance[n] = variance[n] / double(nr_configuration);
@@ -4958,30 +5070,30 @@ int main(int argc, char* argv[]) {
       }
       else if (output == "lagging"){
         ofstream outfile, backward;
-        string name = "./lars_sim/Data/motility/triangular_perc_fhyst";
+        string name = "./lars_sim/Data/phase/triangular_perc_fhyst";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
-        name = "./lars_sim/Data/motility/triangular_perc_bhyst";
+        name = "./lars_sim/Data/phase/triangular_perc_bhyst";
         outputname = name+"_"+occ_p+".txt";
         backward.open(outputname);
         // foward hysteresis, i.e. start below critical point and move up
         Triangle_lattice LB(P, rng);
         double tmax = burnin + until;
         unsigned c = 0;
-        for (double al = 0.0625; al < 0.07 ; al+=0.0001875){
-          // introducing new alpha and updating tumble distribution.
-
+        for (double al = 0.0875; al < 0.094 ; al+=0.0001625){
+          // introducing new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
           LB.set_new_lambda(&LB.tumble, std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size());
-
           std::vector<double> values_mot;
           std::vector<double> values_mas;
           std::vector<double> values_wei;
+          std::vector<double> values_per;
           double mean = 0;
           double rel_mass = 0;
           double count = 0;
           double weighted = 0;
           double cov_w = 0;
+          double s = 0;
           for(unsigned n=0; t < (c+1)*tmax; ++n) {
             t = LB.run_until(burnin + n * every + c*tmax);
 
@@ -4989,6 +5101,8 @@ int main(int argc, char* argv[]) {
             values_mot.push_back(LB.motility_fraction());
             rel_mass += double(LB.max_cluster_size_nr())/double(P.N);
             mean += LB.motility_fraction();
+            values_per.push_back(LB.perimeter()/double(P.N));
+            s += LB.perimeter()/double(P.N);
             count++;
             //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
 
@@ -5004,10 +5118,10 @@ int main(int argc, char* argv[]) {
             weighted += second_moment / first_moment * 1.0/double(P.N);
           
           }
-           mean = mean / count;
+          mean = mean / count;
           rel_mass = rel_mass / count;
           weighted = weighted / count;
-
+          s = s / count;
 
           double cov_mot = 0;
           for (auto& val : values_mot){
@@ -5026,15 +5140,21 @@ int main(int argc, char* argv[]) {
           }
           cov_w = cov_w/(values_wei.size() - 1);
           
+          double cov_s = 0;
+          for (auto& val : values_per){
+            cov_s += pow(val - s, 2);
+          }
+          cov_s = cov_s/(values_per.size() - 1);
+          
 
-          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << " " << weighted << " " << cov_w << endl;
+          outfile << al << " " << mean << " " << cov_mot << " " << rel_mass << " " << cov_mas << " " << weighted << " " << cov_w  << " " << s << " " << cov_s << endl;
           c++;
         }
 
         Triangle_lattice LT(P, rng);
         c = 0;
         t = 0;
-        for (double al = 0.07; al > 0.0625 ; al-=0.0001875){
+        for (double al = 0.094; al > 0.0875 ; al-=0.0001625){
           // introducing new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
           LT.set_new_lambda(&LT.tumble, std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size());
@@ -5046,6 +5166,8 @@ int main(int argc, char* argv[]) {
           double count_b = 0;
           double weighted_b = 0;
           double cov_w_b = 0;
+          double s_b = 0;
+          std::vector<double> values_per_b;
           for(unsigned n=0; t < (c+1)*tmax; ++n) {
             t = LT.run_until(burnin + n * every + c*tmax);
 
@@ -5053,6 +5175,8 @@ int main(int argc, char* argv[]) {
             values_mot_b.push_back(LT.motility_fraction());
             rel_mass_b += double(LT.max_cluster_size_nr())/double(P.N);
             mean_b += LT.motility_fraction();
+            values_per_b.push_back(LB.perimeter()/double(P.N));
+            s_b += LB.perimeter()/double(P.N);
             count_b++;
             //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
 
@@ -5071,6 +5195,7 @@ int main(int argc, char* argv[]) {
            mean_b = mean_b / count_b;
           rel_mass_b = rel_mass_b / count_b;
           weighted_b= weighted_b / count_b;
+          s_b = s_b / count_b;
 
 
           double cov_mot_b = 0;
@@ -5090,7 +5215,14 @@ int main(int argc, char* argv[]) {
           }
           cov_w_b = cov_w_b/(values_wei_b.size() - 1);
 
-          backward << al << " " << mean_b << " " << cov_mot_b << " " << rel_mass_b << " " << cov_mas_b << " " << weighted_b << " " << cov_w_b << endl;
+          double cov_s_b = 0;
+          for (auto& val : values_per_b){
+            cov_s_b += pow(val - s_b, 2);
+          }
+          cov_s_b = cov_s_b/(values_per_b.size() - 1);
+          
+
+          backward << al << " " << mean_b << " " << cov_mot_b << " " << rel_mass_b << " " << cov_mas_b << " " << weighted_b << " " << cov_w_b  << " " << s_b << " " << cov_s_b << endl;
           c++;
         }
       }

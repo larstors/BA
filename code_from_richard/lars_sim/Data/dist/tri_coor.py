@@ -17,7 +17,7 @@ plt.scatter(x=c[1,:], y =c[0,:])
 plt.show()
 """
 
-
+"""
 
 fig = plt.figure()
 f = f/(4000)*1/101
@@ -39,7 +39,7 @@ plt.savefig("tri_1_across.pdf")
 
 print(f[50*100+99])
 
-"""
+
 wtf = np.genfromtxt("tri_wtf.txt", delimiter=" ")
 
 w = wtf[0, :]
@@ -50,3 +50,28 @@ plt.savefig("xwtf.pdf")
 for i in range(len(wtf)):
     print(np.sum(wtf[i, :]))
 """
+
+f1 = np.genfromtxt("fourier_tr_1.txt", delimiter=" ")
+f2 = np.genfromtxt("fourier_tr_2.txt", delimiter=" ")
+f3 = np.genfromtxt("fourier_tr_3.txt", delimiter=" ")
+
+fig3 = plt.figure()
+plt.plot(np.linspace(0, np.pi, len(f1[50*100+50: 50*100+100])), f1[50*100+50: 50*100+100], label="1")
+plt.plot(np.linspace(0, np.pi, len(f2[50*100+50: 50*100+100])), f2[50*100+50: 50*100+100], label="2")
+plt.plot(np.linspace(0, np.pi, len(f3[50*100+50: 50*100+100])), f3[50*100+50: 50*100+100], label="3")
+plt.legend()
+#plt.savefig("tri_1_across.pdf")
+plt.show()
+
+
+Sq = np.asarray(f1[50*100 + 50: 50*100+100])
+i = np.argmax(Sq)
+print(i)
+
+Sq = np.asarray(f2[50*100 + 50: 50*100+100])
+i = np.argmax(Sq)
+print(i)
+
+Sq = np.asarray(f3[50*100 + 50: 50*100+100])
+i = np.argmax(Sq)
+print(i)
