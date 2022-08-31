@@ -86,11 +86,19 @@ def hex_conv(n, j):
 
 if output[0] == "s":
     # square
-    f = open("square.txt")
+    f = open("square_3.txt")
     square_part = []
     for line in f:
         square_part.append(np.loadtxt(StringIO(line), dtype=int))
-
+    
+    fig = plt.figure()
+    x = conv(square_part[0][0::2])[0]
+    y = conv(square_part[0][0::2])[1]
+    plt.scatter(x=x, y=y, c=square_part[0][1::2], marker="s", s=1, cmap="Greens", vmin=0, vmax=n)
+    plt.xticks([])
+    plt.yticks([])
+    plt.axis([min(x)-1 ,max(x)+1, min(y)-1, max(y)+1])
+    plt.savefig("square_spong.pdf", dpi=200)
 
 
 

@@ -178,16 +178,16 @@ class AnimatedScatter(object):
 
 # square
 if True:
-    f = open("./Data/stable/square.txt")
+    f = open("./gif/square_3.txt")
     data = []
     for line in f:
         data.append(np.loadtxt(StringIO(line), dtype=int))
         
-    numb = np.genfromtxt("./Data/stable/square_number.txt", delimiter=" ")
+    #numb = np.genfromtxt("./Data/stable/square_number.txt", delimiter=" ")
 
 
-    fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(20, 20), gridspec_kw={'height_ratios': [15, 2]})
-
+    fig, ax = plt.subplots(figsize=(20, 20))
+    print(len(data))
     def conv(n):
 
         x = []
@@ -199,22 +199,20 @@ if True:
         return x, y
         
     def animate_tri(i):
-        ax[0].cla()
-        ax[0].scatter(x=conv(data[i][0::2])[0], y=conv(data[i][0::2])[1], c=data[i][1::2], cmap="Greens", s=40, vmin=0, vmax=n, marker="s")
-        #ax[0].axis([-50, 110, -5, 90])
-        if i%2:
-            ax[1].plot(numb[i, 0], numb[i, 1], "ko", markersize=1)
-        ax[1].axis([min(numb[:, 0]), max(numb[:, 0]), min(numb[:, 1]), max(numb[:, 1])])
-        ax[1].set_yscale("log")
-        ax[1].set_ylabel("Number of Cluster")
-        ax[1].set_xlabel(r"Time $t$")
+        ax.cla()
+        x = conv(data[i][0::2])[0]
+        y = conv(data[i][0::2])[1]
+        ax.scatter(x=x, y=y, c=data[i][1::2], cmap="Greens", s=24, vmin=0, vmax=n, marker="s")
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.axis([min(x)-1 ,max(x)+1, min(y)-1, max(y)+1])
         
 
 
 
     # Then setup FuncAnimation.
-    ani_tri = animation.FuncAnimation(fig, animate_tri, interval=1, blit=False, save_count=len(numb)-1)
-    ani_tri.save('./gif/Sq_stable_n_1_alpha_0.001_long.gif', writer='PillowWriter', fps=10)
+    ani_tri = animation.FuncAnimation(fig, animate_tri, interval=1, blit=False, save_count=1000)
+    ani_tri.save('./gif/square_sponge.gif', writer='PillowWriter', fps=10)
 
 # triangular
 if False:

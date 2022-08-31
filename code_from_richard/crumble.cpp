@@ -2362,7 +2362,6 @@ class Hexagonal_lattice {
       return dir;
     }
 
-
     auto neighbours_dir(unsigned n) const {
 
         // this is only valid for 2d
@@ -2408,7 +2407,6 @@ class Hexagonal_lattice {
         }
         return nbs;
     }
-
 
     auto forward_neighbours(unsigned n, unsigned index) const {
 
@@ -2578,19 +2576,23 @@ class Hexagonal_lattice {
               }
               
               
+              
               // Check that the neighbour count is correct
-              occupied += sites[n].present[i];
+              occupied ++;
               unsigned nbs = 0;
-              for (const auto& m : neighbours(n, i)) {
+              for (const auto& m : neighbours(n, i%2)) {
                   for (unsigned k = 1 - i%2; k < 2 * P.n_max; k+=2){
-                    if (sites[m].occupied[(i+1)%2]) ++nbs;
+                    if (sites[m].occupied[k]) ++nbs;
                   }
               }
-              
-              if (nbs != sites[n].neighbours[i]){
+              if (nbs != sites[n].neighbours[i%2]){
+                cout << n << " " << i%2 << endl;
+                for (const auto& m : neighbours(n, i%2)) {
+                  cout << m << " " << (i+1)%2 << " " << sites[m].present[(i+1)%2] <<  endl;
+                }
+                cout << nbs << " " << sites[n].neighbours[i%2] << endl;
                 return false;
               }
-              
               // Check that mobile particles are active
               if (nbs < 3 * P.n_max && !sites[n].active[i]) return false;
               if (sites[n].active[i]) ++active;
@@ -2600,9 +2602,9 @@ class Hexagonal_lattice {
             }
         }
         // Check we've not lost any particles
+        cout << occupied << " "<< P.N  << " " << active << " " << S.pending() << " " << endl;
         return occupied == P.N && active == S.pending();
     }
-
 
 public:
     unsigned planned_moves;
@@ -4124,11 +4126,12 @@ int main(int argc, char* argv[]) {
         name = "./lars_sim/Data/phase/square_perc_bhyst";
         outputname = name+"_"+occ_p+".txt";
         backward.open(outputname);
-        // foward hysteresis, i.e. start below critical point and move up
+        //foward hysteresis, i.e. start below critical point and move up
         Lattice LB(P, rng);
         double tmax = burnin + until;
         unsigned c = 0;
-        for (double al = 0.0875; al < 0.094 ; al+=0.0001625){
+        
+        for (double al = 0.03; al < 0.5 ; al*=1.15){
           // introducing new alpha
           P.alpha[0] = P.alpha[1] = al;
           LB.set_new_lambda(&LB.tumble, std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size());
@@ -4199,10 +4202,11 @@ int main(int argc, char* argv[]) {
           c++;
         }
 
+        
         Lattice LT(P, rng);
         c = 0;
         t = 0;
-        for (double al = 0.094; al > 0.0875 ; al-=0.0001625){
+        for (double al = 0.5; al > 0.03 ; al/=1.15){
           // introducing new alpha
           P.alpha[0] = P.alpha[1] = al;
           LT.set_new_lambda(&LT.tumble, std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size());
@@ -4223,8 +4227,8 @@ int main(int argc, char* argv[]) {
             values_mot_b.push_back(LT.motility_fraction());
             rel_mass_b += double(LT.max_cluster_size_nr())/double(P.N);
             mean_b += LT.motility_fraction();
-            values_per_b.push_back(LB.perimeter()/double(P.N));
-            s_b += LB.perimeter()/double(P.N);
+            values_per_b.push_back(LT.perimeter()/double(P.N));
+            s_b += LT.perimeter()/double(P.N);
             count_b++;
             //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
 
@@ -4277,7 +4281,7 @@ int main(int argc, char* argv[]) {
       else if (output == "motility"){
         if (details==0){
         ofstream outfile;
-        string name = "./lars_sim/Data/motility/square_perc_low";
+        string name = "./lars_sim/Data/motility/square_perc_low_L_50";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
         for (double al = 0.0; al < 0.05 ; al+=0.001){
@@ -4483,8 +4487,8 @@ int main(int argc, char* argv[]) {
         outfile.open("./lars_sim/Data/perimeter/square_"+occ_p+".txt");
         pars.open("./lars_sim/Data/perimeter/square_pars_"+occ_p+".txt");
         unsigned check = 0;
-        for (double alp = 1e-3; alp <= 1.0; alp*=1.5){
-          for (double dens = 0.001; dens <= 0.59; dens+=.034){
+        for (double alp = 1e-3; alp <= 100.0; alp*=1.78){
+          for (double dens = 0.001; dens < 1.0; dens+=.05){
             Parameters P_h;
             P_h.N = unsigned(P.L[0]*P.L[0]*P.n_max*dens);
             P_h.alpha[0] = P.alpha[1] = alp;
@@ -4723,9 +4727,22 @@ int main(int argc, char* argv[]) {
           }
 
       }
+      else if (output == "particles") {
+        ofstream outfile;
+        outfile.open("./lars_sim/gif/square_"+occ_p+".txt");
+
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = L.run_until(burnin + n * every);
+          // only doing a positional output here
+          
+          outfile << ParticleWriter(L, outfile) << endl;
+
+        }
+
+      }
       else {
         ofstream outfile;
-        outfile.open("./lars_sim/gif/square.txt");
+        outfile.open("./lars_sim/gif/square_"+occ_p+".txt");
         for(unsigned n=0; t < burnin + until; ++n) {
           t = L.run_until(burnin + n * every);
           if (output == "particles") outfile << ParticleWriter(L, outfile) << std::endl;
@@ -5000,7 +5017,7 @@ int main(int argc, char* argv[]) {
       }else if (output == "motility"){
         if (details==0){
         ofstream outfile;
-        string name = "./lars_sim/Data/motility/triangular_perc_low";
+        string name = "./lars_sim/Data/motility/triangular_perc_low_L_50";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
         for (double al = 0.0; al < 0.05 ; al+=0.001){
@@ -5246,8 +5263,8 @@ int main(int argc, char* argv[]) {
             values_mot_b.push_back(LT.motility_fraction());
             rel_mass_b += double(LT.max_cluster_size_nr())/double(P.N);
             mean_b += LT.motility_fraction();
-            values_per_b.push_back(LB.perimeter()/double(P.N));
-            s_b += LB.perimeter()/double(P.N);
+            values_per_b.push_back(LT.perimeter()/double(P.N));
+            s_b += LT.perimeter()/double(P.N);
             count_b++;
             //outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
 
@@ -5322,8 +5339,8 @@ int main(int argc, char* argv[]) {
         outfile.open("./lars_sim/Data/perimeter/tri_"+occ_p+".txt");
         pars.open("./lars_sim/Data/perimeter/tri_pars_"+occ_p+".txt");
         unsigned check = 0;
-        for (double alp = 1e-3; alp <= 1.0; alp*=1.5){
-          for (double dens = 0.001; dens <= 0.5; dens+=.03){
+        for (double alp = 1e-3; alp <= 100.0; alp*=1.78){
+          for (double dens = 0.001; dens < 1.0; dens+=.05){
             Parameters P_h;
             P_h.N = unsigned(P.L[0]*P.L[0]*P.n_max*dens);
             P_h.alpha[0] = P.alpha[1] = P.alpha[2] = alp;
@@ -5377,6 +5394,17 @@ int main(int argc, char* argv[]) {
           vec output = TL.occ_array();
           for (const auto& m : output) outfile << m << " ";
           outfile << endl;
+        }
+      } else if (output == "particles") {
+        ofstream outfile;
+        outfile.open("./lars_sim/gif/triangle_"+occ_p+".txt");
+
+        for(unsigned n=0; t < burnin + until; ++n) {
+          t = TL.run_until(burnin + n * every);
+          // only doing a positional output here
+          
+          outfile << TriangleParticleWriter(TL, outfile) << endl;
+
         }
 
       }
@@ -5654,8 +5682,8 @@ int main(int argc, char* argv[]) {
         outfile.open("./lars_sim/Data/perimeter/hex_"+occ_p+".txt");
         pars.open("./lars_sim/Data/perimeter/hex_pars_"+occ_p+".txt");
         unsigned check = 0;
-        for (double alp = 1e-3; alp <= 100.0; alp*=1.78){
-          for (double dens = 0.001; dens < 1.0; dens+=.05){
+        for (double alp = 1e-3; alp <= 100.0; alp*=2.4){
+          for (double dens = 0.001; dens < 1.0; dens+=.08){
             Parameters P_h;
             P_h.N = unsigned(P.L[0]*P.L[0]*P.n_max*2*dens);
             P_h.alpha[0] = P.alpha[1] = P.alpha[2] = alp;
@@ -5706,10 +5734,10 @@ int main(int argc, char* argv[]) {
       else if (output == "motility"){
         if (details==0){
         ofstream outfile;
-        string name = "./lars_sim/Data/motility/hexagonal_perc_low";
+        string name = "./lars_sim/Data/motility/hexagonal_perc_testing";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
-        for (double al = 0.0; al < 0.05 ; al+=0.001){
+        for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
           Hexagonal_lattice LB(P, rng);
@@ -6212,7 +6240,7 @@ int main(int argc, char* argv[]) {
       }
       /else if (output == "motility"){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/square_perc_low.txt");
+        outfile.open("./lars_sim/Data/motility/square_perc_low_L_50.txt");
         for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1]  = al;
@@ -6293,8 +6321,8 @@ int main(int argc, char* argv[]) {
         outfile.open("./lars_sim/Data/perimeter/square_"+occ_p+".txt");
         pars.open("./lars_sim/Data/perimeter/square_pars_"+occ_p+".txt");
         unsigned check = 0;
-        for (double alp = 1e-3; alp <= 1.0; alp*=3.9){
-          for (double dens = 0.001; dens <= 0.59; dens+=.13){
+        for (double alp = 1e-3; alp <= 100.0; alp*=1.78){
+          for (double dens = 0.001; dens < 1.0; dens+=.05){
             Parameters P_h;
             P_h.N = unsigned(P.L[0]*P.L[0]*P.n_max*dens);
             P_h.alpha[0] = P.alpha[1] = alp;
@@ -6568,7 +6596,7 @@ int main(int argc, char* argv[]) {
         }
       }else if (output == "motility"){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/triangular_perc_low.txt");
+        outfile.open("./lars_sim/Data/motility/triangular_perc_low_L_50.txt");
         for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
@@ -6653,8 +6681,8 @@ int main(int argc, char* argv[]) {
         outfile.open("./lars_sim/Data/perimeter/tri_"+occ_p+".txt");
         pars.open("./lars_sim/Data/perimeter/tri_pars_"+occ_p+".txt");
         unsigned check = 0;
-        for (double alp = 1e-3; alp <= 1.0; alp*=3.9){
-          for (double dens = 0.001; dens <= 0.5; dens+=.12){
+        for (double alp = 1e-3; alp <= 100.0; alp*=1.78){
+          for (double dens = 0.001; dens < 1.0; dens+=.05){
             Parameters P_h;
             P_h.N = unsigned(P.L[0]*P.L[0]*P.n_max*dens);
             P_h.alpha[0] = P.alpha[1] = P.alpha[2] = alp;
@@ -6924,8 +6952,8 @@ int main(int argc, char* argv[]) {
         outfile.open("./lars_sim/Data/perimeter/hex_"+occ_p+".txt");
         pars.open("./lars_sim/Data/perimeter/hex_pars_"+occ_p+".txt");
         unsigned check = 0;
-        for (double alp = 1e-3; alp <= 1.0; alp*=3.9){
-          for (double dens = 0.001; dens <= 0.69; dens+=.15){
+        for (double alp = 1e-3; alp <= 100.0; alp*=2.4){
+          for (double dens = 0.001; dens < 1.0; dens+=.08){
             Parameters P_h;
             P_h.N = unsigned(P.L[0]*P.L[0]*P.n_max*dens*2);
             P_h.alpha[0] = P.alpha[1] = P.alpha[2]= alp;
@@ -7016,7 +7044,7 @@ int main(int argc, char* argv[]) {
 
       }else if (output == "motility"){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/motility/hexagonal_perc_low.txt");
+        outfile.open("./lars_sim/Data/motility/hexagonal_perc_low_L_50.txt");
         for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;

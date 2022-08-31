@@ -526,35 +526,147 @@ if False:
 
     plt.savefig("./plots/M_comp.pdf", dpi=300, bbox_inches='tight')
 
+# M comp 1
+if True:
+    fig2, ax = plt.subplots(nrows=3, ncols=3,  sharex=True, figsize=(30,30), constrained_layout=True)
+    #plt.tight_layout()
+    #ax2 = ax[0,0].twinx()
+    #ax2.plot(data_squ_1[:, 0], data_squ_1[:, 5-2]*4700, "d", color="red", label=r"$NM, L=100$", ms=10)
+    #ax2.plot(data_squ_1_L_50[:, 0], data_squ_1_L_50[:, 5-2]*1200, "x", color="red", label=r"$NM, L=50$", ms=10)
+    ax[0, 0].plot(data_squ_1_L_50[:, 0], data_squ_1[:, 5-2]-data_squ_1_L_50[:, 5-2], "s-", color="black", label=r"$M$", ms=10)
+    ax[0, 0].plot(data_squ_1_L_50[:, 0], (data_squ_1[:, 5-2]*4700-data_squ_1_L_50[:, 5-2]*1200)/(4700-1200), "s-", color="red", label=r"$NM$", ms=10)
+    #ax[0, 0].plot(data_squ_1[:, 0], data_squ_1[:, 5-2], "s", color="black", label=r"$M, L=100$", ms=10)
+    ax[0, 0].set_ylabel(r"$\Delta M, \Delta NM$")
+    #ax2.set_ylabel(r"$NM$")
+    #ax2.legend(loc=7, bbox_to_anchor=(1.05, 1))
+    #ax[0, 0].set_yscale("log")
+    ax[0, 0].legend()
+    ax[0, 0].grid()
+
+    #ax3 = ax[0,1].twinx()
+    ax[0, 1].plot(data_squ_2_L_50[:, 0], data_squ_2[:, 5-2]-data_squ_2_L_50[:, 5-2], "s-", color="black", label=r"$M_{100}-M_{50}$", ms=10)
+    ax[0, 1].plot(data_squ_2_L_50[:, 0], (data_squ_2[:, 5-2]*5500-data_squ_2_L_50[:, 5-2]*1400)/(5500-1400), "s-", color="red", label=r"$(M_{100}N_{100}-M_{50}N_{50})/(N_{100}-N_{50})$", ms=10)
+    #ax3.plot(data_squ_2[:, 0], data_squ_2[:, 5-2]*5500, "d", color="red", label=r"$NM, L=100$", ms=10)
+    #ax3.plot(data_squ_2_L_50[:, 0], data_squ_2_L_50[:, 5-2]*1400, "x", color="red", label=r"$NM, L=50$", ms=10)
+    #ax[0, 1].plot(data_squ_2_L_50[:, 0], data_squ_2_L_50[:, 5-2], "x", color="black", label=r"$M, L=50$", ms=10)
+    #ax[0, 1].plot(data_squ_2[:, 0], data_squ_2[:, 5-2], "s", color="black", label=r"$M, L=100$", ms=10)
+    #ax[0, 1].set_ylabel(r"$M$")
+    #ax3.set_ylabel(r"$NM$")
+    #ax3.legend(loc=7)
+    #ax[0, 0].set_yscale("log")
+    #ax[0, 1].legend(loc=1)
+    ax[0, 1].grid()
+
+    #ax4 = ax[0,2].twinx()
+    #ax4.plot(data_squ_3[:, 0], data_squ_3[:, 5-2]*5800, "d", color="red", label=r"$NM, L=100$", ms=10)
+    #ax4.plot(data_squ_3_L_50[:, 0], data_squ_3_L_50[:, 5-2]*1500, "x", color="red", label=r"$NM, L=50$", ms=10)
+    #ax[0, 2].plot(data_squ_3_L_50[:, 0], data_squ_3_L_50[:, 5-2], "x", color="black", label=r"$M, L=50$", ms=10)
+    #ax[0, 2].plot(data_squ_3[:, 0], data_squ_3[:, 5-2], "s", color="black", label=r"$M, L=100$", ms=10)
+    ax[0, 2].plot(data_squ_3_L_50[:, 0], data_squ_3[:, 5-2]-data_squ_3_L_50[:, 5-2], "s-", color="black", label=r"$M_{100}-M_{50}$", ms=10)
+    ax[0, 2].plot(data_squ_3_L_50[:, 0], (data_squ_3[:, 5-2]*5800-data_squ_3_L_50[:, 5-2]*1500)/(5800-1500), "s-", color="red", label=r"$(M_{100}N_{100}-M_{50}N_{50})/(N_{100}-N_{50})$", ms=10)
+    #ax[0, 2].set_ylabel(r"$M$")
+    #ax4.set_ylabel(r"$NM$")
+    #ax4.legend(loc=7)
+    #ax[0, 0].set_yscale("log")
+    #ax[0, 2].legend(loc=1)
+    ax[0, 2].grid()
 
 
 
+    #ax5 = ax[1,0].twinx()
+    #ax5.plot(data_hex_1[:, 0], data_hex_1[:, 5-2]*11000, "d", color="red", label=r"$NM, L=100$", ms=10)
+    #ax5.plot(data_hex_1_L_50[:, 0], data_hex_1_L_50[:, 5-2]*2800, "x", color="red", label=r"$NM, L=50$", ms=10)
+    #ax[1, 0].plot(data_hex_1_L_50[:, 0], data_hex_1_L_50[:, 5-2], "x", color="black", label=r"$M, L=50$", ms=10)
+    #ax[1, 0].plot(data_hex_1[:, 0], data_hex_1[:, 5-2], "s", color="black", label=r"$M, L=100$", ms=10)
+    ax[1, 0].plot(data_hex_1_L_50[:, 0], data_hex_1[:, 5-2]-data_hex_1_L_50[:, 5-2], "s-", color="black", label=r"$M_{100}-M_{50}$", ms=10)
+    ax[1, 0].plot(data_hex_1_L_50[:, 0], (data_hex_1[:, 5-2]*11000-data_hex_1_L_50[:, 5-2]*2800)/(11000-2800), "s-", color="red", label=r"$(M_{100}N_{100}-M_{50}N_{50})/(N_{100}-N_{50})$", ms=10)
+    ax[1, 0].set_ylabel(r"$\Delta M, \Delta NM$")
+    #ax5.set_ylabel(r"$NM$")
+    #ax5.legend(loc=7)
+    #ax[0, 0].set_yscale("log")
+    #ax[1, 0].legend(loc=1)
+    ax[1, 0].grid()
+
+    #ax6 = ax[1,1].twinx()
+    #ax6.plot(data_hex_2[:, 0], data_hex_2[:, 5-2]*13200, "d", color="red", label=r"$NM, L=100$", ms=10)
+    #ax6.plot(data_hex_2_L_50[:, 0], data_hex_2_L_50[:, 5-2]*3300, "x", color="red", label=r"$NM, L=50$", ms=10)
+    #ax[1, 1].plot(data_hex_2_L_50[:, 0], data_hex_2_L_50[:, 5-2], "x", color="black", label=r"$M, L=50$", ms=10)
+    #ax[1, 1].plot(data_hex_2[:, 0], data_hex_2[:, 5-2], "s", color="black", label=r"$M, L=100$", ms=10)
+    ax[1, 1].plot(data_hex_2_L_50[:, 0], data_hex_2[:, 5-2]-data_hex_2_L_50[:, 5-2], "s-", color="black", label=r"$M_{100}-M_{50}$", ms=10)
+    ax[1, 1].plot(data_hex_2_L_50[:, 0], (data_hex_2[:, 5-2]*13200-data_hex_2_L_50[:, 5-2]*3300)/(13200-3300), "s-", color="red", label=r"$(M_{100}N_{100}-M_{50}N_{50})/(N_{100}-N_{50})$", ms=10)
+    ##ax[1, 1].set_ylabel(r"$M$")
+    #ax6.set_ylabel(r"$NM$")
+    #ax6.legend(loc=7)
+    #ax[0, 0].set_yscale("log")
+    #ax[1, 1].legend(loc=1)
+    ax[1, 1].grid()
+
+    #ax7 = ax[1,2].twinx()
+    #ax7.plot(data_hex_3[:, 0], data_hex_3[:, 5-2]*14100, "d", color="red", label=r"$NM, L=100$", ms=10)
+    #ax7.plot(data_hex_3_L_50[:, 0], data_hex_3_L_50[:, 5-2]*3500, "x", color="red", label=r"$NM, L=50$", ms=10)
+    #ax[1, 2].plot(data_hex_3_L_50[:, 0], data_hex_3_L_50[:, 5-2], "x", color="black", label=r"$M, L=50$", ms=10)
+    #ax[1, 2].plot(data_hex_3[:, 0], data_hex_3[:, 5-2], "s", color="black", label=r"$M, L=100$", ms=10)
+    ax[1, 2].plot(data_hex_3_L_50[:, 0], data_hex_3[:, 5-2]-data_hex_3_L_50[:, 5-2], "s-", color="black", label=r"$M_{100}-M_{50}$", ms=10)
+    ax[1, 2].plot(data_hex_3_L_50[:, 0], (data_hex_3[:, 5-2]*14100-data_hex_3_L_50[:, 5-2]*3500)/(14100-3500), "s-", color="red", label=r"$(M_{100}N_{100}-M_{50}N_{50})/(N_{100}-N_{50})$", ms=10)
+    #ax[1, 2].set_ylabel(r"$M$")
+    #ax7.set_ylabel(r"$NM$")
+    #ax7.legend(loc=7)
+    #ax[0, 0].set_yscale("log")
+    #ax[1, 2].legend(loc=1)
+    ax[1, 2].grid()
 
 
+    #ax8 = ax[2,0].twinx()
+    #ax8.plot(data_tri_1[:, 0], data_tri_1[:, 5-2]*4000, "d", color="red", label=r"$NM, L=100$", ms=10)
+    #ax8.plot(data_tri_1_L_50[:, 0], data_tri_1_L_50[:, 5-2]*1000, "x", color="red", label=r"$NM, L=50$", ms=10)
+    #ax[2, 0].plot(data_tri_1_L_50[:, 0], data_tri_1_L_50[:, 5-2], "x", color="black", label=r"$M, L=50$", ms=10)
+    #ax[2, 0].plot(data_tri_1[:, 0], data_tri_1[:, 5-2], "s", color="black", label=r"$M, L=100$", ms=10)
+    ax[2, 0].plot(data_tri_1_L_50[:, 0], data_tri_1[:, 5-2]-data_tri_1_L_50[:, 5-2], "s-", color="black", label=r"$M_{100}-M_{50}$", ms=10)
+    ax[2, 0].plot(data_tri_1_L_50[:, 0], (data_tri_1[:, 5-2]*4000-data_tri_1_L_50[:, 5-2]*1000)/(4000-1000), "s-", color="red", label=r"$(M_{100}N_{100}-M_{50}N_{50})/(N_{100}-N_{50})$", ms=10)
+    ax[2, 0].set_ylabel(r"$\Delta M, \Delta NM$")
+    ax[2, 0].set_xlabel(r"$\alpha$")
+    #ax8.set_ylabel(r"$NM$")
+    #ax8.legend(loc=7)
+    #ax[0, 0].set_yscale("log")
+    #ax[2, 0].legend(loc=1)
+    ax[2, 0].grid()
+
+    #ax9 = ax[2,1].twinx()
+    #ax9.plot(data_tri_2[:, 0], data_tri_2[:, 5-2]*4500, "d", color="red", label=r"$NM, L=100$", ms=10)
+    #ax9.plot(data_tri_2_L_50[:, 0], data_tri_2_L_50[:, 5-2]*1100, "x", color="red", label=r"$NM, L=50$", ms=10)
+    #ax[2, 1].plot(data_tri_2_L_50[:, 0], data_tri_2_L_50[:, 5-2], "x", color="black", label=r"$M, L=50$", ms=10)
+    #ax[2, 1].plot(data_tri_2[:, 0], data_tri_2[:, 5-2], "s", color="black", label=r"$M, L=100$", ms=10)
+    ax[2, 1].plot(data_tri_2_L_50[:, 0], data_tri_2[:, 5-2]-data_tri_2_L_50[:, 5-2], "s-", color="black", label=r"$M_{100}-M_{50}$", ms=10)
+    ax[2, 1].plot(data_tri_2_L_50[:, 0], (data_tri_2[:, 5-2]*4500-data_tri_2_L_50[:, 5-2]*1100)/(4500-1100), "s-", color="red", label=r"$(M_{100}N_{100}-M_{50}N_{50})/(N_{100}-N_{50})$", ms=10)
+    #ax[2, 1].set_ylabel(r"$M$")
+    #ax9.set_ylabel(r"$NM$")
+    ax[2, 1].set_xlabel(r"$\alpha$")
+    #ax9.legend(loc=7)
+    #ax[0, 0].set_yscale("log")
+    #ax[2, 1].legend(loc=1)
+    ax[2, 1].grid()
 
 
+    #ax21 = ax[2,2].twinx()
+    #ax21.plot(data_tri_3[:, 0], data_tri_3[:, 5-2]*4700, "d", color="red", label=r"$NM, L=100$", ms=10)
+    #ax21.plot(data_tri_3_L_50[:, 0], data_tri_3_L_50[:, 5-2]*1200, "x", color="red", label=r"$NM, L=50$", ms=10)
+    #ax[2, 2].plot(data_tri_3_L_50[:, 0], data_tri_3_L_50[:, 5-2], "x", color="black", label=r"$M, L=50$", ms=10)
+    #ax[2, 2].plot(data_tri_3[:, 0], data_tri_3[:, 5-2], "s", color="black", label=r"$M, L=100$", ms=10)
+    #ax[2, 2].set_ylabel(r"$M$")
+    ax[2, 2].plot(data_tri_3_L_50[:, 0], data_tri_3[:, 5-2]-data_tri_3_L_50[:, 5-2], "s-", color="black", label=r"$M_{100}-M_{50}$", ms=10)
+    ax[2, 2].plot(data_tri_3_L_50[:, 0], (data_tri_3[:, 5-2]*4700-data_tri_3_L_50[:, 5-2]*1200)/(4700-1200), "s-", color="red", label=r"$(M_{100}N_{100}-M_{50}N_{50})/(N_{100}-N_{50})$", ms=10)
+    ax[2, 2].set_xlabel(r"$\alpha$")
+    #ax21.set_ylabel(r"$NM$")
+    #ax21.legend(loc=7)
+    #ax[0, 0].set_yscale("log")
+    #ax[2, 2].legend(loc=1)
+    ax[2, 2].grid()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    plt.savefig("./plots/M_comp_diff.pdf", dpi=300, bbox_inches='tight')
 
 #Hysteresis
-if True:
+if False:
     plt.rcParams.update({'font.size': 40})
     hex_for_L_50 = np.genfromtxt("./Data/motility/hexagonal_perc_fhyst_L_50_3.txt", delimiter=" ")
     hex_back_L_50 = np.genfromtxt("./Data/motility/hexagonal_perc_bhyst_L_50_3.txt", delimiter=" ")
@@ -620,17 +732,18 @@ The following is for 0.2 percolation threshold!
 """
 
 
-data_hex_1 = np.genfromtxt("./Data/motility/hexagonal_perc_low.txt", delimiter=" ")
-data_hex_2 = np.genfromtxt("./Data/motility/hexagonal_perc_low_2.txt", delimiter=" ")
-data_hex_3 = np.genfromtxt("./Data/motility/hexagonal_perc_low_3.txt", delimiter=" ")
-data_tri_1 = np.genfromtxt("./Data/motility/triangular_perc_low.txt", delimiter=" ")
-data_tri_2 = np.genfromtxt("./Data/motility/triangular_perc_low_2.txt", delimiter=" ")
-data_tri_3 = np.genfromtxt("./Data/motility/triangular_perc_low_3.txt", delimiter=" ")
-data_squ_1 = np.genfromtxt("./Data/motility/square_perc_low.txt", delimiter=" ")
-data_squ_2 = np.genfromtxt("./Data/motility/square_perc_low_2.txt", delimiter=" ")
-data_squ_3 = np.genfromtxt("./Data/motility/square_perc_low_3.txt", delimiter=" ")
+
 
 if False:
+    data_hex_1 = np.genfromtxt("./Data/motility/hexagonal_perc_low.txt", delimiter=" ")
+    data_hex_2 = np.genfromtxt("./Data/motility/hexagonal_perc_low_2.txt", delimiter=" ")
+    data_hex_3 = np.genfromtxt("./Data/motility/hexagonal_perc_low_3.txt", delimiter=" ")
+    data_tri_1 = np.genfromtxt("./Data/motility/triangular_perc_low.txt", delimiter=" ")
+    data_tri_2 = np.genfromtxt("./Data/motility/triangular_perc_low_2.txt", delimiter=" ")
+    data_tri_3 = np.genfromtxt("./Data/motility/triangular_perc_low_3.txt", delimiter=" ")
+    data_squ_1 = np.genfromtxt("./Data/motility/square_perc_low.txt", delimiter=" ")
+    data_squ_2 = np.genfromtxt("./Data/motility/square_perc_low_2.txt", delimiter=" ")
+    data_squ_3 = np.genfromtxt("./Data/motility/square_perc_low_3.txt", delimiter=" ")
     fig, ax = plt.subplots(nrows=3, ncols=3,  sharex=True, sharey=True, figsize=(20,20))
     plt.tight_layout()
     ax[0, 0].errorbar(data_squ_1[:, 0], data_squ_1[:, 1], yerr=np.sqrt(data_squ_1[:, 2]), fmt="s", color="red", label=r"$J$")
@@ -701,3 +814,86 @@ if False:
     ax[2, 2].legend()
     ax[2, 2].grid()
     plt.savefig("./plots/motility_perc_low.pdf", dpi=150, bbox_inches='tight')
+
+
+
+if False:
+    data_hex_1 = np.genfromtxt("./Data/motility/hexagonal_perc_low_L_50.txt", delimiter=" ")
+    data_hex_2 = np.genfromtxt("./Data/motility/hexagonal_perc_low_L_50_2.txt", delimiter=" ")
+    data_hex_3 = np.genfromtxt("./Data/motility/hexagonal_perc_low_L_50_3.txt", delimiter=" ")
+    data_tri_1 = np.genfromtxt("./Data/motility/triangular_perc_low_L_50.txt", delimiter=" ")
+    data_tri_2 = np.genfromtxt("./Data/motility/triangular_perc_low_L_50_2.txt", delimiter=" ")
+    data_tri_3 = np.genfromtxt("./Data/motility/triangular_perc_low_L_50_3.txt", delimiter=" ")
+    data_squ_1 = np.genfromtxt("./Data/motility/square_perc_low_L_50.txt", delimiter=" ")
+    data_squ_2 = np.genfromtxt("./Data/motility/square_perc_low_L_50_2.txt", delimiter=" ")
+    data_squ_3 = np.genfromtxt("./Data/motility/square_perc_low_L_50_3.txt", delimiter=" ")
+    fig, ax = plt.subplots(nrows=3, ncols=3,  sharex=True, sharey=True, figsize=(20,20))
+    plt.tight_layout()
+    ax[0, 0].errorbar(data_squ_1[:, 0], data_squ_1[:, 1], yerr=np.sqrt(data_squ_1[:, 2]), fmt="s", color="red", label=r"$J$")
+    ax[0, 0].errorbar(data_squ_1[:, 0], data_squ_1[:, 3], yerr=np.sqrt(data_squ_1[:, 4]), fmt="o", color="blue", label=r"$M$")
+    ax[0, 0].errorbar(data_squ_1[:, 0], data_squ_1[:, 5], yerr=np.sqrt(data_squ_1[:, 6]), fmt="x", color="black", label=r"$w_N$")
+    ax[0, 0].set_ylabel(r"$J,M$")
+    #ax[0, 0].set_yscale("log")
+    ax[0, 0].legend()
+    ax[0, 0].grid()
+    ax[0, 0].axis([-0.005, 0.055, -0.005, 1.005])
+
+    ax[0, 1].errorbar(data_squ_2[:, 0], data_squ_2[:, 1], yerr=np.sqrt(data_squ_2[:, 2]), fmt="s", color="red", label=r"$J$")
+    ax[0, 1].errorbar(data_squ_2[:, 0], data_squ_2[:, 3], yerr=np.sqrt(data_squ_2[:, 4]), fmt="o", color="blue", label=r"$M$")
+    ax[0, 1].errorbar(data_squ_2[:, 0], data_squ_2[:, 5], yerr=np.sqrt(data_squ_2[:, 6]), fmt="x", color="black", label=r"$w_N$")
+    ax[0, 1].legend()
+    ax[0, 1].grid()
+
+    ax[0, 2].errorbar(data_squ_3[:, 0], data_squ_3[:, 1], yerr=np.sqrt(data_squ_3[:, 2]), fmt="s", color="red", label=r"$J$")
+    ax[0, 2].errorbar(data_squ_3[:, 0], data_squ_3[:, 3], yerr=np.sqrt(data_squ_3[:, 4]), fmt="o", color="blue", label=r"$M$")
+    ax[0, 2].errorbar(data_squ_3[:, 0], data_squ_3[:, 5], yerr=np.sqrt(data_squ_3[:, 6]), fmt="x", color="black", label=r"$w_N$")
+    #ax[0, 2].errorbar(data_squ_3_det[:, 0], data_squ_3_det[:, 1], yerr=np.sqrt(data_squ_3_det[:, 2]), fmt="s", color="red")
+    #ax[0, 2].errorbar(data_squ_3_det[:, 0], data_squ_3_det[:, 3], yerr=np.sqrt(data_squ_3_det[:, 4]), fmt="o", color="blue")
+    ax[0, 2].legend()
+    ax[0, 2].grid()
+
+    ax[1, 0].errorbar(data_hex_1[:, 0], data_hex_1[:, 1], yerr=np.sqrt(data_hex_1[:, 2]), fmt="s", color="red", label=r"$J$")
+    ax[1, 0].errorbar(data_hex_1[:, 0], data_hex_1[:, 3], yerr=np.sqrt(data_hex_1[:, 4]), fmt="o", color="blue", label=r"$M$")
+    ax[1, 0].errorbar(data_hex_1[:, 0], data_hex_1[:, 5], yerr=np.sqrt(data_hex_1[:, 6]), fmt="x", color="black", label=r"$w_N$")
+    ax[1, 0].set_ylabel(r"$J,M$")
+    ax[1, 0].legend()
+    ax[1, 0].grid()
+
+    ax[1, 1].errorbar(data_hex_2[:, 0], data_hex_2[:, 1], yerr=np.sqrt(data_hex_2[:, 2]), fmt="s", color="red", label=r"$J$")
+    ax[1, 1].errorbar(data_hex_2[:, 0], data_hex_2[:, 3], yerr=np.sqrt(data_hex_2[:, 4]), fmt="o", color="blue", label=r"$M$")
+    ax[1, 1].errorbar(data_hex_2[:, 0], data_hex_2[:, 5], yerr=np.sqrt(data_hex_2[:, 6]), fmt="x", color="black", label=r"$w_N$")
+    ax[1, 1].legend()
+    ax[1, 1].grid()
+
+    ax[1, 2].errorbar(data_hex_3[:, 0], data_hex_3[:, 1], yerr=np.sqrt(data_hex_3[:, 2]), fmt="s", color="red", label=r"$J$")
+    ax[1, 2].errorbar(data_hex_3[:, 0], data_hex_3[:, 3], yerr=np.sqrt(data_hex_3[:, 4]), fmt="o", color="blue", label=r"$M$")
+    ax[1, 2].errorbar(data_hex_3[:, 0], data_hex_3[:, 5], yerr=np.sqrt(data_hex_3[:, 6]), fmt="x", color="black", label=r"$w_N$")
+    #ax[1, 2].errorbar(data_hex_3_det[:, 0], data_hex_3_det[:, 1], yerr=np.sqrt(data_hex_3_det[:, 2]), fmt="s", color="red")
+    #ax[1, 2].errorbar(data_hex_3_det[:, 0], data_hex_3_det[:, 3], yerr=np.sqrt(data_hex_3_det[:, 4]), fmt="o", color="blue")
+    ax[1, 2].legend()
+    ax[1, 2].grid()
+
+    ax[2, 0].errorbar(data_tri_1[:, 0], data_tri_1[:, 1], yerr=np.sqrt(data_tri_1[:, 2]), fmt="s", color="red", label=r"$J$")
+    ax[2, 0].errorbar(data_tri_1[:, 0], data_tri_1[:, 3], yerr=np.sqrt(data_tri_1[:, 4]), fmt="o", color="blue", label=r"$M$")
+    ax[2, 0].errorbar(data_tri_1[:, 0], data_tri_1[:, 5], yerr=np.sqrt(data_tri_1[:, 6]), fmt="x", color="black", label=r"$w_N$")
+    ax[2, 0].set_ylabel(r"$J,M$")
+    ax[2, 0].set_xlabel(r"$\alpha$")
+    ax[2, 0].legend()
+    ax[2, 0].grid()
+
+    ax[2, 1].errorbar(data_tri_2[:, 0], data_tri_2[:, 1], yerr=np.sqrt(data_tri_2[:, 2]), fmt="s", color="red", label=r"$J$")
+    ax[2, 1].errorbar(data_tri_2[:, 0], data_tri_2[:, 3], yerr=np.sqrt(data_tri_2[:, 4]), fmt="o", color="blue", label=r"$M$")
+    ax[2, 1].errorbar(data_tri_2[:, 0], data_tri_2[:, 5], yerr=np.sqrt(data_tri_2[:, 6]), fmt="x", color="black", label=r"$w_N$")
+    ax[2, 1].set_xlabel(r"$\alpha$")
+    ax[2, 1].legend()
+    ax[2, 1].grid()
+
+    ax[2, 2].errorbar(data_tri_3[:, 0], data_tri_3[:, 1], yerr=np.sqrt(data_tri_3[:, 2]), fmt="s", color="red", label=r"$J$")
+    ax[2, 2].errorbar(data_tri_3[:, 0], data_tri_3[:, 3], yerr=np.sqrt(data_tri_3[:, 4]), fmt="o", color="blue", label=r"$M$")
+    ax[2, 2].errorbar(data_tri_3[:, 0], data_tri_3[:, 5], yerr=np.sqrt(data_tri_3[:, 6]), fmt="x", color="black", label=r"$w_N$")
+    #ax[2, 2].errorbar(data_tri_3_det[:, 0], data_tri_3_det[:, 1], yerr=np.sqrt(data_tri_3_det[:, 2]), fmt="s", color="red")
+    #ax[2, 2].errorbar(data_tri_3_det[:, 0], data_tri_3_det[:, 3], yerr=np.sqrt(data_tri_3_det[:, 4]), fmt="o", color="blue")
+    ax[2, 2].set_xlabel(r"$\alpha$")
+    ax[2, 2].legend()
+    ax[2, 2].grid()
+    plt.savefig("./plots/motility_perc_low_L_50.pdf", dpi=150, bbox_inches='tight')

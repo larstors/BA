@@ -626,6 +626,7 @@ class distribution:
 
 
     def plot_alpha(self):
+        size = 22
         # square
         if True:
             #data_alpha_00001 = np.genfromtxt("./tumblerate/square_alpha0.0001000_phi0.47_L100_1.txt", delimiter=" ")[0::2]
@@ -675,7 +676,7 @@ class distribution:
             """
 
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
+            plt.rcParams.update({'font.size': size})
             #plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
             plt.loglog(x_0001 + 1, 1-np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
             plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
@@ -691,7 +692,7 @@ class distribution:
             
             
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
+            plt.rcParams.update({'font.size': size})
             #plt.loglog(x_00001 + 1, data_alpha_00001, "r-", label=r"$\alpha=0.0001$")
             plt.loglog(x_0001 + 1, data_alpha_0001, "g-", label=r"$\alpha=0.001$")
             plt.loglog(x_001 + 1, data_alpha_001, "b-", label=r"$\alpha=0.01$")
@@ -754,7 +755,7 @@ class distribution:
             """
 
             fig = plt.figure(figsize=(9.6, 7.2), tight_layout=True)
-            plt.rcParams.update({'font.size': 18})
+            plt.rcParams.update({'font.size': size})
             #plt.loglog(x_00001 + 1, 1-np.cumsum(data_alpha_00001), "r-", label=r"$\alpha=0.0001$")
             plt.loglog(x_0001 + 1, 1-np.cumsum(data_alpha_0001), "g-", label=r"$\alpha=0.001$")
             plt.loglog(x_001 + 1, 1-np.cumsum(data_alpha_001), "b-", label=r"$\alpha=0.01$")
@@ -763,7 +764,7 @@ class distribution:
             plt.loglog(x_1 + 1, 1-np.cumsum(data_alpha_1), "y-", label=r"$\alpha=1$")
             plt.axis([1, 5e3, 1e-7, 1])
             plt.xlabel(r"Cluster size $k$")
-            plt.ylabel(r"CDF $1-C(k)$")
+            plt.ylabel(r"$1-C(k)$")
             plt.legend()
             plt.grid()
             plt.savefig("./plots/hex_alpha.pdf", dpi=200)
@@ -1407,7 +1408,7 @@ class distribution:
             ax[1].set_xlabel(r"Time $t$")
 
             plt.savefig("./plots/time_3.pdf", dpi=200, bbox_inches='tight')
-        plt.rcParams.update({'font.size': 14})
+        plt.rcParams.update({'font.size': 18})
         # ############################### SQUARE DATA #################################
         data_1_square = np.genfromtxt("./number/square_number_alpha0.100_phi0.47_L100.txt", delimiter=" ")
         data_2_square = np.genfromtxt("./number/square_number_alpha0.010_phi0.47_L100.txt", delimiter=" ")
@@ -1455,7 +1456,7 @@ class distribution:
         data_12_hex = np.genfromtxt("./number/hex_number_alpha0.000_phi1.41_L100_3.txt", delimiter=" ")
 
         # Square
-        if False:
+        if True:
             # ###################################### FIG 1 ################################################
 
             fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
@@ -1643,7 +1644,7 @@ class distribution:
                 plt.savefig("./plots/square_comp_n_alpha_0.pdf", dpi=200, bbox_inches='tight')
 
         # Tri
-        if True:
+        if False:
             # ###################################### FIG 1 ################################################
 
             fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
@@ -1831,7 +1832,7 @@ class distribution:
                 plt.savefig("./plots/tri_comp_n_alpha_0.pdf", dpi=200, bbox_inches='tight')
 
         # Hex
-        if True:
+        if False:
             # ###################################### FIG 1 ################################################
 
             fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
@@ -2020,7 +2021,7 @@ class distribution:
                 plt.savefig("./plots/hex_comp_n_alpha_0.pdf", dpi=200, bbox_inches='tight')
 
         # comparison of lattices given n and alpha
-        if False:
+        if True:
             # ###################################### FIG 1 ################################################
 
             fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
@@ -2476,10 +2477,10 @@ if __name__ == "__main__":
     dist = distribution()
 
     #dist.plot_lattice_type()
-    #dist.plot_time_evolution()
+    dist.plot_time_evolution()
 
     #dist.plot_heat()
-    dist.plot_alpha()
+    #dist.plot_alpha()
     #dist.plot_cum_hex()
     #plt.show()
     #dist.plot_square_L()
