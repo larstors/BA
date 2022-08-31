@@ -24,8 +24,8 @@ if (n == 1 and True):
 
     t = svk_1[:, 0]
 
-    tlow = t[t <= 200]
-    thigh = t[t > 300]
+    tlow = t[t <= 150]
+    thigh = t[t > 1000]
 
     def fit (x, a, b):
         return x ** a * b

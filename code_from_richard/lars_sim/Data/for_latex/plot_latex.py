@@ -19,6 +19,8 @@ colormap = cm.inferno
 print("L?")
 L = int(input())
 
+print("n?")
+n = int(input())
 
 f = open("triangle.txt")
 tr = []
@@ -72,7 +74,7 @@ triang = trian()
 
 fig1 = plt.figure()
 plt.triplot(triang, 'r-', alpha=1, linewidth=0.5, zorder=1)
-plt.scatter(tri_conv(n_tr)[0], tri_conv(n_tr)[1], c=p_tr, cmap="Greens", s=100, vmin=0, vmax=3, marker="s", zorder=2)
+plt.scatter(tri_conv(n_tr)[0], tri_conv(n_tr)[1], c=p_tr, cmap="Greens", s=100, vmin=0, vmax=n, marker="s", zorder=2)
 #plt.axis("off")
 #plt.savefig("tri_ex.pdf", dpi=100)
 plt.show()
@@ -171,7 +173,7 @@ def grid_plot():
 
 fig2 = plt.figure()
 grid_plot()
-plt.scatter(hex_cor(n_hx, i_hx)[0], hex_cor(n_hx, i_hx)[1], c=p_hx, cmap="Greens", s=100, vmin=0, vmax=3, marker="s", zorder=2)
+plt.scatter(hex_cor(n_hx, i_hx)[0], hex_cor(n_hx, i_hx)[1], c=p_hx, cmap="Greens", s=100, vmin=0, vmax=n, marker="s", zorder=2)
 plt.axis("off")
 plt.savefig("hex_ex.pdf", dpi=100)
 #plt.show()

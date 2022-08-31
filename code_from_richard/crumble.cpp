@@ -48,6 +48,7 @@ struct Parameters {
 template<typename Engine> class SnapshotWriter;
 template<typename Engine> class VacancyWriter;
 template<typename Engine> class ParticleWriter;
+template<typename Engine> class ParticleWriterWID;
 template<typename Engine> class ClusterWriter;
 
 // new writers for the two new lattices
@@ -65,6 +66,8 @@ class Lattice {
   friend class VacancyWriter<Engine>;
   friend class ParticleWriter<Engine>;
   friend class ClusterWriter<Engine>;
+  friend class ParticleWriterWID<Engine>;
+  
 
   static constexpr unsigned n_max = 3; // ! Nicer way of doing this?
     
@@ -189,16 +192,20 @@ class Lattice {
                     sites[n].present--;
                     assert(sites[n].present >= 0);
 
+
+                    // if it looks to the right add 1
+                    if (sites[n].direction[index] == 0){
+                      sites[n].x_coor[index]++;
+                    }
+                    // if it looks to the left remove 1
+                    else if (sites[n].direction[index] == 1){
+                      sites[n].x_coor[index]--;
+                    }
+
+
                     // ONLY FOR TAGGED PARTICLE. check whether it goes across periodic boundary. We only check in x direction (so horisontally)
                     if (sites[n].tagged[index]){
-                      // if it looks to the right add 1
-                      if (sites[n].direction[index] == 0){
-                        sites[n].x_coor[index]++;
-                      }
-                      // if it looks to the left remove 1
-                      else if (sites[n].direction[index] == 1){
-                        sites[n].x_coor[index]--;
-                      }
+                      
                       // if it is on right border and move "over" to left border increase per_hop by one
                       if ((n+1)%P.L[0] == 0 && dnbs[sites[n].direction[index]]%P.L[0]==0){
                          sites[n].per_hop[index]++;
@@ -277,7 +284,7 @@ class Lattice {
             }
             if (nbs != sites[n].neighbours) return false;
             // Check that mobile particles are active
-            if (nbs < 6*P.n_max && !sites[n].active[k]) return false;
+            if (nbs < 4*P.n_max && !sites[n].active[k]) return false;
             if (sites[n].active[k]) ++active;
           }
         }
@@ -329,11 +336,7 @@ public:
           unsigned i = l/sites.size();
           
           place(n, id, initial(rng), 0.0, i, false, 0, 0);
-          // put used index at end of vector
-          //cout << "here?" << endl;
-          //cout << "index " << index << " len " << position.size() << " possi " << possibilities << endl;
           position.erase(position.begin()+index);
-          //cout << "wtf?" << endl;
           position.push_back(l);
           
           
@@ -1074,6 +1077,16 @@ public:
       }
       return x;
     }
+
+    vec_d x_coor_3(){
+      vec_d x = vec_d(P.N);
+      for (int n = 0; n < sites.size(); n++){
+        for (int i = 0; i < P.n_max; i++){
+          if (sites[n].occupied[i]) x[sites[n].id[i]] = sites[n].x_coor[i];
+        }
+      }
+      return x;
+    }
 };
 
 // ! Following classes are additions by Lars. Note that in the triangular case it is just the one as above with some very slight adjustments
@@ -1129,19 +1142,25 @@ class Triangle_lattice {
         int y = (n/L);
 
         // for diagonals. There surely is a better way than this
-        int xk, yk, xm, ym;
+        int xk, yk;
+        int xm = 0;
+        int ym;
         int k = n + L + 1;
-        int m = n - L - 1;
-
+        int m = int(n) - L - 1;
+        
         xk = k%L;
-        xm = (m+L)%L;
+        if (m%L >= 0) xm = m%L;
+        else if (m%L < 0){
+          xm = L + m%L;
+        }
 
         if (((k-1)/L - L) >= 0){ 
           yk = 0;
         }else{
           yk = ((k-1)/L);
         }
-        if ((m+1) < 0){ 
+        if ((m+1) < 0){
+          
           ym = L - 1;
         }else{
           int l = std::abs(int(n - L));
@@ -1149,14 +1168,15 @@ class Triangle_lattice {
           ym = (l/L);
         }
         nbs[0] = (n + 1) % L + y * L;
-        nbs[1] = (n - 1) % L + y * L;
+        if ((int(n) - 1) % L < 0) nbs[1] = L + (int(n) - 1) % L + y * L;
+        else if ((int(n) - 1) % L + y * L >= 0) nbs[1] = (int(n) - 1) % L + y * L;
+        
 
         nbs[2] = x + ((y + 1) % L) * L;
         nbs[3] = x + ((y - 1 + L) % L) * L;
 
         nbs[4] = xk + yk * L;
         nbs[5] = xm + ym * L;
-
         return nbs;
     }
 
@@ -1201,14 +1221,8 @@ class Triangle_lattice {
         sites[n].hoptime[index] = t;
         sites[n].last_jump[index] = t;
         if (!sites[n].occupied[index]) {
-            
             sites[n].occupied[index] = true;
-            //std::cout << "n " << n << endl;
-            for (const auto& m : neighbours(n)){
-              //std::cout << "m " << m << endl;
-             ++sites[m].neighbours;
-            }
-            //std::cout << "---------------------------------" << endl;
+            for (const auto& m : neighbours(n)) ++sites[m].neighbours;
         }
         
         sites[n].present++;
@@ -1305,6 +1319,7 @@ class Triangle_lattice {
         for (unsigned n = 0; n < sites.size(); ++n) {
           for (unsigned k = 0; k < P.n_max; k++){
             // Check each site has a unique id
+            
             if (ids.count(sites[n].id[k])) return false;
             ids.insert(sites[n].id[k]);
             // Check that empty sites are also inactive
@@ -1313,6 +1328,7 @@ class Triangle_lattice {
                 // Nothing left to do if empty
                 continue;
             }
+            
             // Check that the neighbour count is correct
             ++occupied;
             // ! Can we move this out one loop?
@@ -1322,10 +1338,19 @@ class Triangle_lattice {
                 if (sites[m].occupied[i]) ++nbs;
               }
             }
-            if (nbs != sites[n].neighbours) return false;
+            if (nbs != sites[n].neighbours) {
+              cout << "n " << n << endl; 
+              for (const auto& m : neighbours(n)) {
+                cout << "m " << m << endl;
+                cout << "particles present " << sites[m].present << endl;
+              }
+              cout << nbs << " " << unsigned(sites[n].neighbours) << endl;
+              return false;
+            }
             // Check that mobile particles are active
             if (nbs < 6*P.n_max && !sites[n].active[k]) return false;
             if (sites[n].active[k]) ++active;
+            
           }
         }
         // Check we've not lost any particles
@@ -1391,27 +1416,6 @@ public:
           }
         }
 
-        /*
-        // Place particles on the lattice
-        unsigned unplaced = P.N; // Current number of particles remaining to be placed
-        unsigned id_vac = P.N;
-        for (unsigned index = 0; index < P.n_max; index++){
-          for (unsigned n = 0; n < sites.size(); ++n) {
-            // Number of remaining sites where partcles could be placed is sites.size()-n, unplaced of which need to be filled
-            if (std::uniform_int_distribution<unsigned>(1, sites.size() - n)(rng) <= unplaced) {
-                // For ease we only place one particle per site in the initial configuration
-                place(n, P.N - unplaced, anyway(rng), 0.0, index);
-                --unplaced;
-            }
-            // vacancies
-            else {
-              sites[n].id[index] = id_vac;
-              id_vac++;
-            }
-          }
-        }
-        assert(unplaced == 0);
-        */
         // Activate particles that can move, and schedule a hop accordingly
         for (unsigned n = 0; n < sites.size(); ++n) {
           for (unsigned k = 0; k < P.n_max; ++k){
@@ -2293,7 +2297,7 @@ class Hexagonal_lattice {
         std::vector<unsigned> id  = std::vector<unsigned>(2 * n_max); // Particle / vacancy id
         std::vector<bool> occupied = std::vector<bool>(2 * n_max); // There is a particle here
         std::vector<bool> active = std::vector<bool>(2 * n_max); // A move event is scheduled
-        std::vector<direction_t> neighbours = std::vector<direction_t>(2); // Number of neighbours that are occupied
+        std::vector<int> neighbours = std::vector<int>(2); // Number of neighbours that are occupied
         std::vector<direction_t> direction = std::vector<direction_t>(2 * n_max); // Preferred direction of movement
         std::vector<double> hoptime = std::vector<double>(2 * n_max); // Time of last hop attempt
         std::vector<int> present = std::vector<int>(2); // Number of particles present at each site in unit cell
@@ -2384,20 +2388,22 @@ class Hexagonal_lattice {
 
         // this is only valid for 2d
 
-        std::vector<unsigned> nbs(3);
+        std::vector<int> nbs(3);
         int L1 = P.L[0];
         int L2 = P.L[1];
 
-        unsigned x = n % L1;
-        unsigned y = (n/L1);
+        int x = n % L1;
+        int y = (n/L1);
 
         if(index){
           nbs[0] = n;                               // same site
           nbs[1] = (n + 1) % L1 + y * L1;           // right
           nbs[2] = x + ((y - 1 + L1) % L2) * L1;    // down
         } else {
-          nbs[0] = n;                               // same site
-          nbs[1] = (n - 1) % L1 + y * L1;           // left
+          nbs[0] = n;
+          if ((int(n) - 1) % L1 < 0) nbs[1] = L1 + (int(n) - 1) % L1 + y * L1;            // left
+          else if ((int(n) - 1) % L1 + y * L1 >= 0) nbs[1] = (int(n) - 1) % L1 + y * L1;  // left                            // same site
+          //nbs[1] = (n - 1) % L1 + y * L1;           
           nbs[2] = x + ((y + 1) % L2) * L1;         // up
         }
         return nbs;
@@ -2504,7 +2510,7 @@ class Hexagonal_lattice {
                   // Now go through the neighbours of the departure site, update neighbour count and activate any
                   // that can now move. Note the particle this is at the target site is included in this list
                   // and will be activated accordingly
-                  for (const auto& m : dnbs) {
+                  for (const auto& m : neighbours(n, index)) {
                       --sites[m].neighbours[(index+1)%2];
                       for (unsigned k = 1 - index%2; k < 2 * P.n_max; k+=2)
                       if (sites[m].occupied[k] && !sites[m].active[k]) schedule(m, k);
@@ -2560,15 +2566,18 @@ class Hexagonal_lattice {
         std::set<unsigned> ids;
         for (unsigned n = 0; n < sites.size(); ++n) {
             // Check each site has a unique id
-            for (unsigned i = 0; n < 2; i++){
+            for (unsigned i = 0; i < 2 * P.n_max; i++){
               if (ids.count(sites[n].id[i])) return false;
               ids.insert(sites[n].id[i]);
+              
               // Check that empty sites are also inactive
               if (!sites[n].occupied[i]) {
                   if (sites[n].active[i]) return false;
                   // Nothing left to do if empty
                   continue;
               }
+              
+              
               // Check that the neighbour count is correct
               occupied += sites[n].present[i];
               unsigned nbs = 0;
@@ -2577,12 +2586,17 @@ class Hexagonal_lattice {
                     if (sites[m].occupied[(i+1)%2]) ++nbs;
                   }
               }
-              if (nbs != sites[n].neighbours[i]) return false;
+              
+              if (nbs != sites[n].neighbours[i]){
+                return false;
+              }
+              
               // Check that mobile particles are active
               if (nbs < 3 * P.n_max && !sites[n].active[i]) return false;
-              for (unsigned k = i; k < 2 * P.n_max; k+=2){
-                if (sites[n].active[k]) ++active;
-              }
+              if (sites[n].active[i]) ++active;
+              
+              
+              
             }
         }
         // Check we've not lost any particles
@@ -2652,7 +2666,7 @@ public:
           unplaced--;
         }
 
-        for (unsigned index = 0; index < P.n_max; index++){
+        for (unsigned index = 0; index < 2*P.n_max; index++){
           for (unsigned n = 0; n < sites.size(); ++n) {
             if (sites[n].occupied[index] == false){
               sites[n].id[index] = id;
@@ -2660,38 +2674,16 @@ public:
             }
           }
         }
-        /*
-        // Place particles on the lattice
-        unsigned unplaced = P.N; // Current number of particles remaining to be placed
-        unsigned id_vac = P.N;
-        // the outer loop is to allow for overcrowding of the cells. We have to sites per lattice site, and on each
-        // of these we allow n_max particles. We therefore have to loop over all these as we can place particles 
-        // on all of them
-        for (unsigned index = 0; index < 2 * P.n_max; index++){
-          for (unsigned n = 0; n < sites.size(); ++n) {
-            // Number of remaining sites where partcles could be placed is sites.size()-n, unplaced of which need to be filled
-            if (std::uniform_int_distribution<unsigned>(1, sites.size() - n)(rng) <= unplaced) {
-                direction_t direction = anyway(rng);
-                int dir = preference_direction(n, index, direction);
-                auto dnbs = neighbours_dir(n);
-                place(n, P.N - unplaced, direction, 0.0, index, dnbs[dir]);
-                --unplaced;        
-            }
-            else {
-                // don't need to randomize these, since they are vacancies
-                sites[n].id[index] = id_vac;
-                id_vac++;
-            }
-          }
-        }
-        assert(unplaced == 0);
-        */
+        
         // Activate particles that can move, and schedule a hop accordingly
         for (unsigned n = 0; n < sites.size(); ++n) {
           for (unsigned i = 0; i < 2 * P.n_max; i++){
             if (sites[n].occupied[i] && sites[n].neighbours[i%2] < 3 * P.n_max) schedule(n, i);
           }
         }
+
+
+
         assert(consistent());
     }
 
@@ -3839,6 +3831,28 @@ public:
   }
 };
 
+template<typename Engine>
+class ParticleWriterWID {
+  const Lattice<Engine>& L;
+public:
+  ParticleWriterWID(const Lattice<Engine>& L, ofstream& outfile) : L(L) { }
+
+  // Output pairs (id, n, p) indicating site and number of particles present
+
+  friend std::ostream& operator << (std::ostream& out, const ParticleWriterWID& PW) {
+
+    const auto& sites = PW.L.sites; // Save typing
+
+    for(unsigned n=0; n<sites.size(); ++n) {
+      for (unsigned i=0; i < PW.L.n_max; i ++){
+        if(sites[n].occupied[i]) out << sites[n].id[i] << " " << n << " " << sites[n].present << " ";
+      }
+    }
+
+    return out;
+  }
+
+};
 
 int main(int argc, char* argv[]) {
 
@@ -4527,130 +4541,187 @@ int main(int argc, char* argv[]) {
 
       }
       else if (output == "function"){
-        ofstream varkur, dist;
-        varkur.open("./lars_sim/Data/displacement/sq_varkur_rho_25_"+occ_p+"_test.txt");
-        
-        // number of configurations
-        unsigned nr_configuration = 25000;
-        // vector for variance and kurtosis
-        vector<long double> variance;
-        vector<long double> kurtosis;
-        vector<long double> variance2;
-        vector<long double> kurtosis2;
-        // map of every position
-        //std::map<unsigned, std::vector<double>> pos;
-        double count = 0;
-        for (unsigned k = 0; t < until; ++k){
-          
-          t = L.run_until(k * every);
-          if (k > 0){
-            variance.push_back(0);
-            kurtosis.push_back(0);
-            variance2.push_back(0);
-            kurtosis2.push_back(0);
+        if (details == 0){
+        ofstream outfile, dist;
+          outfile.open("./lars_sim/Data/displacement/sq_varkur_rho_25_"+occ_p+"_test.txt");
+          dist.open("./lars_sim/Data/displacement/sq_dist_rho_05_"+occ_p+"_test.txt");
+          vector<long double> variance;
+          vector<long double> kurtosis;
+          // number of configurations
+          unsigned nr_configuration = 10;
+          map<unsigned, vec_d> x;
+          vec dist_time = {50, 150, 200, 500, 5000, unsigned(until-1)};
+          for (unsigned k = 0; t < until; ++k){
+            // add part to map for distribution. 
+            for (const auto & m : dist_time){
+              if (m == k) x.insert(pair<unsigned, vec_d> (k, {}));
+            }
+            // fill the arrays with 0, probably not the best way to do it.
+            t = L.run_until(k * every);
+            if (k > 0){
+              variance.push_back(0);
+              kurtosis.push_back(0);
+            }
+            
           }
-          //pos.insert(pair<unsigned, vector<double>> (k, {}));
-        }
 
-        for (unsigned k = 0; k < nr_configuration; k++){
-          count++;
-          // yes, I really just made myself a progress bar
-          if (k%(nr_configuration/10) == 0){
-            cout << "[";
-            for (unsigned o = 0; o <= k / (nr_configuration/10); o++){
-              cout << "#"; 
-            }
-            for (unsigned o = k / (nr_configuration/10); o < 10; o++){
-              cout << " ";
-            }
-            cout << "]" << endl;
-          }
-          Lattice L(P, rng);
-          t = 0;
-          double x_0 = L.x_coor();
-          for(unsigned n=1; t < until; ++n){
-              t = L.run_until(n * every);
-              double x = L.x_coor();
-              
-              variance[n-1] += pow(x - x_0, 2);
-              kurtosis[n-1] += pow(x - x_0, 4);
-              variance2[n-1] += pow(L.x_coor_2(), 2);
-              kurtosis2[n-1] += pow(L.x_coor_2(), 4);
-          }
-          dist << endl;
-        }
-        cout << count << " " << nr_configuration << endl;
-        for (unsigned n = 0; n < variance.size(); n++){
-          variance[n] = variance[n] / double(nr_configuration);
-          kurtosis[n] = kurtosis[n] / (double(nr_configuration) * pow(variance[n], 2));
-          variance2[n] = variance2[n] / double(nr_configuration);
-          kurtosis2[n] = kurtosis2[n] / (double(nr_configuration) * pow(variance2[n], 2));
-          varkur << (n+1) * every << " " << variance[n] << " " << kurtosis[n] << " " << variance2[n] << " " << kurtosis2[n] <<  endl;
-        }
-        
-      }
-      else if (output == "tagged"){
-        ofstream varkur, dist;
-        varkur.open("./lars_sim/Data/displacement/sq_varkur_rho_05_"+occ_p+"_long.txt");
-        dist.open("./lars_sim/Data/displacement/sq_dist_rho_05_"+occ_p+"_long.txt");
-        // number of configurations
-        unsigned nr_configuration = 25000;
-        // vector for variance and kurtosis
-        vector<long double> variance;
-        vector<long double> kurtosis;
-        vector<unsigned> dist_time = {51, 151, 201, 501, 1001, unsigned(until)-1};
-        // map of every position
-        //std::map<unsigned, std::vector<double>> pos;
-        for (unsigned k = 0; t < until; ++k){
-          t = L.run_until(k * every);
-          if (k > 0){
-            variance.push_back(0);
-            kurtosis.push_back(0);
-          }
-          //pos.insert(pair<unsigned, vector<double>> (k, {}));
-        }
-
-        for (unsigned k = 0; k < nr_configuration; k++){
-          // yes, I really just made myself a progress bar
-          if (k%(nr_configuration/10) == 0){
-            cout << "[";
-            for (unsigned o = 0; o <= k / (nr_configuration/10); o++){
-              cout << "#"; 
-            }
-            for (unsigned o = k / (nr_configuration/10); o < 10; o++){
-              cout << " ";
-            }
-            cout << "]" << endl;
-          }
-          Lattice L(P, rng);
-          t = 0;
-          double x_0 = L.x_coor();
-          dist << x_0 << " ";
-          for(unsigned n=1; t < until; ++n){
-              t = L.run_until(n * every);
-              double x = L.x_coor();
-              for (unsigned p = 0; p < dist_time.size(); p++){
-                if (dist_time[p] == n) dist << x << " ";  
+          for (unsigned i = 0; i < nr_configuration ; i++){
+            if (i%(nr_configuration/10)==0){
+              for (int o =0 ; o < i / (nr_configuration/10); o++){
+                cout << "#";
               }
-              variance[n-1] += pow(x - x_0, 2);
-              kurtosis[n-1] += pow(x - x_0, 4);
+              cout << endl;
+            }
+            Lattice L(P, rng);
+            t = 0;
+            for(unsigned n=1; t < until; ++n){
+                t = L.run_until(n * every);
+                vec_d pos = L.x_coor_3();
+                for (unsigned k = 0; k < P.N; k++){
+                  variance[n-1] += pow(pos[k], 2);
+                  kurtosis[n-1] += pow(pos[k], 4);
+                }
+                for (unsigned m = 0; m < dist_time.size(); m++){
+                  if (dist_time[m] == n) {
+                    
+                    x[m].insert(x[m].end(), pos.begin(), pos.end());
+                    //cout << m << " " << x[m].size() << " " << pos.size() << endl;
+                  }
+                }
+            }
           }
-          dist << endl;
-        }
-        /*
-        for (unsigned p = 0; p < dist_time.size(); p++){
-          for (unsigned k = 0; k < nr_configuration; k++){
-            dist << pos[dist_time[p]][k] << " ";
+          
+          // calculate variance and kurtosis
+          for (unsigned n = 0; n < variance.size(); n++){
+            variance[n] /= double(P.N * nr_configuration);
+            kurtosis[n] /= (double(P.N * nr_configuration) * pow(variance[n], 2));
+            outfile << (n+1) << " " << variance[n] << " " << kurtosis[n] << endl;
           }
-          dist << endl;
-        }
-        */
 
-        for (unsigned n = 0; n < variance.size(); n++){
-          variance[n] = variance[n] / double(nr_configuration);
-          kurtosis[n] = kurtosis[n] / double(nr_configuration) * (1 / pow(variance[n], 2));
-          varkur << (n+1) * every << " " << variance[n] << " " << kurtosis[n] << endl;
+
+          // fill distribution file
+          for (unsigned n = 0; n < dist_time.size(); n++){
+            for (unsigned k = 0; k < nr_configuration * P.N; k++){
+              //cout << x[n].size() << endl;
+              dist << x[n][k] << " ";
+            }
+            dist << endl;
+          }
         }
+        // ############################ TESTING SOME MORE STUFF #################################
+        else if (details == 1){
+          ofstream outfile;
+          outfile.open("./lars_sim/Data/displacement/sq_varkur_rho_25_"+occ_p+"_test_test_test.txt");
+          vector<long double> variance;
+          vector<long double> kurtosis;
+          // number of configurations
+          unsigned nr_configuration = 1000;
+          //map<unsigned, vec_d> x;
+          for (unsigned k = 0; t < until; ++k){
+            t = L.run_until(k * every);
+            if (k > 0){
+              variance.push_back(0);
+              kurtosis.push_back(0);
+            }
+            //x.insert(pair<unsigned, vec_d> (k, {}));
+          }
+
+          for (unsigned i = 0; i < nr_configuration ; i++){
+            if (i%(nr_configuration/10)==0){
+              for (int o =0 ; o < i / (nr_configuration/10); o++){
+                cout << "#";
+              }
+              cout << endl;
+            }
+            Lattice L(P, rng);
+            t = 0;
+            for(unsigned n=1; t < until; ++n){
+                t = L.run_until(n * every);
+                vec_d pos = L.x_coor_3();
+                for (unsigned k = 0; k < P.N; k++){
+                  variance[n-1] += pow(pos[k], 2);
+                  kurtosis[n-1] += pow(pos[k], 4);
+                }
+            }
+          }
+
+          for (unsigned n = 0; n < variance.size(); n++){
+            variance[n] /= double(P.N * nr_configuration);
+            kurtosis[n] /= (double(P.N * nr_configuration) * pow(variance[n], 2));
+            outfile << (n+1) << " " << variance[n] << " " << kurtosis[n] << endl;
+          }
+
+        }
+      }
+
+      else if (output == "tagged"){
+        ofstream outfile, dist;
+          outfile.open("./lars_sim/Data/displacement/sq_varkur_rho_05_"+occ_p+".txt");
+          dist.open("./lars_sim/Data/displacement/sq_dist_rho_05_"+occ_p+".txt");
+          vector<long double> variance;
+          vector<long double> kurtosis;
+          // number of configurations
+          unsigned nr_configuration = 50;
+          map<unsigned, vec_d> x;
+          vec dist_time = {50, 150, 200, 500, 5000, unsigned(until-1)};
+          for (unsigned k = 0; t < until; ++k){
+            // add part to map for distribution. 
+            for (const auto & m : dist_time){
+              if (m == k) x.insert(pair<unsigned, vec_d> (k, {}));
+            }
+            // fill the arrays with 0, probably not the best way to do it.
+            t = L.run_until(k * every);
+            if (k > 0){
+              variance.push_back(0);
+              kurtosis.push_back(0);
+            }
+            
+          }
+          // need to iterate over several lattice to achieve good statistics
+          for (unsigned i = 0; i < nr_configuration ; i++){
+            // just a little progress bar so I am not kept in the dark for too long
+            if (i%(nr_configuration/10)==0){
+              for (int o =0 ; o < i / (nr_configuration/10); o++){
+                cout << "#";
+              }
+              cout << endl;
+            }
+            Lattice L(P, rng);
+            t = 0;
+            for(unsigned n=1; t < until; ++n){
+                t = L.run_until(n * every);
+                vec_d pos = L.x_coor_3();
+                for (unsigned k = 0; k < P.N; k++){
+                  variance[n-1] += pow(pos[k], 2);
+                  kurtosis[n-1] += pow(pos[k], 4);
+                }
+                for (unsigned m = 0; m < dist_time.size(); m++){
+                  if (dist_time[m] == n) {
+                    
+                    x[m].insert(x[m].end(), pos.begin(), pos.end());
+                    //cout << m << " " << x[m].size() << " " << pos.size() << endl;
+                  }
+                }
+            }
+          }
+          
+          // calculate variance and kurtosis
+          for (unsigned n = 0; n < variance.size(); n++){
+            variance[n] /= double(P.N * nr_configuration);
+            kurtosis[n] /= (double(P.N * nr_configuration) * pow(variance[n], 2));
+            outfile << (n+1) << " " << variance[n] << " " << kurtosis[n] << endl;
+          }
+
+
+          // fill distribution file
+          for (unsigned n = 0; n < dist_time.size(); n++){
+            for (unsigned k = 0; k < nr_configuration * P.N; k++){
+              //cout << x[n].size() << endl;
+              dist << x[n][k] << " ";
+            }
+            dist << endl;
+          }
+
       }
       else {
         ofstream outfile;
@@ -5431,7 +5502,7 @@ int main(int argc, char* argv[]) {
         }
       } else if (output == "particles") {
         ofstream outfile;
-        outfile.open("./lars_sim/gif/hexagonal.txt");
+        outfile.open("./lars_sim/Data/for_latex/hexagonal_"+occ_p+".txt");
 
         for(unsigned n=0; t < burnin + until; ++n) {
           t = HL.run_until(burnin + n * every);

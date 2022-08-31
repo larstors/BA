@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import scipy.optimize as opt
 import numba as nb
 from matplotlib import rcParams
-plt.rcParams.update({'font.size': 20})
+plt.rcParams.update({'font.size': 36})
 
 
 print("Lattice? (only first letter)")
@@ -118,7 +118,7 @@ if lat == "t":
     plt.plot(alp, p(10, np.array(Tstop[0])), "ro", label=r"$n_\mathrm{max}=1$")
     plt.plot(alp, p(10, np.array(Tstop[1])), "bo", label=r"$n_\mathrm{max}=2$")
     plt.plot(alp, p(10, np.array(Tstop[2])), "go", label=r"$n_\mathrm{max}=3$")
-    plt.legend()
+    #plt.legend()
     plt.ylabel(r"${T_\mathrm{stop}^\alpha}$")
     plt.xlabel(r"${\alpha}$")
     plt.grid()
@@ -142,9 +142,9 @@ if lat == "t":
     plt.plot(1/alp, p(10, np.array(Tstop[0])), "ro", label=r"$n_\mathrm{max}=1$")
     plt.plot(1/alp, p(10, np.array(Tstop[1])), "bo", label=r"$n_\mathrm{max}=2$")
     plt.plot(1/alp, p(10, np.array(Tstop[2])), "go", label=r"$n_\mathrm{max}=3$")
-    plt.legend()
+    #plt.legend()
     plt.ylabel(r"${T_\mathrm{stop}^\alpha}$")
-    plt.xlabel(r"${\alpha}$")
+    plt.xlabel(r"${\alpha^{-1}}$")
     plt.grid()
     plt.yscale("log")
     plt.xscale("log")
@@ -223,7 +223,7 @@ if lat == "s":
     plt.plot(alp, p(10, np.array(Tstop[0])), "ro", label=r"$n_\mathrm{max}=1$")
     plt.plot(alp, p(10, np.array(Tstop[1])), "bo", label=r"$n_\mathrm{max}=2$")
     plt.plot(alp, p(10, np.array(Tstop[2])), "go", label=r"$n_\mathrm{max}=3$")
-    plt.legend()
+    #plt.legend()
     plt.ylabel(r"${T_\mathrm{stop}^\alpha}$")
     plt.xlabel(r"${\alpha}$")
     plt.grid()
@@ -302,7 +302,7 @@ if lat == "h":
     plt.plot(alp, p(10, np.array(Tstop[0])), "ro", label=r"$n_\mathrm{max}=1$")
     plt.plot(alp, p(10, np.array(Tstop[1])), "bo", label=r"$n_\mathrm{max}=2$")
     plt.plot(alp, p(10, np.array(Tstop[2])), "go", label=r"$n_\mathrm{max}=3$")
-    plt.legend()
+    #plt.legend()
     plt.ylabel(r"${T_\mathrm{stop}^\alpha}$")
     plt.xlabel(r"${\alpha}$")
     plt.grid()
