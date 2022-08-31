@@ -2442,7 +2442,9 @@ class Hexagonal_lattice {
         sites[n].last_jump[index] = t;
         if (!sites[n].occupied[index]) {
             sites[n].occupied[index] = true;
-            for (const auto& m : neighbours(n, index%2)) ++sites[m].neighbours[(index+1)%2];
+            for (const auto& m : neighbours(n, index%2)){
+              ++sites[m].neighbours[(index+1)%2];
+            }
         }
         sites[n].present[index%2]++;
         sites[n].current_dir[index] = dir;
@@ -2456,7 +2458,7 @@ class Hexagonal_lattice {
             assert(sites[n].occupied[index]);
             assert(sites[n].active[index]);
             // If there are no local vacancies, mark this particle as inactive and exit
-            if (sites[n].neighbours[index] == 3 * P.n_max) {
+            if (sites[n].neighbours[index%2] == 3 * P.n_max) {
                 // std::cout << "Can't move from "; decode(n); std::cout << " deactivating" << std::endl;
                 sites[n].active[index] = false;
             }
@@ -2508,35 +2510,13 @@ class Hexagonal_lattice {
                   // Now go through the neighbours of the departure site, update neighbour count and activate any
                   // that can now move. Note the particle this is at the target site is included in this list
                   // and will be activated accordingly
-                  for (const auto& m : neighbours(n, index)) {
+                  for (const auto& m : neighbours(n, index%2)) {
                       --sites[m].neighbours[(index+1)%2];
                       for (unsigned k = 1 - index%2; k < 2 * P.n_max; k+=2)
                       if (sites[m].occupied[k] && !sites[m].active[k]) schedule(m, k);
                   }
 
                 }
-                /*
-                if (!sites[dnbs[sites[n].direction[index]]].occupied[(index+1)%2]) {
-                    assert(!sites[dnbs[sites[n].direction[index]]].active[(index+1)%2]);
-                    // Get the id of the vacancy that is being displaced
-                    unsigned vid = sites[dnbs[sites[n].direction[index]]].id[(index+1)%2];
-                    // std::cout << "Moving from "; decode(n); std::cout << " deactivating" << std::endl;
-                    // Deactive the departure site; also mark it empty
-                    sites[n].occupied[index] = sites[n].active[index] = false;
-                    // Place a particle on the target site; it has the same direction and hoptime as the departing particle
-                    // std::cout << "Moving to "; decode(dnbs[sites[n].direction]); std::cout << " placing" << std::endl;
-                    place(dnbs[sites[n].direction[index]], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index], (index+1)%2);
-                    // Move the vacancy id onto the departure site
-                    sites[n].id[index] = vid;
-                    // Now go through the neighbours of the departure site, update neighbour count and activate any
-                    // that can now move. Note the particle this is at the target site is included in this list
-                    // and will be activated accordingly
-                    for (const auto& m : dnbs) {
-                        --sites[m].neighbours[(index+1)%2];
-                        if (sites[m].occupied[(index+1)%2] && !sites[m].active[(index+1)%2]) schedule(m, (index+1)%2);
-                    }
-                }
-                */
                 else {
                     // std::cout << "Didn't move from "; decode(n); std::cout << std::endl;
                     // This site is still active, so schedule another hop
@@ -2586,11 +2566,6 @@ class Hexagonal_lattice {
                   }
               }
               if (nbs != sites[n].neighbours[i%2]){
-                cout << n << " " << i%2 << endl;
-                for (const auto& m : neighbours(n, i%2)) {
-                  cout << m << " " << (i+1)%2 << " " << sites[m].present[(i+1)%2] <<  endl;
-                }
-                cout << nbs << " " << sites[n].neighbours[i%2] << endl;
                 return false;
               }
               // Check that mobile particles are active
@@ -2602,7 +2577,6 @@ class Hexagonal_lattice {
             }
         }
         // Check we've not lost any particles
-        cout << occupied << " "<< P.N  << " " << active << " " << S.pending() << " " << endl;
         return occupied == P.N && active == S.pending();
     }
 
