@@ -1339,12 +1339,6 @@ class Triangle_lattice {
               }
             }
             if (nbs != sites[n].neighbours) {
-              cout << "n " << n << endl; 
-              for (const auto& m : neighbours(n)) {
-                cout << "m " << m << endl;
-                cout << "particles present " << sites[m].present << endl;
-              }
-              cout << nbs << " " << unsigned(sites[n].neighbours) << endl;
               return false;
             }
             // Check that mobile particles are active
@@ -2373,11 +2367,16 @@ class Hexagonal_lattice {
         unsigned x = n % L1;
         unsigned y = (n/L1);
 
+        int left = 0;
+
+        if ((int(n) - 1) % L1 < 0) left = L1 + (int(n) - 1) % L1 + y * L1;            // left
+        else if ((int(n) - 1) % L1 + y * L1 >= 0) left = (int(n) - 1) % L1 + y * L1;
+
 
         nbs[0] = n;                               // same site
         nbs[1] = n;                               // same site
         nbs[2] = (n + 1) % L1 + y * L1;           // right
-        nbs[3] = (n - 1) % L1 + y * L1;           // left
+        nbs[3] = left;                            // left
         nbs[4] = x + ((y - 1 + L1) % L2) * L1;    // down
         nbs[5] = x + ((y + 1) % L2) * L1;         // up
         return nbs;
@@ -2488,34 +2487,28 @@ class Hexagonal_lattice {
                       break;
                     }
                   }
-                  //std::cout << n << " " << int(sites[n].direction[index]) << endl;
                   assert(!sites[dnbs[dir]].active[ind]);
                   // Get the id of the vacancy that is being displaced
                   unsigned vid = sites[dnbs[dir]].id[ind];
-                  // std::cout << "Moving from "; decode(n); std::cout << " deactivating" << std::endl;
                   // Deactive the departure site; also mark it empty
                   sites[n].occupied[index] = sites[n].active[index] = false;
-                  //std::cout << "before:\t n\t" << sites[n].present[index] << "\t m\t" << sites[dnbs[sites[n].direction[index]]].present[ind] << endl;
                   // Place a particle on the target site; it has the same direction and hoptime as the departing particle
-                  // std::cout << "Moving to "; decode(dnbs[sites[n].direction]); std::cout << " placing" << std::endl;
                   int dir_next = preference_direction(dnbs[dir], ind, sites[n].direction[index]);
                   auto dnbs_next = neighbours_dir(dnbs[dir]);
                   place(dnbs[dir], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index], ind, dnbs_next[dir_next]);
                   // Move the vacancy id onto the departure site
                   sites[n].id[index] = vid;
                   sites[n].present[index%2] -= 1;
-                  //if (sites[n].present[index%2] == -1) std::cout << "n: " << n << " j: " << index << endl;
-                  //std::cout << "after:\t n\t" << sites[n].present[index] << "\t m\t" << sites[dnbs[sites[n].direction[index]]].present[ind] << endl;
-
                   // Now go through the neighbours of the departure site, update neighbour count and activate any
                   // that can now move. Note the particle this is at the target site is included in this list
                   // and will be activated accordingly
                   for (const auto& m : neighbours(n, index%2)) {
                       --sites[m].neighbours[(index+1)%2];
-                      for (unsigned k = 1 - index%2; k < 2 * P.n_max; k+=2)
-                      if (sites[m].occupied[k] && !sites[m].active[k]) schedule(m, k);
+                      for (unsigned k = 1 - index%2; k < 2 * P.n_max; k+=2){
+                        if (sites[m].occupied[k] && !sites[m].active[k]) schedule(m, k);
+                      }
                   }
-
+                  
                 }
                 else {
                     // std::cout << "Didn't move from "; decode(n); std::cout << std::endl;
@@ -2545,17 +2538,18 @@ class Hexagonal_lattice {
         for (unsigned n = 0; n < sites.size(); ++n) {
             // Check each site has a unique id
             for (unsigned i = 0; i < 2 * P.n_max; i++){
-              if (ids.count(sites[n].id[i])) return false;
+              if (ids.count(sites[n].id[i])) {
+                return false;
+              }
               ids.insert(sites[n].id[i]);
-              
               // Check that empty sites are also inactive
               if (!sites[n].occupied[i]) {
-                  if (sites[n].active[i]) return false;
+                  if (sites[n].active[i]) {
+                    return false;
+                  }
                   // Nothing left to do if empty
                   continue;
               }
-              
-              
               
               // Check that the neighbour count is correct
               occupied ++;
@@ -2569,10 +2563,10 @@ class Hexagonal_lattice {
                 return false;
               }
               // Check that mobile particles are active
-              if (nbs < 3 * P.n_max && !sites[n].active[i]) return false;
+              if (nbs < 3 * P.n_max && !sites[n].active[i]){
+                return false;
+              }
               if (sites[n].active[i]) ++active;
-              
-              
               
             }
         }
@@ -2651,10 +2645,16 @@ public:
           }
         }
         
+       
+
         // Activate particles that can move, and schedule a hop accordingly
         for (unsigned n = 0; n < sites.size(); ++n) {
           for (unsigned i = 0; i < 2 * P.n_max; i++){
-            if (sites[n].occupied[i] && sites[n].neighbours[i%2] < 3 * P.n_max) schedule(n, i);
+            if (sites[n].occupied[i] && sites[n].neighbours[i%2] < 3 * P.n_max) {
+              schedule(n, i);
+              sites[n].active[i] = true;
+            }
+
           }
         }
 
@@ -4991,10 +4991,10 @@ int main(int argc, char* argv[]) {
       }else if (output == "motility"){
         if (details==0){
         ofstream outfile;
-        string name = "./lars_sim/Data/motility/triangular_perc_low_L_50";
+        string name = "./lars_sim/Data/motility/triangular_perc_testing";
         string outputname = name+"_"+occ_p+".txt";
         outfile.open(outputname);
-        for (double al = 0.0; al < 0.05 ; al+=0.001){
+        for (double al = 0.0; al < 0.2 ; al+=0.005){
           // defining lattice for new alpha
           P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
           Triangle_lattice LB(P, rng);
@@ -5113,21 +5113,7 @@ int main(int argc, char* argv[]) {
           part << TriangleParticleWriter(TL, part) << endl;
           for (const auto& n : TL.cluster_surface()) border << n << " ";
           border << endl;
-          /*
-          if (TL.clust_size(8, 10) == 1 && check_1 == 0){
-            vec n = TL.single_cluster(8, 10);
-            for (const auto& m : n) clust << m << " ";
-            clust << endl;
-            check_1++;
-          }
-
-          if (TL.clust_size(1470, 1520) == 1 && check_2 == 0){
-            vec n = TL.single_cluster(1470, 1520);
-            for (const auto& m : n) clust << m << " ";
-            clust << endl;
-            check_2++;
-          }
-          */
+         
         }
       }
       else if (output == "lagging"){
