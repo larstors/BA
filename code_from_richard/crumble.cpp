@@ -4458,8 +4458,8 @@ int main(int argc, char* argv[]) {
       }
       else if (output == "perimeter"){
         ofstream outfile, pars; 
-        outfile.open("./lars_sim/Data/perimeter/square_"+occ_p+".txt");
-        pars.open("./lars_sim/Data/perimeter/square_pars_"+occ_p+".txt");
+        outfile.open("./lars_sim/Data/perimeter/square_"+occ_p+"_t.txt");
+        pars.open("./lars_sim/Data/perimeter/square_pars_"+occ_p+"_t.txt");
         unsigned check = 0;
         for (double alp = 1e-3; alp <= 100.0; alp*=1.78){
           for (double dens = 0.001; dens < 1.0; dens+=.05){
@@ -5296,8 +5296,8 @@ int main(int argc, char* argv[]) {
       }
       else if (output == "perimeter"){
         ofstream outfile, pars; 
-        outfile.open("./lars_sim/Data/perimeter/tri_"+occ_p+".txt");
-        pars.open("./lars_sim/Data/perimeter/tri_pars_"+occ_p+".txt");
+        outfile.open("./lars_sim/Data/perimeter/tri_"+occ_p+"_t.txt");
+        pars.open("./lars_sim/Data/perimeter/tri_pars_"+occ_p+"_t.txt");
         unsigned check = 0;
         for (double alp = 1e-3; alp <= 100.0; alp*=1.78){
           for (double dens = 0.001; dens < 1.0; dens+=.05){
@@ -5639,8 +5639,8 @@ int main(int argc, char* argv[]) {
       }
       else if (output == "perimeter"){
         ofstream outfile, pars; 
-        outfile.open("./lars_sim/Data/perimeter/hex_"+occ_p+".txt");
-        pars.open("./lars_sim/Data/perimeter/hex_pars_"+occ_p+".txt");
+        outfile.open("./lars_sim/Data/perimeter/hex_"+occ_p+"_t.txt");
+        pars.open("./lars_sim/Data/perimeter/hex_pars_"+occ_p+"_t.txt");
         unsigned check = 0;
         for (double alp = 1e-3; alp <= 100.0; alp*=2.4){
           for (double dens = 0.001; dens < 1.0; dens+=.08){

@@ -211,7 +211,7 @@ if True:
 
 
     # Then setup FuncAnimation.
-    ani_tri = animation.FuncAnimation(fig, animate_tri, interval=1, blit=False, save_count=1000)
+    ani_tri = animation.FuncAnimation(fig, animate_tri, interval=1, blit=False, save_count=200)
     ani_tri.save('./gif/square_sponge.gif', writer='PillowWriter', fps=10)
 
 # triangular
