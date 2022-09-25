@@ -2,6 +2,7 @@
 small program to produce some lattice examples for latex
 """
 
+import string
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.optimize as opt
@@ -22,21 +23,12 @@ L = int(input())
 print("n?")
 n = int(input())
 
-f = open("triangle.txt")
-tr = []
-for line in f:
-    tr.append(np.loadtxt(StringIO(line), dtype=int))
+print("Lat?")
+l = input()
 
-n_tr = tr[0][1::3]
-p_tr = tr[0][2::3]
 
-f = open("hexagonal.txt")
-hx = []
-for line in f:
-    hx.append(np.loadtxt(StringIO(line), dtype=int))
-n_hx = hx[0][1::4]
-i_hx = hx[0][2::4]
-p_hx = hx[0][3::4]
+
+
 
 def tri_conv(n):
     
@@ -69,16 +61,6 @@ def trian():
                 triangles.append([i+L, i, i+1+L])
         triang = mtri.Triangulation(x, y, triangles)
         return triang
-    
-triang = trian()
-
-fig1 = plt.figure()
-plt.triplot(triang, 'r-', alpha=1, linewidth=0.5, zorder=1)
-plt.scatter(tri_conv(n_tr)[0], tri_conv(n_tr)[1], c=p_tr, cmap="Greens", s=100, vmin=0, vmax=n, marker="s", zorder=2)
-#plt.axis("off")
-#plt.savefig("tri_ex.pdf", dpi=100)
-plt.show()
-
 def hex_cor(n, j):
     """function that converts the index n and site index j into coordinates x and y, with x being horisontal.
 
@@ -171,10 +153,38 @@ def grid_plot():
     plt.plot([xl[2*L*(L-1)], xl[2*L*L - L]], [yl[2*L*(L-1)], yl[2*L*L - L]], 'r-', alpha=1, linewidth=0.5, zorder=1)
 
 
-fig2 = plt.figure()
-grid_plot()
-plt.scatter(hex_cor(n_hx, i_hx)[0], hex_cor(n_hx, i_hx)[1], c=p_hx, cmap="Greens", s=100, vmin=0, vmax=n, marker="s", zorder=2)
-plt.axis("off")
-plt.savefig("hex_ex.pdf", dpi=100)
-#plt.show()
+if l == "t":
+    name = "triangle_"+str(n)+".txt"
+    f = open(name)
+    tr = []
+    for line in f:
+        tr.append(np.loadtxt(StringIO(line), dtype=int))
+
+    n_tr = tr[0][1::3]
+    p_tr = tr[0][2::3]
+    triang = trian()
+
+    fig1 = plt.figure()
+    plt.triplot(triang, 'r-', alpha=.4, linewidth=0.3, zorder=1)
+    plt.scatter(tri_conv(n_tr)[0], tri_conv(n_tr)[1], c=p_tr, cmap="Greens", s=1, vmin=0, vmax=n, marker="s", zorder=2)
+    plt.axis("off")
+    plt.savefig("tri_"+str(n)+".pdf", dpi=100)
+    #plt.show()
+
+
+elif l == "h":
+    name = "hexagonal_"+str(n)+".txt"
+    f = open(name)
+    hx = []
+    for line in f:
+        hx.append(np.loadtxt(StringIO(line), dtype=int))
+    n_hx = hx[0][1::4]
+    i_hx = hx[0][2::4]
+    p_hx = hx[0][3::4]
+    fig2 = plt.figure()
+    grid_plot()
+    plt.scatter(hex_cor(n_hx, i_hx)[0], hex_cor(n_hx, i_hx)[1], c=p_hx, cmap="Greens", s=0.25, vmin=0, vmax=n, marker="s", zorder=2)
+    plt.axis("off")
+    plt.savefig("hex_"+str(n)+".pdf", dpi=100)
+    #plt.show()
 

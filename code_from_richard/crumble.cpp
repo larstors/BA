@@ -1087,6 +1087,14 @@ public:
       }
       return x;
     }
+
+    hist_t occupation_prob(){
+      hist_t output(P.n_max+1);
+      for (unsigned n = 0; n < sites.size(); n++){
+        output[sites[n].present]++;
+      }
+      return output;
+    }
 };
 
 // ! Following classes are additions by Lars. Note that in the triangular case it is just the one as above with some very slight adjustments
@@ -4457,11 +4465,11 @@ int main(int argc, char* argv[]) {
         }
       }
       else if (output == "perimeter"){
-        ofstream outfile, pars; 
-        outfile.open("./lars_sim/Data/perimeter/square_"+occ_p+"_t.txt");
-        pars.open("./lars_sim/Data/perimeter/square_pars_"+occ_p+"_t.txt");
-        unsigned check = 0;
-        for (double alp = 1e-3; alp <= 100.0; alp*=1.78){
+        ofstream outfile, pars, probs; 
+        outfile.open("./lars_sim/Data/perimeter/square_"+occ_p+".txt");
+        pars.open("./lars_sim/Data/perimeter/square_pars_"+occ_p+".txt");
+        probs.open("./lars_sim/Data/perimeter/square_probs_"+occ_p+".txt");
+        for (double alp = 1e5; alp <= 1e5+1; alp*=1.78){
           for (double dens = 0.001; dens < 1.0; dens+=.05){
             Parameters P_h;
             P_h.N = unsigned(P.L[0]*P.L[0]*P.n_max*dens);
@@ -4472,15 +4480,15 @@ int main(int argc, char* argv[]) {
             t = 0;
 
             //output for parameters (curious to see the values)
-            if (check < 7){
-              pars << P_h.N << endl;
-              check ++;
-            }
+            pars << P_h.N << endl;
+
             // jamming, max cl size, perimeter, weighted mean cl size
             double j = 0;
             double m = 0;
             double s = 0;
             double w = 0;
+
+            vec_d prob(P.n_max+1);
 
             // count for mean vals
             double count = 0;
@@ -4490,6 +4498,10 @@ int main(int argc, char* argv[]) {
               m += LB.max_cluster_size_nr();
               s += LB.perimeter();
               w += LB.w_N();
+              hist_t p = LB.occupation_prob();
+              for (unsigned i = 0; i < P.n_max+1; i++){
+                prob[i] += double(p[i]);
+              }
               count++;
             }
 
@@ -4501,6 +4513,13 @@ int main(int argc, char* argv[]) {
             m = m / double(P_h.N);
             s = s / double(P_h.N);
             w = w / double(P_h.N);
+
+            for (unsigned i = 0; i < P.n_max+1; i++){
+              prob[i] /= double(P.L[0]*P.L[1] * count);
+              probs << prob[i] << " ";
+            }
+            probs << endl;
+            
 
             outfile << j << " " << m << " " << s << " " << w << " ";
           }
@@ -4634,21 +4653,20 @@ int main(int argc, char* argv[]) {
 
       else if (output == "tagged"){
         ofstream outfile, dist;
-          outfile.open("./lars_sim/Data/displacement/sq_varkur_rho_05_"+occ_p+".txt");
-          dist.open("./lars_sim/Data/displacement/sq_dist_rho_05_"+occ_p+".txt");
+          outfile.open("./lars_sim/Data/displacement/sq_varkur_rho_25_"+occ_p+"_test2.txt");
+          dist.open("./lars_sim/Data/displacement/sq_dist_rho_25_"+occ_p+"_test2.txt");
           vector<long double> variance;
           vector<long double> kurtosis;
           // number of configurations
-          unsigned nr_configuration = 50;
+          unsigned nr_configuration = 1;
           map<unsigned, vec_d> x;
           vec dist_time = {50, 150, 200, 500, 5000, unsigned(until-1)};
-          for (unsigned k = 0; t < until; ++k){
+          for (unsigned k = 0; k*every < until; ++k){
             // add part to map for distribution. 
             for (const auto & m : dist_time){
               if (m == k) x.insert(pair<unsigned, vec_d> (k, {}));
             }
             // fill the arrays with 0, probably not the best way to do it.
-            t = L.run_until(k * every);
             if (k > 0){
               variance.push_back(0);
               kurtosis.push_back(0);
@@ -4658,8 +4676,15 @@ int main(int argc, char* argv[]) {
           // need to iterate over several lattice to achieve good statistics
           for (unsigned i = 0; i < nr_configuration ; i++){
             // just a little progress bar so I am not kept in the dark for too long
+            if (nr_configuration >= 10){
             if (i%(nr_configuration/10)==0){
               for (int o =0 ; o < i / (nr_configuration/10); o++){
+                cout << "#";
+              }
+              cout << endl;
+            }
+            } else {
+              for (int o = 0; o <= i ; o++){
                 cout << "#";
               }
               cout << endl;
@@ -4703,7 +4728,7 @@ int main(int argc, char* argv[]) {
       }
       else if (output == "particles") {
         ofstream outfile;
-        outfile.open("./lars_sim/gif/square_"+occ_p+".txt");
+        outfile.open("./lars_sim/Data/for_latex/square_"+occ_p+".txt");
 
         for(unsigned n=0; t < burnin + until; ++n) {
           t = L.run_until(burnin + n * every);
@@ -5357,7 +5382,7 @@ int main(int argc, char* argv[]) {
         }
       } else if (output == "particles") {
         ofstream outfile;
-        outfile.open("./lars_sim/gif/triangle_"+occ_p+".txt");
+        outfile.open("./lars_sim/Data/for_latex/triangle_"+occ_p+".txt");
 
         for(unsigned n=0; t < burnin + until; ++n) {
           t = TL.run_until(burnin + n * every);

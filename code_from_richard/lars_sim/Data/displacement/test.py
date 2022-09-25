@@ -12,7 +12,7 @@ from matplotlib import rcParams
 from io import StringIO
 import matplotlib.tri as mtri
 
-plt.rcParams.update({'font.size': 14})
+plt.rcParams.update({'font.size': 18})
 
 n = 1
 
@@ -170,33 +170,42 @@ if False:
 
 
 if True:
-    svk_1 = np.genfromtxt("sq_varkur_rho_25_3.txt", delimiter=" ")
-    dist = np.genfromtxt("sq_dist_rho_25_3.txt", delimiter=" ")
+    svk_1 = np.genfromtxt("sq_varkur_rho_25_3_test2.txt", delimiter=" ")
+    dist = np.genfromtxt("sq_dist_rho_25_3_test2.txt", delimiter=" ")
 
     t = svk_1[:, 0]
 
     tlow = t[t <= 10]
-    thigh = t[t > 20000]
-    t3 = t[10000:30000]
+    thigh = t[-40000:]
+    t3 = t[200:1000]
 
     def fit (x, a, b):
         return x ** a * b
 
     par1 = opt.curve_fit(fit, tlow, svk_1[:len(tlow), 1])[0]
     par2 = opt.curve_fit(fit, thigh, svk_1[-len(thigh):, 1])[0]
-    par3 = opt.curve_fit(fit, t3, svk_1[10000:30000, 1])[0]
+    par3 = opt.curve_fit(fit, t3, svk_1[200:1000, 1])[0]
 
     fig = plt.figure()
-    plt.plot(svk_1[:, 0], svk_1[:, 1], ".", label="var")
+    plt.plot(svk_1[:, 0], svk_1[:, 1], "m.")
     plt.plot(tlow, fit(tlow, par1[0], par1[1]), "k--", label=r"$\sim t^{%.2f}$" % par1[0])
     plt.plot(thigh, fit(thigh, par2[0], par2[1]), "k-.", label=r"$\sim t^{%.2f}$" % par2[0])
     plt.plot(t3, fit(t3, par3[0], par3[1]), "k-", label=r"$\sim t^{%.2f}$" % par3[0])
     #plt.axis([10000, 100000, 1000, 1000000])
     plt.legend()
+    plt.grid()
+    plt.xlabel(r"$t$")
+    plt.ylabel(r"$\Delta x(t)^2$")
     plt.xscale("log")
     plt.yscale("log")
-    #plt.savefig("L_100_25_3.pdf")
-    plt.show()
+    plt.savefig("var_25_3.pdf", bbox_inches="tight")
+
+    fig3 = plt.figure()
+    plt.plot(svk_1[:, 0], svk_1[:, 2], ".")
+    plt.grid()
+    plt.xlabel(r"$t$")
+    plt.ylabel(r"$\kappa(t)$")
+    plt.savefig("kur_25_3.pdf", bbox_inches="tight")
 
     bins = 300
 
@@ -210,8 +219,8 @@ if True:
     plt.xlabel(r"$x(t)-x(0)$")
     plt.ylabel(r"$P(x(t)-x(0))$")
     plt.legend()
-    #plt.savefig("dist_low_05_2.pdf", dpi=150)
-    plt.show()
+    plt.savefig("dist_low_25_3.pdf", dpi=150, bbox_inches="tight")
+    
 
     dis = distribution(dist, bins, 5)
     d1 = np.asarray(dis[0])
@@ -239,5 +248,4 @@ if True:
     plt.ylabel(r"$P(x(t)-x(0))$")
     plt.axis([-1000, 1000, 10**(-6), 1])
     plt.legend()
-    #plt.savefig("dist_high_05_2.pdf", dpi=150)
-    plt.show()
+    plt.savefig("dist_high_25_3.pdf", dpi=150, bbox_inches="tight")

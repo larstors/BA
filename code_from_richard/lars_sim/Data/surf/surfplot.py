@@ -29,22 +29,22 @@ def fit_func(x, a):
 
 # square
 if what == 1:
-    f = open("square_part1.txt")
+    f = open("square_part3.txt")
     square_part = []
     for line in f:
         square_part.append(np.loadtxt(StringIO(line), dtype=int))
 
-    f = open("square_sv1.txt")
+    f = open("square_sv3.txt")
     square_sv = []
     for line in f:
         square_sv.append(np.loadtxt(StringIO(line), dtype=int))
     
-    f = open("square_clust1.txt")
+    f = open("square_clust3.txt")
     square_cl = []
     for line in f:
         square_cl.append(np.loadtxt(StringIO(line), dtype=int))
 
-    f = open("square_border1.txt")
+    f = open("square_border3.txt")
     square_int = []
     for line in f:
         square_int.append(np.loadtxt(StringIO(line), dtype=int))
@@ -117,7 +117,7 @@ if what == 1:
     ax1.set_ylabel(r"Volume $V$")
     ax1.grid()
     ax1.legend()
-    plt.savefig("sq_n_1.pdf", dpi=150)
+    plt.savefig("sq_n_3.pdf", dpi=150)
     #plt.show()
 
 
@@ -125,9 +125,9 @@ if what == 1:
     fig2, ax1 = plt.subplots()
  
 
-    ax1.plot(np.linspace(1, max(s)), fit_func(np.linspace(1, max(s)), par[0]), "k-", label=r"$\beta=%g$" % par[0])
-    ax1.plot(np.linspace(min(ts), max(ts)), fit_func(np.linspace(min(ts), max(ts)), tpar[0]), "k--", label=r"$\beta^\prime=%g$" % tpar[0])
-    ax1.plot(np.linspace(min(ks), max(ks)), fit_func(np.linspace(min(ks), max(ks)), kpar[0]), "k-.", label=r"$\beta^{\prime\prime}=%g$" % kpar[0])
+    ax1.plot(np.linspace(1, max(s)), fit_func(np.linspace(1, max(s)), par[0]), "k-", label=r"$\beta=%.2f$" % par[0])
+    ax1.plot(np.linspace(min(ts), max(ts)), fit_func(np.linspace(min(ts), max(ts)), tpar[0]), "k--", label=r"$\beta^\prime=%.2f$" % tpar[0])
+    ax1.plot(np.linspace(min(ks), max(ks)), fit_func(np.linspace(min(ks), max(ks)), kpar[0]), "k-.", label=r"$\beta^{\prime\prime}=%.2f$" % kpar[0])
 
     for i in range(4):
         ax1.plot(square_sv[i*16][1::2], square_sv[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
@@ -139,7 +139,7 @@ if what == 1:
     ax1.set_yscale("log")
     ax1.grid()
     ax1.legend()
-    plt.savefig("sq_n_1_log.pdf", dpi=150, bbox_inches="tight")
+    plt.savefig("sq_n_3_log.pdf", dpi=150, bbox_inches="tight")
     #plt.show()
 
     fig3, ax = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
@@ -285,9 +285,9 @@ if what == 2:
     fig2, ax1 = plt.subplots()
     
 
-    ax1.plot(np.linspace(1, max(s)), fit_func(np.linspace(1, max(s)), par[0]), "k-", label=r"$\beta=%g$" % par[0])
+    ax1.plot(np.linspace(1, max(s)), fit_func(np.linspace(1, max(s)), par[0]), "k-", label=r"$\beta=%.2f$" % par[0])
     #ax1.plot(np.linspace(min(ts), max(ts)), fit_func(np.linspace(min(ts), max(ts)), tpar[0]), "k--", label=r"$\beta^\prime=%g$" % tpar[0])
-    ax1.plot(np.linspace(min(ks), max(ks)), fit_func(np.linspace(min(ks), max(ks)), kpar[0]), "k-.", label=r"$\beta^{\prime\prime}=%g$" % kpar[0])
+    ax1.plot(np.linspace(min(ks), max(ks)), fit_func(np.linspace(min(ks), max(ks)), kpar[0]), "k-.", label=r"$\beta^{\prime\prime}=%.2f$" % kpar[0])
 
     for i in range(4):
         ax1.plot(square_sv[i*16][1::2], square_sv[i*16][::2], "o", label=r"$t=%d\cdot 10^4$" % (16*i))
@@ -755,7 +755,7 @@ if what == 5:
     if True:
         ps1 = opt.curve_fit(fit_func, fill(s1)[0], fill(s1)[1])[0]
         fig1, ax1 = plt.subplots()
-        ax1.plot(np.linspace(1, max(fill(s1)[0])), fit_func(np.linspace(1, max(fill(s1)[0])), ps1[0]), "k-", label=r"$x^{%g}$" % ps1[0])
+        ax1.plot(np.linspace(1, max(fill(s1)[0])), fit_func(np.linspace(1, max(fill(s1)[0])), ps1[0]), "k-", label=r"$x^{%.2f}$" % ps1[0])
         for i in range(6):
             ax1.plot(s1[i*16][1::2], s1[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
         ax1.set_xlabel(r"Surface $S$")
@@ -770,7 +770,7 @@ if what == 5:
     if True:
         ps2 = opt.curve_fit(fit_func, fill(s2)[0], fill(s2)[1])[0]
         fig1, ax1 = plt.subplots()
-        ax1.plot(np.linspace(1, max(fill(s2)[0])), fit_func(np.linspace(1, max(fill(s2)[0])), ps2[0]), "k-", label=r"$x^{%g}$" % ps2[0])
+        ax1.plot(np.linspace(1, max(fill(s2)[0])), fit_func(np.linspace(1, max(fill(s2)[0])), ps2[0]), "k-", label=r"$x^{%.2f}$" % ps2[0])
         for i in range(6):
             ax1.plot(s2[i*16][1::2], s2[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
         ax1.set_xlabel(r"Surface $S$")
@@ -801,8 +801,8 @@ if what == 5:
         print(ps3, p3)
 
         fig1, ax1 = plt.subplots()
-        ax1.plot(np.linspace(1, max(fill(s3)[0])), fit_func(np.linspace(1, max(fill(s3)[0])), ps3[0]), "k-", label=r"$x^{%g}$" % ps3[0])
-        ax1.plot(np.linspace(min(sx), max(sx)), fit_func(np.linspace(min(sx), max(sx)), p3[0]), "m-", label=r"$x^{%g}$" % p3[0])
+        ax1.plot(np.linspace(1, max(fill(s3)[0])), fit_func(np.linspace(1, max(fill(s3)[0])), ps3[0]), "k-", label=r"$x^{%.2f}$" % ps3[0])
+        ax1.plot(np.linspace(min(sx), max(sx)), fit_func(np.linspace(min(sx), max(sx)), p3[0]), "m-", label=r"$x^{%.2f}$" % p3[0])
         for i in range(6):
             ax1.plot(s3[i*16][1::2], s3[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
         ax1.set_xlabel(r"Surface $S$")
@@ -817,7 +817,7 @@ if what == 5:
     if True:
         pt1 = opt.curve_fit(fit_func, fill(t1)[0], fill(t1)[1])[0]
         fig1, ax1 = plt.subplots()
-        ax1.plot(np.linspace(1, max(fill(t1)[0])), fit_func(np.linspace(1, max(fill(t1)[0])), pt1[0]), "k-", label=r"$x^{%g}$" % pt1[0])
+        ax1.plot(np.linspace(1, max(fill(t1)[0])), fit_func(np.linspace(1, max(fill(t1)[0])), pt1[0]), "k-", label=r"$x^{%.2f}$" % pt1[0])
         for i in range(6):
             ax1.plot(t1[i*16][1::2], t1[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
         ax1.set_xlabel(r"Surface $S$")
@@ -832,7 +832,7 @@ if what == 5:
     if True:
         pt2 = opt.curve_fit(fit_func, fill(t2)[0], fill(t2)[1])[0]
         fig1, ax1 = plt.subplots()
-        ax1.plot(np.linspace(1, max(fill(t2)[0])), fit_func(np.linspace(1, max(fill(t2)[0])), pt2[0]), "k-", label=r"$x^{%g}$" % pt2[0])
+        ax1.plot(np.linspace(1, max(fill(t2)[0])), fit_func(np.linspace(1, max(fill(t2)[0])), pt2[0]), "k-", label=r"$x^{%.2f}$" % pt2[0])
         for i in range(6):
             ax1.plot(t2[i*16][1::2], t2[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
         ax1.set_xlabel(r"Surface $S$")
@@ -847,7 +847,7 @@ if what == 5:
     if True:
         pt3 = opt.curve_fit(fit_func, fill(t3)[0], fill(t3)[1])[0]
         fig1, ax1 = plt.subplots()
-        ax1.plot(np.linspace(1, max(fill(t3)[0])), fit_func(np.linspace(1, max(fill(t3)[0])), pt3[0]), "k-", label=r"$x^{%g}$" % pt3[0])
+        ax1.plot(np.linspace(1, max(fill(t3)[0])), fit_func(np.linspace(1, max(fill(t3)[0])), pt3[0]), "k-", label=r"$x^{%.2f}$" % pt3[0])
         for i in range(6):
             ax1.plot(t3[i*16][1::2], t3[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
         ax1.set_xlabel(r"Surface $S$")
@@ -862,7 +862,7 @@ if what == 5:
     if True:
         ph1 = opt.curve_fit(fit_func, fill(h1)[0], fill(h1)[1])[0]
         fig1, ax1 = plt.subplots()
-        ax1.plot(np.linspace(1, max(fill(h1)[0])), fit_func(np.linspace(1, max(fill(h1)[0])), ph1[0]), "k-", label=r"$x^{%g}$" % ph1[0])
+        ax1.plot(np.linspace(1, max(fill(h1)[0])), fit_func(np.linspace(1, max(fill(h1)[0])), ph1[0]), "k-", label=r"$x^{%.2f}$" % ph1[0])
         for i in range(6):
             ax1.plot(h1[i*16][1::2], h1[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
         ax1.set_xlabel(r"Surface $S$")
@@ -877,7 +877,7 @@ if what == 5:
     if True:
         ph2 = opt.curve_fit(fit_func, fill(h2)[0], fill(h2)[1])[0]
         fig1, ax1 = plt.subplots()
-        ax1.plot(np.linspace(1, max(fill(h2)[0])), fit_func(np.linspace(1, max(fill(h2)[0])), ph2[0]), "k-", label=r"$x^{%g}$" % ph2[0])
+        ax1.plot(np.linspace(1, max(fill(h2)[0])), fit_func(np.linspace(1, max(fill(h2)[0])), ph2[0]), "k-", label=r"$x^{%.2f}$" % ph2[0])
         for i in range(6):
             ax1.plot(h2[i*16][1::2], h2[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
         ax1.set_xlabel(r"Surface $S$")
@@ -892,7 +892,7 @@ if what == 5:
     if True:
         ph3 = opt.curve_fit(fit_func, fill(h3)[0], fill(h3)[1])[0]
         fig1, ax1 = plt.subplots()
-        ax1.plot(np.linspace(1, max(fill(h3)[0])), fit_func(np.linspace(1, max(fill(h3)[0])), ph3[0]), "k-", label=r"$x^{%g}$" % ph3[0])
+        ax1.plot(np.linspace(1, max(fill(h3)[0])), fit_func(np.linspace(1, max(fill(h3)[0])), ph3[0]), "k-", label=r"$x^{%g%.2f}$" % ph3[0])
         for i in range(6):
             ax1.plot(h3[i*16][1::2], h3[i*16][::2], "o", label=r"$t=%d\cdot 10^3$" % (16*i))
         ax1.set_xlabel(r"Surface $S$")

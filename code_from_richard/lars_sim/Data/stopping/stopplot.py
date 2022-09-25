@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import scipy.optimize as opt
 import numba as nb
 from matplotlib import rcParams
-plt.rcParams.update({'font.size': 36})
+plt.rcParams.update({'font.size': 30})
 
 
 print("Lattice? (only first letter)")
