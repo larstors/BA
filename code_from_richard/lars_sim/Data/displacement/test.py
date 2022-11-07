@@ -173,6 +173,7 @@ if True:
     svk_1 = np.genfromtxt("sq_varkur_rho_25_3_test2.txt", delimiter=" ")
     dist = np.genfromtxt("sq_dist_rho_25_3_test2.txt", delimiter=" ")
 
+    """
     t = svk_1[:, 0]
 
     tlow = t[t <= 10]
@@ -187,10 +188,10 @@ if True:
     par3 = opt.curve_fit(fit, t3, svk_1[200:1000, 1])[0]
 
     fig = plt.figure()
-    plt.plot(svk_1[:, 0], svk_1[:, 1], "m.")
+    plt.plot(svk_1[:, 0], svk_1[:, 1], "c.")
     plt.plot(tlow, fit(tlow, par1[0], par1[1]), "k--", label=r"$\sim t^{%.2f}$" % par1[0])
     plt.plot(thigh, fit(thigh, par2[0], par2[1]), "k-.", label=r"$\sim t^{%.2f}$" % par2[0])
-    plt.plot(t3, fit(t3, par3[0], par3[1]), "k-", label=r"$\sim t^{%.2f}$" % par3[0])
+    plt.plot(t3, fit(t3, par3[0], par3[1]), linewidth=2, color="black", linestyle="dotted", label=r"$\sim t^{%.2f}$" % par3[0])
     #plt.axis([10000, 100000, 1000, 1000000])
     plt.legend()
     plt.grid()
@@ -198,14 +199,19 @@ if True:
     plt.ylabel(r"$\Delta x(t)^2$")
     plt.xscale("log")
     plt.yscale("log")
-    plt.savefig("var_25_3.pdf", bbox_inches="tight")
+    #plt.savefig("var_25_3.pdf", bbox_inches="tight")
+    plt.show()
+
 
     fig3 = plt.figure()
     plt.plot(svk_1[:, 0], svk_1[:, 2], ".")
     plt.grid()
+    plt.axis([svk_1[:, 0].min(), svk_1[:, 0].max()*2, svk_1[:, 2].min()-.5, 5])
+    plt.xscale("log")
     plt.xlabel(r"$t$")
     plt.ylabel(r"$\kappa(t)$")
-    plt.savefig("kur_25_3.pdf", bbox_inches="tight")
+    #plt.savefig("kur_25_3.pdf", bbox_inches="tight")
+    plt.show()
 
     bins = 300
 
@@ -219,9 +225,10 @@ if True:
     plt.xlabel(r"$x(t)-x(0)$")
     plt.ylabel(r"$P(x(t)-x(0))$")
     plt.legend()
-    plt.savefig("dist_low_25_3.pdf", dpi=150, bbox_inches="tight")
-    
-
+    #plt.savefig("dist_low_25_3.pdf", dpi=150, bbox_inches="tight")
+    plt.show()
+    """
+    bins = 300
     dis = distribution(dist, bins, 5)
     d1 = np.asarray(dis[0])
     x1 = np.asarray(dis[1])
@@ -234,18 +241,50 @@ if True:
 
     par = opt.curve_fit(gauss_function, xdata=x1, ydata=d1, p0=[mean,sigma])[0]
 
-    print(par)
-
-    fig2 = plt.figure()
-    plt.plot(x1, gauss_function(x1, *par), "k-.", label="Gaussian fit")
+    fig2, ax = plt.subplots(figsize=(6.4, 4.8))
+    ax.plot(x1, gauss_function(x1, *par), "k-.", label="Gaussian fit")
     for i in range(3, 6):
         dist1 = distribution(dist, bins, i)
         d1 = np.asarray(dist1[0])
         x1 = np.asarray(dist1[1])
-        plt.plot(x1[d1>0], d1[d1>0], distinguisher[i-3], label=name[i], linewidth=1)
-    plt.yscale("log")
-    plt.xlabel(r"$x(t)-x(0)$")
-    plt.ylabel(r"$P(x(t)-x(0))$")
-    plt.axis([-1000, 1000, 10**(-6), 1])
-    plt.legend()
+        ax.plot(x1[d1>0], d1[d1>0], distinguisher[i-3], label=name[i], linewidth=1)
+    ax.set_yscale("log")
+    ax.set_xlabel(r"$x(t)-x(0)$")
+    ax.set_ylabel(r"$P(x(t)-x(0))$")
+    ax.axis([-1000, 1000, 10**(-6), 10**(-1)])
+    ax.set_xticks([-800, -400, 0, 400, 800])
+    ax.set_xticklabels(["-800", "-400", "0", "400", "800"])
+    ax.legend()
     plt.savefig("dist_high_25_3.pdf", dpi=150, bbox_inches="tight")
+
+
+
+    dist = np.genfromtxt("sq_dist_rho_05_3.txt", delimiter=" ")
+    bins = 300
+
+    dis = distribution(dist, bins, 5)
+    d1 = np.asarray(dis[0])
+    x1 = np.asarray(dis[1])
+    
+    n = len(x1)
+    mean = sum(x1*d1)/n
+    sigma = sum(d1*(x1-mean)**2)/n 
+
+
+    par = opt.curve_fit(gauss_function, xdata=x1, ydata=d1, p0=[mean,sigma])[0]
+
+    fig3, ax1 = plt.subplots(figsize=(6.4, 4.8))
+    ax1.plot(x1, gauss_function(x1, *par), "k-.", label="Gaussian fit")
+    for i in range(3, 6):
+        dist1 = distribution(dist, bins, i)
+        d1 = np.asarray(dist1[0])
+        x1 = np.asarray(dist1[1])
+        ax1.plot(x1[d1>0], d1[d1>0], distinguisher[i-3], label=name[i], linewidth=1)
+    ax1.set_yscale("log")
+    ax1.set_xlabel(r"$x(t)-x(0)$")
+    ax1.set_ylabel(r"$P(x(t)-x(0))$")
+    ax1.axis([-10000, 10000, 10**(-7), 10**(-1)])
+    ax1.set_xticks([-8000, -4000, 0, 4000, 8000])
+    ax1.set_xticklabels(["-8000", "-4000", "0", "4000", "8000"])
+    ax1.legend()
+    plt.savefig("dist_high_05_3.pdf", dpi=150, bbox_inches="tight") 
