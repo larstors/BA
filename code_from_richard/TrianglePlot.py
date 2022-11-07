@@ -5,6 +5,8 @@ Here I attempt to read and work with the output of the positional output of the 
 
 """
 
+
+from turtle import color
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
@@ -13,29 +15,38 @@ import scipy
 import matplotlib.animation as animation
 #from celluloid import Camera
 import matplotlib.tri as mtri
+from io import StringIO
+import matplotlib.cm as cm
+
+colormap = cm.inferno
+
 
 # TODO: better way of doing this...
 # parameters
-L = [10, 10]
+l = int(input())
+L = [l, l]
 alpha = []
 N = 600
+n = int(input())
 
-
-
-data = np.loadtxt("./triangle.txt")
 
 
 
 class AnimatedScatter(object):
     """An animated scatter plot using matplotlib.animations.FuncAnimation."""
     def __init__(self, numpoints=50):
-        self.data = np.loadtxt("./triangle.txt")
+        #f = open("./lars_sim/gif/triangle.txt")
+        f = open("./lars_sim/testing/triangle.txt")
+        self.data = []
+        for line in f:
+            self.data.append(np.loadtxt(StringIO(line), dtype=int))
+        
         self.triang = self.trian()
         # Setup the figure and axes
         self.fig, self.ax = plt.subplots(figsize=(20, 20))
         # Then setup FuncAnimation.
-        self.ani = animation.FuncAnimation(self.fig, self.update, interval=5, 
-                                          init_func=self.setup_plot, blit=True)
+        #self.ani = animation.FuncAnimation(self.fig, self.update, interval=1, 
+        #                                  init_func=self.setup_plot, blit=False, save_count=300)
         
 
     def conv(self, n):
@@ -74,9 +85,10 @@ class AnimatedScatter(object):
 
     def setup_plot(self):
         """Initial drawing of the scatter plot."""
-        s = 1.8 * 100 / L[0]
-        kos = self.data[0][1::2]
-        self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c="k", s=s, vmin=0, vmax=1, marker="s", edgecolor="k")
+        s = 1.8 * 100
+        kos = self.data[0][1::3]
+        weight = self.data[0][2::3]
+        self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=n, marker="s")
         self.ax.axis([-0.5*L[0], L[0],-5, L[1]])
         self.ax.triplot(self.triang, 'r-', alpha=0.6, linewidth=0.2)
         return self.scat,
@@ -84,12 +96,16 @@ class AnimatedScatter(object):
 
     def update(self, i):
         """Update the scatter plot."""
-        kos = self.data[i][1::2]
+        kos = self.data[i][1::3]
         self.ax.cla()
-        s = 1.8 * 100 / L[0]
-        self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c="k", s=s, vmin=0, vmax=1, marker="s", edgecolor="k")
+        s = 1.8*100
+        weight = self.data[i][2::3]
+        title = "%.1f" % (0.1*i)
+        title = "t="+title
+        self.scat = self.ax.scatter(x=self.conv(kos)[0], y=self.conv(kos)[1], c=weight, cmap="Greens", s=s, vmin=0, vmax=n, marker="s")
         self.ax.axis([-0.5*L[0], L[0],-5, L[1]])
         self.ax.triplot(self.triang, 'r-', alpha=0.6, linewidth=0.2)
+        self.ax.set_title(title)
         # We need to return the updated artist for FuncAnimation to draw..
         # Note that it expects a sequence of artists, thus the trailing comma.
         return self.scat,
@@ -97,34 +113,10 @@ class AnimatedScatter(object):
 
 if __name__ == '__main__':
     a = AnimatedScatter()
-    a.ani.save('scatter.gif', fps=5)
+    #a.ani.save('./lars_sim/gif/TriStart_n_2_N_750.gif', fps=10)
+    #a.ani.save('./lars_sim/testing/triangle_heat.gif', fps=10)
+    a.update(0)
+    plt.show()
+    #plt.savefig("./lars_sim/triang_test.pdf")
 
 
-
-"""
-# creating figure
-fig = plt.figure()
-ax = plt.axes(xlim=(-50, 105), ylim=(-5, 100))
-line, = ax.plot([], [])
-
-
-# animation function that will be called sequentially
-def animate(i):
-"""
-"""camera = Camera(plt.figure())
-for i in range(len(data)):
-    #positions 
-    kos = data[i][1::2]
-    #plot them
-    plt.scatter(x=conv(kos)[0], y=conv(kos)[1], s=1.8, marker="s", c="k")
-    #snapshot for movie
-    camera.snap()
-anim = camera.animate(blit=True)
-anim.save('scatter.gif')
-"""
-
-"""
-k = data[0]
-
-
-plt.savefig("triangle_plot_test.pdf", dpi=400)"""
