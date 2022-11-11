@@ -34,6 +34,17 @@ General notes on the code from Lars:
 */
 
 
+/* TODO LIST
+
+  - add displacement to Tri and Hex
+  - fix the function mess:
+    - dont need to recalculate the cluster sizes each time -> also less code
+    - optimise them -> feel like there are some unnecessary loops there somewhere
+  - overall optimisation 
+    - code is very slow for some systems/outputs
+
+
+*/
 
 #include <vector>
 #include <list>
@@ -973,6 +984,7 @@ public:
   }
 
   // local density (smoothed out a bit, i.e. weighted by 1/2 for site and 1/8 for neighbours)
+  // the part regarding structure factor didnt end up in the thesis, but this is the starting point.
   vec_d density(){
     vec_d den;
 
@@ -987,7 +999,7 @@ public:
     return den;
   }
   
-  // stopping time
+  // stopping time -> array of time since last jump occured for each particle
   vec_d stopping(double t){ 
     vec_d stopping_time;
 
@@ -1076,6 +1088,7 @@ public:
 // ! Following classes are additions by Lars. Note that in the triangular case it is just the one as above with some very slight adjustments
 // ! while the one for the hexagonal lattice has more drastic changes. 
 
+// TODO add diffusion and displacement for Tri and Hex!
 
 template<typename Engine>
 class Triangle_lattice {
