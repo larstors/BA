@@ -2,6 +2,39 @@
   * crumble: condensed run-and-tumble simulation
   */
 
+
+
+/*
+General notes on the code from Lars:
+
+  - I did not touch the decoder, so they probably do not work
+  
+  - The main change I did to the code is:
+    
+    (a) I added two lattices. It is probably not the best implementation, but I basically copied
+        the lattice class by Richard and made the appropriate adjustments
+    (b) I included a variable upper bound for allowed particles per site. This is not 100% perfect, as I didnt
+        find a way to globally introduce this while also defining the size in the classes. I have commented 
+        the appropriate places in the code where this takes place (or rather, does not take place)
+  
+  - Because I re-use some of the output multiple times to save computational effort, I changed the output of the 
+    script to give me txt files, that I then read in in python for further consideration/analysis. While not the 
+    most efficient it allows for some flexible output of different data.
+
+  - The actual output has become quite a mess. Especially since I started looking at many different things. 
+    Hence, one has to navigate the appropriate "if" statements to find the proper output. I am well aware that
+    this is not he most efficient way to do this. Thus, I would for now not recommend looking into the actual 
+    plotting scripts, because the consist of a spaghetti of code that I would not wish upon my worst enemy.
+
+  - As you might have guessed, I am not the most experienced coder, especially not in C++ (this is my first time
+    using it...), so there are bound to be sections that are wildly inefficient. As for the python scripts I went
+    for a brute force approach. Most parts are just repetitive plotting with some interludes of transforming the
+    data into suitable formats.
+
+*/
+
+
+
 #include <vector>
 #include <list>
 #include <map>
@@ -1176,13 +1209,13 @@ class Triangle_lattice {
             for (const auto& m : neighbours(n)) ++sites[m].neighbours;
         }
         
-        sites[n].present++;
-
+        sites[n].present++; // increase the count of particles on lattice site
     }
 
     // Schedule a hop event for a particle at site n
     void schedule(unsigned n, unsigned index) {
         assert(sites[n].occupied[index]);
+        // here we added the index to be given as well, so that we can distinguish single particles for higher occupation number
         S.schedule(run(rng), [this, n, index]() {
             assert(sites[n].occupied[index]);
             assert(sites[n].active[index]);
@@ -1191,9 +1224,7 @@ class Triangle_lattice {
                 sites[n].active[index] = false;
 
             }
-            else {
-                  // if(std::uniform_real_distribution<double>()(rng)>=std::exp(-P.alpha*(S.time()-sites[n].hoptime))) {
-                
+            else {                
                 // Make sure that for alpha=0 we dont get some weird changes.
                 // ! Note that for lower alpha this threshold has to be adjusted
                 if (P.alpha[0] - 1e-5 > 0){
@@ -1203,7 +1234,6 @@ class Triangle_lattice {
                 }
                 sites[n].hoptime[index] = S.time();
                 // Get the sites adjacent to the departure site
-                
                 auto dnbs = neighbours(n);
                 if (sites[dnbs[sites[n].direction[index]]].present < P.n_max) {
                   // Find first spot that is empty in target site and then calculate actual index.
@@ -1211,7 +1241,6 @@ class Triangle_lattice {
                   unsigned k = std::distance(sites[dnbs[sites[n].direction[index]]].occupied.begin(), itr);
                   if (k < (P.n_max) && !sites[dnbs[sites[n].direction[index]]].occupied[k]){
                     
-                    //std::cout << "here" << endl;
                     // Get the id of the vacancy that is being displaced
                     unsigned vid = sites[dnbs[sites[n].direction[index]]].id[k];
                     // std::cout << "Moving from "; decode(n); std::cout << " deactivating" << std::endl;
