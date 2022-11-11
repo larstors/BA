@@ -8,9 +8,9 @@ tr = np.genfromtxt("tri_long.txt", delimiter=" ")
 
 t = tr[:, 0]
 val = tr[:, 1]
-"""
+
 fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(15, 5), sharey=True, gridspec_kw={'width_ratios': [9, 4]})
-#plt.tight_layout()
+plt.tight_layout()
 ax[0].plot(t, val, "o")
 ax[0].set_xlabel(r"$t$")
 ax[0].set_ylabel(r"$J$")
@@ -25,7 +25,6 @@ ax[1].set_xscale("log")
 plt.savefig("tri_unstable_long.pdf", dpi=200, bbox_inches='tight')
 
 """
-
 tr_long = np.genfromtxt("tri_longlong.txt", delimiter=" ")
 
 dur = []
@@ -133,7 +132,7 @@ xxh = np.linspace(min(xh), max(xh), 100)
 
 
 fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(20, 10))
-
+fig.tight_layout()
 colors = [r'$J<0.05$', r'$J>0.05$']
 ax[0].plot(txx, fit(xx, *p), "-r", label="exp. fit")
 ax[0].plot(tx, hist/sum(hist), "s")
@@ -152,5 +151,5 @@ ax[1].set_xlabel(r"$t$")
 plt.savefig("hist_long_tri.pdf", dpi=200)
 
 
-
+"""
 

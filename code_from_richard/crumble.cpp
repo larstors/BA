@@ -5646,7 +5646,7 @@ int main(int argc, char* argv[]) {
         outfile.open("./lars_sim/Data/perimeter/hex_"+occ_p+"_t.txt");
         pars.open("./lars_sim/Data/perimeter/hex_pars_"+occ_p+"_t.txt");
         unsigned check = 0;
-        for (double alp = 1e-3; alp <= 100.0; alp*=2.4){
+        for (double alp = 1e-3*pow(2.4,10); alp <= 100.0; alp*=2.4){
           for (double dens = 0.001; dens < 1.0; dens+=.08){
             Parameters P_h;
             P_h.N = unsigned(P.L[0]*P.L[0]*P.n_max*2*dens);
