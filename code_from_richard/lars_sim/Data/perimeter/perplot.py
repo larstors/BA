@@ -272,6 +272,24 @@ ax[0].set_ylabel(r"$\rho$")
 plt.savefig("perp_h2.pdf", bbox_inches='tight')
 
 ##########################################################################################
+h3e = np.genfromtxt("hex_3_t.txt", delimiter=" ")
+o = []
+
+for i in range(len(h3)):
+    o.append(h3[i])
+
+for i in range(1, len(h3e)):
+    o.append(h3e[i])
+"""
+rhoe = np.array([0.001+(n-i)*.08 for i in range(len(h3e), 0, -1)])
+alpe = np.array([np.log10(0.001*2.4**(m-i)) for i in range(len(h3e[0, ::4]), 0, -1)])
+
+ye, xe = np.meshgrid(rhoe, alpe)
+"""
+
+h3 = np.asarray(o)
+
+
 n = len(h3)
 m = len(h3[0, ::4])
 
@@ -296,7 +314,7 @@ plt.savefig("perp_h3.pdf", bbox_inches='tight')
 
 
 
-if True:
+if False:
     n = len(t1)
     m = len(t1[0, ::4])
 

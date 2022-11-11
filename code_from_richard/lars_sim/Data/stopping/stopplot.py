@@ -155,10 +155,10 @@ if lat == "t":
 
 # square
 if lat == "s":
-    n1 = ["square_1_0.001.txt", "square_1_0.005.txt", "square_1_0.010.txt", "square_1_0.050.txt", "square_1_0.100.txt"]
-    n2 = ["square_2_0.001.txt", "square_2_0.005.txt", "square_2_0.010.txt", "square_2_0.050.txt", "square_2_0.100.txt"]
-    n3 = ["square_3_0.001.txt", "square_3_0.005.txt", "square_3_0.010.txt", "square_3_0.050.txt", "square_3_0.100.txt"]
-    alp = [0.001, 0.005, 0.01, 0.05, 0.1]
+    n1 = ["square_1_0.001.txt", "square_1_0.002.txt", "square_1_0.003.txt", "square_1_0.004.txt", "square_1_0.005.txt", "square_1_0.006.txt", "square_1_0.007.txt", "square_1_0.008.txt", "square_1_0.009.txt", "square_1_0.010.txt"]
+    n2 = ["square_2_0.001.txt", "square_2_0.002.txt", "square_2_0.003.txt", "square_2_0.004.txt", "square_2_0.005.txt", "square_2_0.006.txt", "square_2_0.007.txt", "square_2_0.008.txt", "square_2_0.009.txt", "square_2_0.010.txt"]
+    n3 = ["square_3_0.001.txt", "square_3_0.002.txt", "square_3_0.003.txt", "square_3_0.004.txt", "square_3_0.005.txt", "square_3_0.006.txt", "square_3_0.007.txt", "square_3_0.008.txt", "square_3_0.009.txt", "square_3_0.010.txt"]
+    alp = [0.001 * i for i in range(1, 11)]
 
     print("Square lattice")
     
