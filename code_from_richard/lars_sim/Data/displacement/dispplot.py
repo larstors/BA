@@ -11,6 +11,7 @@ import matplotlib.patches as mpl_patches
 from matplotlib import rcParams
 from io import StringIO
 import matplotlib.tri as mtri
+import matplotlib.patches as mpatches
 
 plt.rcParams.update({'font.size': 18})
 
@@ -18,7 +19,7 @@ print("n?")
 n = int(input())
 
 # var and kurt
-if (n == 1 and True):
+if (n == 1 and False):
     svk_1 = np.genfromtxt("sq_varkur_rho_05_1.txt", delimiter=" ")
     svk_2 = np.genfromtxt("sq_varkur_rho_25_1.txt", delimiter=" ")
 
@@ -82,7 +83,7 @@ if (n == 1 and True):
     plt.ylabel(r"$\kappa(t)$")
     plt.savefig("kur_25_1.pdf", dpi=150)
 
-elif (n == 2 and True):
+elif (n == 2 and False):
     svk_1 = np.genfromtxt("sq_varkur_rho_05_2.txt", delimiter=" ")
     svk_2 = np.genfromtxt("sq_varkur_rho_25_2.txt", delimiter=" ")
 
@@ -322,6 +323,12 @@ if (n == 2 and True):
     plt.xlabel(r"$x(t)-x(0)$")
     plt.ylabel(r"$P(x(t)-x(0))$")
     plt.legend()
+    plt.annotate("", xy=(-200, 0.006), xytext=(-200, 0.02), arrowprops=dict(arrowstyle="->", lw=3))
+    plt.annotate("", xy=(200, 0.006), xytext=(200, 0.02), arrowprops=dict(arrowstyle="->", lw=3))
+    plt.annotate("", xy=(-150, 0.01), xytext=(-150, 0.03), arrowprops=dict(arrowstyle="->", lw=3))
+    plt.annotate("", xy=(150, 0.01), xytext=(150, 0.03), arrowprops=dict(arrowstyle="->", lw=3))
+    plt.annotate("", xy=(-50, 0.03), xytext=(-50, 0.09), arrowprops=dict(arrowstyle="->", lw=3))
+    plt.annotate("", xy=(50, 0.03), xytext=(50, 0.09), arrowprops=dict(arrowstyle="->", lw=3))
     plt.savefig("dist_low_05_2.pdf", dpi=150, bbox_inches="tight")
 
     dis = distribution(dist, bins, 5)
@@ -401,19 +408,28 @@ if (n == 3 and True):
 
     dist = np.genfromtxt("sq_dist_rho_05_3.txt", delimiter=" ")
     bins = 300
-    """
+    
     fig1 = plt.figure()
     for i in range(3):
         dist1 = distribution(dist, bins, i)
         d1 = np.asarray(dist1[0])
         x1 = np.asarray(dist1[1])
         plt.plot(x1[d1>0], d1[d1>0], distinguisher[i], label=name[i], linewidth=1)
+    handles, labels = plt.gca().get_legend_handles_labels()
     plt.yscale("log")
     plt.xlabel(r"$x(t)-x(0)$")
     plt.ylabel(r"$P(x(t)-x(0))$")
-    plt.legend()
+    plt.annotate("", xy=(-200, 0.006), xytext=(-200, 0.02), arrowprops=dict(arrowstyle="->", lw=3))
+    plt.annotate("", xy=(200, 0.006), xytext=(200, 0.02), arrowprops=dict(arrowstyle="->", lw=3))
+    plt.annotate("", xy=(-150, 0.01), xytext=(-150, 0.03), arrowprops=dict(arrowstyle="->", lw=3))
+    plt.annotate("", xy=(150, 0.01), xytext=(150, 0.03), arrowprops=dict(arrowstyle="->", lw=3))
+    plt.annotate("", xy=(-50, 0.03), xytext=(-50, 0.09), arrowprops=dict(arrowstyle="->", lw=3))
+    arrow = plt.annotate("", xy=(50, 0.03), xytext=(50, 0.09), arrowprops=dict(arrowstyle="->", lw=3), label="Ballistic Peak")
+    #handles.append(arrow.arrow_patch)
+    #labels.append(arrow.get_label())
+    plt.legend(handles=handles, labels=labels)
     plt.savefig("dist_low_05_3.pdf", bbox_inches="tight")
-    """
+    
     dis = distribution(dist, bins, 5)
     d1 = np.asarray(dis[0])
     x1 = np.asarray(dis[1])
