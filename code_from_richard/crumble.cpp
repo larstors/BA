@@ -4055,14 +4055,17 @@ int main(int argc, char* argv[]) {
       }
       else if (output == "number"){ // TODO substitute the old methods with the functions that you have created
         ofstream outfile;
-        string name = "./lars_sim/Data/testing/square_";
+        string name = "./lars_sim/Data/trajectory/square_";
         string name_number = name+"number"+"_"+tumb+"_"+dens+"_"+size+"_"+occ_p+txt;
         outfile.open(name_number);
 
-        vec_d res, clnr;
+        vec_d res, clnr, cn, j, m;
         for(unsigned n=0; burnin + pow(1.01, n)*every < burnin + until; n++) {
           res.push_back(0);
           clnr.push_back(0);
+          cn.push_back(0);
+          j.push_back(0);
+          m.push_back(0);
         }
 
         unsigned iterations = 10;
@@ -4084,6 +4087,9 @@ int main(int argc, char* argv[]) {
           weighted = weighted / double(P.N);
           res[0] += weighted;
           clnr[0] += L.avg_cluster_size_nr();
+          cn[0] += L.perimeter();
+          j[0] += L.motility_fraction();
+          m[0] += L.max_cluster_size_nr();
           // now let time run and do the appropriate calculations
           for(unsigned n=1; t < burnin + until; n++) {
             t = L.run_until(burnin + pow(1.01, n) * every);
@@ -4098,11 +4104,14 @@ int main(int argc, char* argv[]) {
             weighted = weighted / double(P.N);
             res[n] += weighted;
             clnr[n] += L.avg_cluster_size_nr();
+            cn[n] += L.perimeter();
+            j[n] += L.motility_fraction();
+            m[n] += L.max_cluster_size_nr();
           }
           cout << "We are at " << q << endl;
         }
         for (unsigned i = 0; i <= res.size(); i++){
-            outfile << burnin + pow(1.01, i)*every << " " << res[i]/double(iterations) << " " << double(clnr[i])/double(iterations) << endl;
+            outfile << burnin + pow(1.01, i)*every << " " << res[i]/double(iterations) << " " << cn[i] /double(iterations) << " " << j[i]/double(iterations) << " " << m[i]/double(iterations) << " " << double(clnr[i])/double(iterations) << endl;
         }
       } 
       else if (output == "lagging"){
@@ -4955,14 +4964,17 @@ int main(int argc, char* argv[]) {
       }
       else if (output == "number"){
         ofstream outfile;
-        string name = "./lars_sim/Data/testing/tri_";
+        string name = "./lars_sim/Data/trajectory/tri_";
         string name_number = name+"number"+"_"+tumb+"_"+dens+"_"+size+"_"+occ_p+txt;
         outfile.open(name_number);
 
-        vec_d res, clnr;
+        vec_d res, clnr, cn, j, m;
         for(unsigned n=0; burnin + pow(1.01, n)*every < burnin + until; n++) {
           res.push_back(0);
           clnr.push_back(0);
+          cn.push_back(0);
+          j.push_back(0);
+          m.push_back(0);
         }
 
         unsigned iterations = 10;
@@ -4981,6 +4993,9 @@ int main(int argc, char* argv[]) {
           weighted = weighted / double(P.N);
           res[0] += weighted;
           clnr[0] += TL.avg_cluster_size_nr();
+          cn[0] += TL.perimeter();
+          j[0] += TL.motility_fraction();
+          m[0] += TL.max_cluster_size_nr();
           for(unsigned n=1; t < burnin + until; n++) {
             t = TL.run_until(burnin + pow(1.01, n) * every);
             hist_t hist = TL.cluster_distributions();
@@ -4994,11 +5009,14 @@ int main(int argc, char* argv[]) {
             weighted = weighted / double(P.N);
             res[n] += weighted;
             clnr[n] += TL.avg_cluster_size_nr();
+            cn[n] += TL.perimeter();
+            j[n] += TL.motility_fraction();
+            m[n] += TL.max_cluster_size_nr();
           }
           cout << "We are at " << q << endl;
         }
         for (unsigned i = 0; i <= res.size(); i++){
-            outfile << burnin + pow(1.01, i)*every << " " << res[i]/double(iterations) << " " << double(clnr[i])/double(iterations) << endl;
+            outfile << burnin + pow(1.01, i)*every << " " << res[i]/double(iterations) << " " << cn[i] /double(iterations) << " " << j[i]/double(iterations) << " " << m[i]/double(iterations) << " " << double(clnr[i])/double(iterations) << endl;
         }
       
       }
@@ -5963,14 +5981,17 @@ int main(int argc, char* argv[]) {
       }
       else if (output == "number"){
         ofstream outfile;
-        string name = "./lars_sim/Data/testing/hex_";
+        string name = "./lars_sim/Data/trajectory/hex_";
         string name_number = name+"number"+"_"+tumb+"_"+dens+"_"+size+"_"+occ_p+txt;
         outfile.open(name_number);
 
-        vec_d res, clnr;
+        vec_d res, clnr, cn, j, m;
         for(unsigned n=0; burnin + pow(1.01, n)*every < burnin + until; n++) {
           res.push_back(0);
           clnr.push_back(0);
+          cn.push_back(0);
+          j.push_back(0);
+          m.push_back(0);
         }
 
         unsigned iterations = 10;
@@ -5989,6 +6010,9 @@ int main(int argc, char* argv[]) {
           weighted = weighted / double(P.N);
           res[0] += weighted;
           clnr[0] += HL.avg_cluster_size_nr();
+          cn[0] += HL.perimeter();
+          j[0] += HL.motility_fraction();
+          m[0] += HL.max_cluster_size_nr();
           for(unsigned n=1; t < burnin + until; n++) {
             t = HL.run_until(burnin + pow(1.01, n) * every);
             hist_t hist = HL.cluster_distributions();
@@ -6002,11 +6026,14 @@ int main(int argc, char* argv[]) {
             weighted = weighted / double(P.N);
             res[n] += weighted;
             clnr[n] += HL.avg_cluster_size_nr();
+            cn[n] += HL.perimeter();
+            j[n] += HL.motility_fraction();
+            m[n] += HL.max_cluster_size_nr();
           }
           cout << "We are at " << q << endl;
         }
         for (unsigned i = 0; i <= res.size(); i++){
-            outfile << burnin + pow(1.01, i)*every << " " << res[i]/double(iterations) << " " << double(clnr[i])/double(iterations) << endl;
+            outfile << burnin + pow(1.01, i)*every << " " << res[i]/double(iterations) << " " << cn[i] /double(iterations) << " " << j[i]/double(iterations) << " " << m[i]/double(iterations) << " " << double(clnr[i])/double(iterations) << endl;
         }
       } else if (output == "snapshots"){
         ofstream outfile;
