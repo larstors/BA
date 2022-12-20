@@ -1,4 +1,4 @@
 import moviepy.editor as mp
 
-clip = mp.VideoFileClip("./gto4/tri_2_N_8000.gif")
-clip.write_videofile("./gto4/tri_2_N_8000.mp4")
+clip = mp.VideoFileClip("./gto4/sq_1_001_long_5000.gif")
+clip.write_videofile("./gto4/sq_1_001_long_5000.mp4")

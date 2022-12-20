@@ -527,7 +527,7 @@ if False:
     plt.savefig("./plots/M_comp.pdf", dpi=300, bbox_inches='tight')
 
 # M comp 1
-if True:
+if False:
     fig2, ax = plt.subplots(nrows=3, ncols=3,  sharex=True, figsize=(30,30), constrained_layout=True)
     #plt.tight_layout()
     #ax2 = ax[0,0].twinx()
@@ -730,7 +730,14 @@ if True:
     ax[1,2].set_xlabel(r"$\alpha$")
     ax[1,2].grid()
 
-    plt.savefig("./plots/hyst.pdf", dpi=150, bbox_inches='tight')
+
+    for a, color in zip([ax[0, 0], ax[1, 0], ax[0, 1], ax[1, 1], ax[0, 2], ax[1, 2]], ['black', 'black', 'blue', 'blue', 'blue', 'blue']):
+        for ticks in a.xaxis.get_ticklines() + a.yaxis.get_ticklines():
+            ticks.set_color(color)
+        for pos in ['top', 'bottom', 'right', 'left']:
+            a.spines[pos].set_edgecolor(color)
+
+    plt.savefig("./plots/hyst_1.pdf", dpi=150, bbox_inches='tight')
 
 
 
