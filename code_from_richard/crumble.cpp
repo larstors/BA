@@ -1034,7 +1034,7 @@ public:
       }
       first_moment += dist[i] * ((i+2)/2);
     }
-    return second_moment/first_moment;
+    return second_moment/(first_moment*double(P.N));
   }
 
   // function for returning w(_N) order parameter (see thesis)
@@ -2220,7 +2220,7 @@ public:
         first_moment += dist[i] * ((i+2)/2);
         
       }
-      return second_moment/first_moment;
+      return second_moment/(first_moment*double(P.N));
     }
 
         // function for returning w(_N) order parameter (see thesis)
@@ -3581,7 +3581,7 @@ public:
         first_moment += dist[i] * ((i+2)/2);
       }
       
-      return second_moment/first_moment;
+      return second_moment/(first_moment*double(P.N));
     }
 
         // function for returning w(_N) order parameter (see thesis)
@@ -4054,11 +4054,14 @@ int main(int argc, char* argv[]) {
         }
       }
       else if (output == "number"){ // TODO substitute the old methods with the functions that you have created
-        ofstream outfile;
+        ofstream outfile, snap;
+        string name2 = "./lars_sim/Data/trajectory/square_snap"; 
         string name = "./lars_sim/Data/trajectory/square_";
+        string name_number2 = name2+"number"+"_"+tumb+"_"+dens+"_"+size+"_"+occ_p+txt;
         string name_number = name+"number"+"_"+tumb+"_"+dens+"_"+size+"_"+occ_p+txt;
         outfile.open(name_number);
-
+        snap.open(name_number2);
+        snap << ParticleWriter(L, snap) << endl;
         vec_d res, clnr, cn, j, m;
         for(unsigned n=0; burnin + pow(1.01, n)*every < burnin + until; n++) {
           res.push_back(0);
@@ -4069,7 +4072,7 @@ int main(int argc, char* argv[]) {
         }
 
         unsigned iterations = 10;
-        
+        unsigned wow = 0;
         // average the curve over "iterations" many individual runs
         for (int q = 0; q <= iterations; q++){
           // have to start an new, independent run for each iteration
@@ -4107,11 +4110,19 @@ int main(int argc, char* argv[]) {
             cn[n] += L.perimeter();
             j[n] += L.motility_fraction();
             m[n] += L.max_cluster_size_nr();
+            if (wow < 2 && n==500){
+              snap << ParticleWriter(L, snap) << endl;
+              wow++;
+            }
+            else if (wow < 2 && n == res.size()-1){
+              snap << ParticleWriter(L, snap) << endl;
+              wow++;
+            }
           }
           cout << "We are at " << q << endl;
         }
         for (unsigned i = 0; i <= res.size(); i++){
-            outfile << burnin + pow(1.01, i)*every << " " << res[i]/double(iterations) << " " << cn[i] /double(iterations) << " " << j[i]/double(iterations) << " " << m[i]/double(iterations) << " " << double(clnr[i])/double(iterations) << endl;
+            outfile << burnin + pow(1.01, i)*every << " " << res[i]/double(iterations+1) << " " << cn[i] /double(iterations+1) << " " << j[i]/double(iterations+1) << " " << m[i]/double(iterations+1) << " " << double(clnr[i])/double(iterations+1) << endl;
         }
       } 
       else if (output == "lagging"){
@@ -5016,7 +5027,7 @@ int main(int argc, char* argv[]) {
           cout << "We are at " << q << endl;
         }
         for (unsigned i = 0; i <= res.size(); i++){
-            outfile << burnin + pow(1.01, i)*every << " " << res[i]/double(iterations) << " " << cn[i] /double(iterations) << " " << j[i]/double(iterations) << " " << m[i]/double(iterations) << " " << double(clnr[i])/double(iterations) << endl;
+            outfile << burnin + pow(1.01, i)*every << " " << res[i]/double(iterations+1) << " " << cn[i] /double(iterations+1) << " " << j[i]/double(iterations+1) << " " << m[i]/double(iterations+1) << " " << double(clnr[i])/double(iterations+1) << endl;
         }
       
       }
@@ -6036,7 +6047,7 @@ int main(int argc, char* argv[]) {
           cout << "We are at " << q << endl;
         }
         for (unsigned i = 0; i <= res.size(); i++){
-            outfile << burnin + pow(1.01, i)*every << " " << res[i]/double(iterations) << " " << cn[i] /double(iterations) << " " << j[i]/double(iterations) << " " << m[i]/double(iterations) << " " << double(clnr[i])/double(iterations) << endl;
+            outfile << burnin + pow(1.01, i)*every << " " << res[i]/double(iterations+1) << " " << cn[i] /double(iterations+1) << " " << j[i]/double(iterations+1) << " " << m[i]/double(iterations+1) << " " << double(clnr[i])/double(iterations+1) << endl;
         }
       } else if (output == "snapshots"){
         ofstream outfile;

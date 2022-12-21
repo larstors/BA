@@ -13,7 +13,7 @@ from io import StringIO
 import matplotlib.tri as mtri
 import matplotlib.patches as mpatches
 
-plt.rcParams.update({'font.size': 18})
+plt.rcParams.update({'font.size': 15})
 
 print("n?")
 n = int(input())
@@ -458,11 +458,11 @@ if (n == 3 and True):
     plt.savefig("dist_high_05_3.pdf", dpi=150, bbox_inches="tight")  
 
     # HIGHER DENSITY
-    """
-    dist = np.genfromtxt("sq_dist_rho_25_3.txt", delimiter=" ")
+    
+    dist = np.genfromtxt("sq_dist_rho_25_3_test2.txt", delimiter=" ")
     bins = 300
 
-    fig1 = plt.figure()
+    fig3 = plt.figure()
     for i in range(3):
         dist1 = distribution(dist, bins, i)
         d1 = np.asarray(dist1[0])
@@ -470,8 +470,9 @@ if (n == 3 and True):
         plt.plot(x1[d1>0], d1[d1>0], distinguisher[i], label=name[i], linewidth=1)
     plt.yscale("log")
     plt.legend()
-    plt.show()
-    #plt.savefig("dist_low_25_3.pdf", dpi=150)
+    plt.xlabel(r"$x(t)-x(0)$")
+    plt.ylabel(r"$P(x(t)-x(0))$")
+    plt.savefig("dist_low_25_3.pdf", dpi=150, bbox_inches="tight")
 
     dis = distribution(dist, bins, 5)
     d1 = np.asarray(dis[0])
@@ -486,7 +487,7 @@ if (n == 3 and True):
 
     print(par)
 
-    fig2 = plt.figure()
+    fig4 = plt.figure()
     plt.plot(x1, gauss_function(x1, *par), "k-.", label="Gaussian fit")
     for i in range(3, 6):
         dist1 = distribution(dist, bins, i)
@@ -494,7 +495,8 @@ if (n == 3 and True):
         x1 = np.asarray(dist1[1])
         plt.plot(x1[d1>0], d1[d1>0], distinguisher[i-3], label=name[i], linewidth=1)
     plt.yscale("log")
-    plt.axis([-3000, 3000, 1e-6, 1])
+    plt.axis([-900, 900, 1e-6, 1])
     plt.legend()
-    plt.show()
-    #plt.savefig("dist_high_25_3.pdf", dpi=150)"""
+    plt.xlabel(r"$x(t)-x(0)$")
+    plt.ylabel(r"$P(x(t)-x(0))$")
+    plt.savefig("dist_high_25_3.pdf", dpi=150, bbox_inches="tight")  
