@@ -2,6 +2,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy as sc
 
+def angle(x_shift: float, y_shift: float, x_coor: np.ndarray, y_coor: np.ndarray):
+    """Function to calculate the angle relative to the x-axis in a two-dimensional plane for 
+    an arbitrary shift of the origin
+
+
+    Args:
+        x_shift (float): shift of origin in x-direction
+        y_shift (float): shift of origin in y-direction
+        x_coor (np.ndarray): x-coordinate
+        y_coor (np.ndarray): y-coordinate
+
+    Returns:
+        np.ndarray: angle in two-dimensional plane relative to the x-axis
+    """
+
+    x = x_coor.copy() - x_shift
+    y = y_coor.copy() - y_shift
+
+
+
+    theta = np.arccos(x / np.sqrt(x**2 + y**2))
+    theta[y<0] = 2*np.pi - theta[y<0]
+    return theta
+
 
 
 if (False):
@@ -79,6 +103,20 @@ if (True):
     ax.set_title("Square")
     plt.savefig("squ_tra.pdf")
 
+
+    # make an angle plot with the proposed shift above
+    fig1 = plt.figure()
+    plt.plot(tr001[:, 0], angle(shiftx, shifty, tr001[:, 2], tr001[:, 1]), label=r"$\alpha=0.001$")
+    plt.plot(tr010[:, 0], angle(shiftx, shifty, tr010[:, 2]/12000, tr010[:, 1]), label=r"$\alpha=0.010$")
+    plt.plot(tr001[:, 0], np.ones_like(tr001[:, 0]) * np.pi/2, "--", label="S-C transition")
+    plt.plot(tr001[:, 0], np.ones_like(tr001[:, 0]) * np.pi, "--", label="C-G transition")
+    plt.xscale("log")
+    plt.legend()
+    plt.xlabel(r"Time $(t)$")
+    plt.ylabel(r"$\Theta_{c_N}^{w_N}(t)$")
+    plt.grid()
+    plt.savefig("angle_test.pdf", dpi=200)
+
 if (False):
     """
     We will start with hexagonal lattice to figure out how well this works/looks
@@ -138,7 +176,7 @@ if (False):
     ax[1].legend()
     ax[1].set_ylabel("Mean cluster size")
     ax[1].set_xlabel(r"Time $(t)$")
-    plt.show()
+    plt.show() 
 
 if (False):
     tr001 = np.genfromtxt("tri_number_alpha0.001_phi1.20_L100_3.txt", delimiter=" ")

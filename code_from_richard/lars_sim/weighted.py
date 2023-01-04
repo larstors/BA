@@ -4,18 +4,12 @@ This is an addition by Lars.
 
 """
 
-
-from turtle import color
+from io import StringIO
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
-import time
-import scipy
-import matplotlib.animation as animation
-#from celluloid import Camera
+from matplotlib import animation
 import matplotlib.tri as mtri
-from io import StringIO
-import matplotlib.cm as cm
+from matplotlib import cm
 plt.rcParams.update({'font.size': 22})
 
 colormap = cm.inferno
@@ -186,20 +180,20 @@ if True:
         
     numb = np.genfromtxt("./Data/weighted/square.txt", delimiter=" ")
 
-
+ 
     fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(20, 20), gridspec_kw={'height_ratios': [15, 2]})
 
-    def conv(n):
+    def conv(n): 
 
         x = []
         y = []
         for i in n:
             x.append(i % L[0])
-            y.append(int(i/L[0]))
+            y.append(int(i/L[0])) 
         
         return x, y
         
-    def animate_tri(i):
+    def animate_tri(i): 
         ax[0].cla()
         ax[0].scatter(x=conv(data[i][0::2])[0], y=conv(data[i][0::2])[1], c=data[i][1::2], cmap="Greens", s=40, vmin=0, vmax=n, marker="s")
         #ax[0].axis([-50, 110, -5, 90])
@@ -210,9 +204,10 @@ if True:
         #ax[1].set_xscale("log")
         ax[1].set_ylabel(r"$w_N$")
         ax[1].set_xlabel(r"Time $t$")
+
+
         
-
-
+        
     # Then setup FuncAnimation.
     ani_tri = animation.FuncAnimation(fig, animate_tri, interval=1, blit=False, save_count=len(numb)-1)
     ani_tri.save('./gif/sq_n_3_alp_0.075_L_50.gif', writer='PillowWriter', fps=10)
