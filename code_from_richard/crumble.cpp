@@ -5301,16 +5301,40 @@ int main(int argc, char *argv[])
     }
     else if (output == "stopping time")
     {
-      ofstream outfile;
+      if (details == 0){
+        ofstream outfile;
 
-      outfile.open("./lars_sim/Data/stopping/square_" + occ_p + "_" + alpha_p + ".txt");
-      for (unsigned n = 0; t < burnin + until; ++n)
-      {
-        t = L.run_until(burnin + n * every);
-        vec_d st = L.stopping(t);
-        for (const auto &m : st)
-          outfile << m << " ";
-        outfile << endl;
+        outfile.open("./lars_sim/Data/stopping/square_" + occ_p + "_" + alpha_p + ".txt");
+        for (unsigned n = 0; t < burnin + until; ++n)
+        {
+          t = L.run_until(burnin + n * every);
+          vec_d st = L.stopping(t);
+          for (const auto &m : st)
+            outfile << m << " ";
+          outfile << endl;
+        }
+      }
+      else if (details == 1){
+        ofstream outfile;
+        outfile.open("./lars_sim/Data/stopping/square_" + occ_p + "_times.txt");
+
+        // looping over all alpha
+        for (int a = 1; a < 26; a++){
+          cout << "We are at a=" << a << endl;
+          P.alpha[0] = P.alpha[1] = 0.001 * a * pow(10, (a/10));
+          cout << "Alpha is " << P.alpha[0] << endl;
+
+          Lattice L(P, rng);
+          for (unsigned n = 0; t < burnin + until; ++n)
+          {
+            t = L.run_until(burnin + n * every);
+            vec_d st = L.stopping(t);
+            for (const auto &m : st)
+              outfile << m << " ";
+            outfile << endl;
+          }
+
+        }
       }
     }
     else if (output == "perimeter")
