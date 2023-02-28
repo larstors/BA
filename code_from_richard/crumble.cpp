@@ -7130,16 +7130,7 @@ int main(int argc, char *argv[])
     {
       ofstream outfile;
       outfile.open("./lars_sim/testing/hexagonal.txt");
-      // outfile << "# L = [ ";
-      // for(const auto& L: P.L) outfile << L << " ";
-      // outfile << "]" << endl;
-      // outfile << "# N = " << P.N << endl;
-      // outfile << "# alpha = [ ";
-      // for(const auto& alpha: P.alpha) outfile << alpha << " ";
-      // outfile << "]" << endl;
-      // outfile << "# output = " << output << endl;
-      // outfile << "# initial = " << burnin << endl;
-      // outfile << "# interval = " << every << endl;
+
 
       for (unsigned n = 0; t < burnin + until; ++n)
       {
