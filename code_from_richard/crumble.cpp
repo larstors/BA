@@ -5659,7 +5659,7 @@ int main(int argc, char *argv[])
     else
     {
       ofstream outfile;
-      outfile.open("./lars_sim/gif/square_" + occ_p + ".txt");
+      outfile.open("./lars_sim/Data/for_latex/square_" + occ_p + ".txt");
       for (unsigned n = 0; t < burnin + until; ++n)
       {
         t = L.run_until(burnin + n * every);

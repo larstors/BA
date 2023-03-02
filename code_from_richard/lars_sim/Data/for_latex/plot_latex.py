@@ -28,7 +28,15 @@ l = input()
 
 
 
-
+def conv(n):
+    
+        x = []
+        y = []
+        for i in n:
+            x.append(i % L)
+            y.append(int(i/L))
+        
+        return x, y
 
 def tri_conv(n):
     
@@ -147,10 +155,12 @@ def grid_plot():
         for i in range(L-1):
             coord = [[xl[i + 2*n*L], yl[i+ 2*n*L]], [xl[i + L + 1 + 2*n*L], yl[i+ L + 1 + 2*n*L]], [xl[i+ 2*L + 1+ 2*n*L], yl[i+ 2*L + 1+ 2*n*L]], [xl[i+ 3*L + 1+ 2*n*L], yl[i+ 3*L +1+ 2*n*L]], [xl[i+ L*2+ 2*n*L], yl[i+ L*2+ 2*n*L]], [xl[i+ L+ 2*n*L], yl[i+ L+ 2*n*L]], [xl[i+ 2*n*L], yl[i+ 2*n*L]]]
             xs, ys = zip(*coord)
-            plt.plot(xs, ys, 'r-', alpha=1, linewidth=0.5, zorder=1)
+            plt.plot(xs, ys, 'r-', alpha=.1, linewidth=0.5, zorder=1)
 
-    plt.plot([xl[L-1], xl[2*L-1]], [yl[L-1], yl[2*L-1]], 'r-', alpha=1, linewidth=0.5, zorder=1)
-    plt.plot([xl[2*L*(L-1)], xl[2*L*L - L]], [yl[2*L*(L-1)], yl[2*L*L - L]], 'r-', alpha=1, linewidth=0.5, zorder=1)
+    plt.plot([xl[L-1], xl[2*L-1]], [yl[L-1], yl[2*L-1]], 'r-', alpha=.1, linewidth=0.5, zorder=1)
+    plt.plot([xl[2*L*(L-1)], xl[2*L*L - L]], [yl[2*L*(L-1)], yl[2*L*L - L]], 'r-', alpha=.1, linewidth=0.5, zorder=1)
+
+
 
 
 if l == "t":
@@ -165,11 +175,13 @@ if l == "t":
     triang = trian()
 
     fig1 = plt.figure()
-    plt.triplot(triang, 'r-', alpha=.4, linewidth=0.3, zorder=1)
-    plt.scatter(tri_conv(n_tr)[0], tri_conv(n_tr)[1], c=p_tr, cmap="Greens", s=1, vmin=0, vmax=n, marker="s", zorder=2)
-    plt.axis("off")
-    plt.savefig("tri_"+str(n)+".pdf", dpi=100)
-    #plt.show()
+    plt.triplot(triang, 'r-', alpha=.1, linewidth=0.3, zorder=1)
+    plt.scatter(tri_conv(n_tr)[0], tri_conv(n_tr)[1], c=p_tr, cmap="Blues", s=40, vmin=0, vmax=n, marker="s", zorder=2)
+    plt.xticks([])
+    plt.yticks([])
+    plt.axis([-19, 18, -0.5, 21.5])
+    plt.savefig("tri_"+str(n)+".svg", dpi=200, transparent=True)
+    plt.show()
 
 
 elif l == "h":
@@ -183,11 +195,30 @@ elif l == "h":
     p_hx = hx[0][3::4]
     fig2 = plt.figure()
     grid_plot()
-    plt.scatter(hex_cor(n_hx, i_hx)[0], hex_cor(n_hx, i_hx)[1], c=p_hx, cmap="Greens", s=0.25, vmin=0, vmax=n, marker="s", zorder=2)
-    plt.axis("off")
-    plt.savefig("hex_"+str(n)+".pdf", dpi=100)
-    #plt.show()
+    plt.scatter(hex_cor(n_hx, i_hx)[0], hex_cor(n_hx, i_hx)[1], c=p_hx, cmap="Blues", s=10, vmin=0, vmax=n, marker="s", zorder=2)
+    plt.xticks([])
+    plt.yticks([])
+    plt.axis([-20, 45, -1, 37])
+    plt.savefig("hex_"+str(n)+".svg", dpi=200, transparent=True)
+    plt.show()
 
+elif l == "s":
+    name = "square_"+str(n)+".txt"
+    f = open(name)
+    tr = []
+    for line in f:
+        tr.append(np.loadtxt(StringIO(line), dtype=int))
+
+    n_tr = tr[0][0::2]
+    p_tr = tr[0][1::2]
+
+    fig1 = plt.figure()
+    plt.scatter(conv(n_tr)[0], conv(n_tr)[1], c=p_tr, cmap="Blues", s=40, vmin=0, vmax=n, marker="s", zorder=2)
+    plt.xticks([])
+    plt.yticks([])
+    plt.axis([-1, 25, -1, 25])
+    plt.savefig("squ_"+str(n)+".svg", dpi=200, transparent=True)
+    plt.show()
 
 if False:
     """
@@ -276,7 +307,7 @@ if False:
         ani_tri.save('tri_3_N_12000_l.gif', writer='PillowWriter', fps=10)
 
 # square
-if True:
+if False:
     L=[100, 100]
     f = open("./square_3.txt")
     data = []

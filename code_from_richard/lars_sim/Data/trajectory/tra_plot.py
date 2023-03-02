@@ -76,13 +76,18 @@ if (True):
 
     tr001 = np.genfromtxt("square_number_alpha0.001_phi1.20_L100_3.txt", delimiter=" ")
     tr010 = np.genfromtxt("square_number_alpha0.010_phi1.20_L100_3.txt", delimiter=" ")
+    tr100 = np.genfromtxt("square_number_alpha0.100_phi1.20_L100_3.txt", delimiter=" ")
 
     fig, ax = plt.subplots()
 
     ax.plot(tr001[:, 2]-shiftx, tr001[:, 1]-shifty, label=r"$\alpha=0.001$")
     ax.plot(tr010[:, 2]/12000-shiftx, tr010[:, 1]-shifty, label=r"$\alpha=0.010$")
-    ax.plot(tr010[0, 2]/12000-shiftx, tr010[0, 1]-shifty, "ro", label=r"$\alpha=0.010$ Start")
+    ax.plot(tr100[:, 2]-shiftx, tr100[:, 1]-shifty, label=r"$\alpha=0.100$")
     ax.plot(tr001[0, 2]-shiftx, tr001[0, 1]-shifty, "go", label=r"$\alpha=0.001$ Start")
+    ax.plot(tr010[0, 2]/12000-shiftx, tr010[0, 1]-shifty, "ro", label=r"$\alpha=0.010$ Start")
+    ax.plot(tr100[0, 2]-shiftx, tr100[0, 1]-shifty, "ko", label=r"$\alpha=0.100$ Start")
+    
+    
     
     # ax.spines['left'].set_position('center')
     # ax.spines['bottom'].set_position('center')
@@ -108,6 +113,7 @@ if (True):
     fig1 = plt.figure()
     plt.plot(tr001[:, 0], angle(shiftx, shifty, tr001[:, 2], tr001[:, 1]), label=r"$\alpha=0.001$")
     plt.plot(tr010[:, 0], angle(shiftx, shifty, tr010[:, 2]/12000, tr010[:, 1]), label=r"$\alpha=0.010$")
+    plt.plot(tr100[:, 0], angle(shiftx, shifty, tr100[:, 2], tr100[:, 1]), label=r"$\alpha=0.100$")
     plt.plot(tr001[:, 0], np.ones_like(tr001[:, 0]) * np.pi/2, "--", label="S-C transition")
     plt.plot(tr001[:, 0], np.ones_like(tr001[:, 0]) * np.pi, "--", label="C-G transition")
     plt.xscale("log")
