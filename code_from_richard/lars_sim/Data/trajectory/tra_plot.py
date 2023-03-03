@@ -106,7 +106,7 @@ if (True):
     #ax.grid()
     ax.legend()
     ax.set_title("Square")
-    plt.savefig("squ_tra.pdf")
+    plt.savefig("squ_tra.svg")
 
 
     # make an angle plot with the proposed shift above
@@ -121,7 +121,7 @@ if (True):
     plt.xlabel(r"Time $(t)$")
     plt.ylabel(r"$\Theta_{c_N}^{w_N}(t)$")
     plt.grid()
-    plt.savefig("angle_test.pdf", dpi=200)
+    plt.savefig("angle_test.svg", dpi=200)
 
 if (False):
     """

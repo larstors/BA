@@ -2715,6 +2715,7 @@ class Hexagonal_lattice
     std::vector<int> present = std::vector<int>(2);                           // Number of particles present at each site in unit cell
     std::vector<unsigned> current_dir = std::vector<unsigned>(2 * n_max);     // Contains the lattice site it points at.
     std::vector<double> last_jump = std::vector<double>(2 * n_max);           // time of last jump made
+    std::vector<double> x_coor = std::vector<double>(n_max);                  // x coordinate (unlike for square lattice we need to consider actual distance here, hence double)
   };
 
   /*           0        5         2
@@ -2877,9 +2878,40 @@ class Hexagonal_lattice
     return nbs;
   }
 
+  // function to calculate x-and-y coordinate
+  vec_d coordinates(unsigned n, unsigned index){
+    n = int(n); // don't want trouble in case negative
+    index = int(index);
+
+    // final x and y coordinates
+    double xf, yf;
+
+    // define specific  cos and sin
+    double c30 = cos(M_PI / 6.0);
+    double s30 = sin(M_PI / 6.0);
+
+    // intermediate x and y
+    int y = n / P.L[0];
+    int x = 2 * (n%P.L[0]) + index - y + 1;
+
+    xf = x * c30;
+
+    if (y%2 == 1){
+      if (x%2 == 1) yf = y * (1 + s30);
+      else yf = (3 * y + 1)/2.0;
+    }
+    else {
+      if (x%2 == 1) yf = (3 * y + 1)/2.0;
+      else yf = 1.5 * y;
+    }
+    
+    vec_d coord = {xf, yf};
+    return coord;
+  }
+
   // Place a particle with given direction and hop time at site n;
   // neighbouring sites will be accordingly adjusted
-  void place(unsigned n, unsigned id, direction_t d, double t, unsigned index, unsigned dir)
+  void place(unsigned n, unsigned id, direction_t d, double t, unsigned index, unsigned dir, double x)
   {
     sites[n].id[index] = id;
     sites[n].direction[index] = d;
@@ -2895,6 +2927,7 @@ class Hexagonal_lattice
     }
     sites[n].present[index % 2]++;
     sites[n].current_dir[index] = dir;
+    sites[n].x_coor[index] = x;
   }
 
   // Schedule a hop event for a particle at site n
@@ -2903,7 +2936,7 @@ class Hexagonal_lattice
     assert(sites[n].occupied[index]);
     planned_moves++;
     S.schedule(run(rng), [this, n, index]()
-               {
+              {
             assert(sites[n].occupied[index]);
             assert(sites[n].active[index]);
             // If there are no local vacancies, mark this particle as inactive and exit
@@ -2945,7 +2978,14 @@ class Hexagonal_lattice
                   // Place a particle on the target site; it has the same direction and hoptime as the departing particle
                   int dir_next = preference_direction(dnbs[dir], ind, sites[n].direction[index]);
                   auto dnbs_next = neighbours_dir(dnbs[dir]);
-                  place(dnbs[dir], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index], ind, dnbs_next[dir_next]);
+
+                  // adjust position of particle
+                  vec_d xold = coordinates(n, index%2);
+                  vec_d xnew = coordinates(dnbs[dir], (index+1)%2);
+
+                  sites[n].x_coor[n] += xnew[0] - xold[0];
+
+                  place(dnbs[dir], sites[n].id[index], sites[n].direction[index], sites[n].hoptime[index], ind, dnbs_next[dir_next], sites[n].x_coor[n]);
                   // Move the vacancy id onto the departure site
                   sites[n].id[index] = vid;
                   sites[n].present[index%2] -= 1;
@@ -3085,8 +3125,8 @@ public:
       direction_t direction = initial(rng);
       int dir = preference_direction(n, i, direction);
       auto dnbs = neighbours_dir(n);
-
-      place(n, id, direction, 0.0, i, dnbs[dir]);
+      vec_d coord = coordinates(n, i%2);
+      place(n, id, direction, 0.0, i, dnbs[dir], coord[0]);
 
       position.erase(position.begin() + index);
       position.push_back(l);
@@ -5555,8 +5595,8 @@ int main(int argc, char *argv[])
     else if (output == "tagged")
     {
       ofstream outfile, dist;
-      outfile.open("./lars_sim/Data/displacement/sq_varkur_rho_25_" + occ_p + "_test2.txt");
-      dist.open("./lars_sim/Data/displacement/sq_dist_rho_25_" + occ_p + "_test2.txt");
+      outfile.open("./lars_sim/Data/displacement/detailed_displacement/sq_varkur_rho_65_" + occ_p + "_" + tumb + ".txt");
+      dist.open("./lars_sim/Data/displacement/detailed_displacement/sq_dist_rho_65_" + occ_p + "_" + tumb + ".txt");
       vector<long double> variance;
       vector<long double> kurtosis;
       // number of configurations
