@@ -176,7 +176,7 @@ if l == "t":
 
     fig1 = plt.figure()
     plt.triplot(triang, 'r-', alpha=.1, linewidth=0.3, zorder=1)
-    plt.scatter(tri_conv(n_tr)[0], tri_conv(n_tr)[1], c=p_tr, cmap="Blues", s=40, vmin=0, vmax=n, marker="s", zorder=2)
+    plt.scatter(tri_conv(n_tr)[0], tri_conv(n_tr)[1], c=p_tr+2, cmap="Blues", s=40, vmin=0, vmax=n+2, marker="s", zorder=2)
     plt.xticks([])
     plt.yticks([])
     plt.axis([-19, 18, -0.5, 21.5])
@@ -195,7 +195,7 @@ elif l == "h":
     p_hx = hx[0][3::4]
     fig2 = plt.figure()
     grid_plot()
-    plt.scatter(hex_cor(n_hx, i_hx)[0], hex_cor(n_hx, i_hx)[1], c=p_hx, cmap="Blues", s=10, vmin=0, vmax=n, marker="s", zorder=2)
+    plt.scatter(hex_cor(n_hx, i_hx)[0], hex_cor(n_hx, i_hx)[1], c=p_hx+2, cmap="Blues", s=10, vmin=0, vmax=n+2, marker="s", zorder=2)
     plt.xticks([])
     plt.yticks([])
     plt.axis([-20, 45, -1, 37])
@@ -213,7 +213,7 @@ elif l == "s":
     p_tr = tr[0][1::2]
 
     fig1 = plt.figure()
-    plt.scatter(conv(n_tr)[0], conv(n_tr)[1], c=p_tr, cmap="Blues", s=40, vmin=0, vmax=n, marker="s", zorder=2)
+    plt.scatter(conv(n_tr)[0], conv(n_tr)[1], c=p_tr+2, cmap="Blues", s=40, vmin=0, vmax=n+2, marker="s", zorder=2)
     plt.xticks([])
     plt.yticks([])
     plt.axis([-1, 25, -1, 25])

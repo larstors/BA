@@ -5624,8 +5624,8 @@ int main(int argc, char *argv[])
     else if (output == "tagged")
     {
       ofstream outfile, dist;
-      outfile.open("./lars_sim/Data/displacement/detailed_displacement/sq_varkur_rho_65_" + occ_p + "_" + tumb + ".txt");
-      dist.open("./lars_sim/Data/displacement/detailed_displacement/sq_dist_rho_65_" + occ_p + "_" + tumb + ".txt");
+      outfile.open("./lars_sim/Data/displacement/detailed_displacement/sq_varkur_rho_60_" + occ_p + "_" + tumb + ".txt");
+      dist.open("./lars_sim/Data/displacement/detailed_displacement/sq_dist_rho_60_" + occ_p + "_" + tumb + ".txt");
       vector<long double> variance;
       vector<long double> kurtosis;
       // number of configurations

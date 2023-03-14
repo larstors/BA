@@ -67,7 +67,7 @@ if (False):
     ax.set_title("Triangle")
     plt.savefig("Tri_trajectory_3_rho04.pdf", dpi=200)
 
-if (True):
+if (False):
     """
     We will start with square lattice to figure out how well this works/looks
     """
@@ -184,32 +184,26 @@ if (False):
     ax[1].set_xlabel(r"Time $(t)$")
     plt.show() 
 
-if (False):
+if (True):
+    plt.rcParams.update({'font.size': 20})
+
     tr001 = np.genfromtxt("tri_number_alpha0.001_phi1.20_L100_3.txt", delimiter=" ")
     tr010 = np.genfromtxt("tri_number_alpha0.010_phi1.20_L100_3.txt", delimiter=" ")
-    fig, ax = plt.subplots(nrows=2, ncols=1, figsize=(12, 8), sharex=True)
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,4))
     plt.tight_layout()
 
-    ax[0].plot(tr001[1:-2, 0], tr001[1:-2, 3]*10/11, label=r"$\alpha=0.001, J$")
-    ax[0].plot(tr010[1:-2, 0], tr010[1:-2, 3]*10/11, label=r"$\alpha=0.010, J$")
-    ax[0].plot(tr001[1:-2, 0], tr001[1:-2, 1]*10/11, label=r"$\alpha=0.001, w_N$")
-    ax[0].plot(tr010[1:-2, 0], tr010[1:-2, 1]*10/11, label=r"$\alpha=0.010, w_N$")
-    ax[0].plot(tr001[1:-2, 0], tr001[1:-2, 4]/12000*10/11, label=r"$\alpha=0.001, M$")
-    ax[0].plot(tr010[1:-2, 0], tr010[1:-2, 4]/12000*10/11, label=r"$\alpha=0.010, M$")
-    # ax[0].plot(tr001[1:-2, 0], tr001[1:-2, 2]/12000, label=r"$\alpha=0.001, c_N$")
-    # ax[0].plot(tr010[1:-2, 0], tr010[1:-2, 2]/12000, label=r"$\alpha=0.010, c_N$")
-    ax[0].grid()
-    ax[0].set_yscale("log")
-    ax[0].legend(loc="right")
-    ax[0].set_ylabel(r"$J$")
-    ax[0].set_xscale("log")
-
-    ax[1].plot(tr001[1:-2, 0], tr001[1:-2, -1], label=r"$\alpha=0.001$")
-    ax[1].plot(tr010[1:-2, 0], tr010[1:-2, -1], label=r"$\alpha=0.010$")
-    ax[1].grid()
-    ax[1].set_yscale("log")
-    ax[1].set_xscale("log")
-    ax[1].legend()
-    ax[1].set_ylabel("Mean cluster size")
-    ax[1].set_xlabel(r"Time $(t)$")
+    # ax[0].plot(tr001[1:-2, 0], tr001[1:-2, 3]*10/11, label=r"$\alpha=0.001, J$")
+    # ax[0].plot(tr010[1:-2, 0], tr010[1:-2, 3]*10/11, label=r"$\alpha=0.010, J$")
+    ax.plot(tr001[1:-2, 0], tr001[1:-2, 1]*10/11, label=r"$\alpha=0.001, w_N$")
+    ax.plot(tr010[1:-2, 0], tr010[1:-2, 1]*10/11, label=r"$\alpha=0.010, w_N$")
+    # ax[0].plot(tr001[1:-2, 0], tr001[1:-2, 4]/12000*10/11, label=r"$\alpha=0.001, M$")
+    # ax[0].plot(tr010[1:-2, 0], tr010[1:-2, 4]/12000*10/11, label=r"$\alpha=0.010, M$")
+    ax.plot(tr001[1:-2, 0], tr001[1:-2, 2]/12000*10/11, label=r"$\alpha=0.001, c_N$")
+    ax.plot(tr010[1:-2, 0], tr010[1:-2, 2]/12000*10/11, label=r"$\alpha=0.010, c_N$")
+    ax.grid()
+    ax.set_yscale("log")
+    ax.legend()
+    ax.set_ylabel(r"$J$")
+    ax.set_xscale("log")
+    ax.set_xlabel(r"Time $(t)$")
     plt.show()
