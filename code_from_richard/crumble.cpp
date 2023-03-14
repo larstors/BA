@@ -5316,24 +5316,53 @@ int main(int argc, char *argv[])
       }
       else if (details == 1){
         ofstream outfile;
-        outfile.open("./lars_sim/Data/stopping/square_" + occ_p + "_times.txt");
-
+        outfile.open("./lars_sim/Data/stopping/square_" + occ_p + "_stoppingtimes.txt");
+        vec_d alp;
+        for (int i = 0; i < 3; i++){
+          for (int j = 1; j < 10; j++){
+            alp.push_back(0.001 * j * pow(10, i));
+          }
+        }
         // looping over all alpha
-        for (int a = 1; a < 26; a++){
-          cout << "We are at a=" << a << endl;
-          P.alpha[0] = P.alpha[1] = 0.001 * a * pow(10, (a/10));
+        for (const auto & a: alp){
+          double t = 0;
+          P.alpha[0] = P.alpha[1] = a;
+          cout << " --------------------------------------------- " << endl; 
           cout << "Alpha is " << P.alpha[0] << endl;
-
+          // new lattice
           Lattice L(P, rng);
+
+          
+          int n_bins = 1000;
+          double stopping_time = 0.0;
+          vec_d Tstop;
+          vec_d hist(n_bins);
+          // loop over time
           for (unsigned n = 0; t < burnin + until; ++n)
           {
             t = L.run_until(burnin + n * every);
             vec_d st = L.stopping(t);
-            for (const auto &m : st)
-              outfile << m << " ";
-            outfile << endl;
+            Tstop.insert(end(Tstop), begin(st), end(st));
           }
+          // make histogram
+          // bin width
+          double width = (*max_element(Tstop.begin(), Tstop.end()) - *min_element(Tstop.begin(), Tstop.end())) / double(n_bins + 1);
+          cout << "Width of histogram bins " << width << endl;
 
+          for (const auto &m : Tstop){
+            for (int k = 0; k < n_bins; k++){
+              if (m - (k + 1) * width < 0){
+                hist[k]++;
+                break;
+              }
+            }
+          }
+          int sum_hist = accumulate(hist.begin(), hist.end(), 0);
+          // calculate mean
+          for (int k = 0; k < hist.size(); k++){
+            stopping_time += width * (k + 0.5) * hist[k] / double(sum_hist);
+          }
+          outfile << P.alpha[0] << " " << stopping_time << endl;
         }
       }
     }
@@ -5909,7 +5938,7 @@ int main(int argc, char *argv[])
     else if (output == "number")
     {
       ofstream outfile;
-      string name = "./lars_sim/Data/trajectory/tri_";
+      string name = "./lars_sim/Data/testing/tri_";
       string name_number = name + "number" + "_" + tumb + "_" + dens + "_" + size + "_" + occ_p + txt;
       outfile.open(name_number);
 
@@ -6157,10 +6186,10 @@ int main(int argc, char *argv[])
     else if (output == "lagging")
     {
       ofstream outfile, backward;
-      string name = "./lars_sim/Data/phase/triangular_perc_fhyst";
+      string name = "./lars_sim/Data/phase/triangular_perc_fhyst_20";
       string outputname = name + "_" + occ_p + ".txt";
       outfile.open(outputname);
-      name = "./lars_sim/Data/phase/triangular_perc_bhyst";
+      name = "./lars_sim/Data/phase/triangular_perc_bhyst_20";
       outputname = name + "_" + occ_p + ".txt";
       backward.open(outputname);
       // foward hysteresis, i.e. start below critical point and move up
@@ -6169,6 +6198,7 @@ int main(int argc, char *argv[])
       unsigned c = 0;
       for (double al = 0.0875; al < 0.094; al += 0.0001625)
       {
+        cout << al << endl;
         // introducing new alpha
         P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
         LB.set_new_lambda(&LB.tumble, std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size());
@@ -6248,6 +6278,7 @@ int main(int argc, char *argv[])
       t = 0;
       for (double al = 0.094; al > 0.0875; al -= 0.0001625)
       {
+        cout << al << endl;
         // introducing new alpha
         P.alpha[0] = P.alpha[1] = P.alpha[2] = al;
         LT.set_new_lambda(&LT.tumble, std::accumulate(P.alpha.begin(), P.alpha.end(), 0.0) / P.alpha.size());

@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import scipy.optimize as opt
 import numba as nb
 from matplotlib import rcParams
+import itertools
 plt.rcParams.update({'font.size': 30})
 
 
@@ -48,6 +49,10 @@ def time_stop(name, alpha):
 
 def fit(x, a, b):
     return x*a + b
+
+
+def fit2(x, a, b):
+    return x**a * b
 
 
 def p(a, b):
@@ -220,87 +225,6 @@ if False:
 # square
 if lat == "s":
     plt.rcParams.update({'font.size': 20})
-    """
-    n1 = ["square_1_0.001.txt", "square_1_0.002.txt", "square_1_0.003.txt", "square_1_0.004.txt", "square_1_0.005.txt",
-          "square_1_0.006.txt", "square_1_0.007.txt", "square_1_0.008.txt", "square_1_0.009.txt", "square_1_0.010.txt"]
-    n2 = ["square_2_0.001.txt", "square_2_0.002.txt", "square_2_0.003.txt", "square_2_0.004.txt", "square_2_0.005.txt",
-          "square_2_0.006.txt", "square_2_0.007.txt", "square_2_0.008.txt", "square_2_0.009.txt", "square_2_0.010.txt"]
-    n3 = ["square_3_0.001.txt", "square_3_0.002.txt", "square_3_0.003.txt", "square_3_0.004.txt", "square_3_0.005.txt",
-          "square_3_0.006.txt", "square_3_0.007.txt", "square_3_0.008.txt", "square_3_0.009.txt", "square_3_0.010.txt"]
-    alp = [0.001 * i for i in range(1, 11)]
-
-    print("Square lattice")
-
-    Tstop = []
-
-    data1 = time_stop(n1, alp)
-    Tstop.append(data1[2])
-    data1 = time_stop(n2, alp)
-    Tstop.append(data1[2])
-    data1 = time_stop(n3, alp)
-    Tstop.append(data1[2])
-    
-    fig1 = plt.figure()
-    plt.plot(10**data1[2][0]*np.ones(2), np.array([0, max(data1[0][0][ :])]), "r--", label=r"$T_\mathrm{stop}^{0.001}$")
-    plt.plot(10**data1[2][2]*np.ones(2), np.array([0, max(data1[0][2][ :])]), "b--", label=r"$T_\mathrm{stop}^{0.01}$")
-    plt.plot(10**data1[2][4]*np.ones(2), np.array([0, max(data1[0][4][ :])]), "g--", label=r"$T_\mathrm{stop}^{0.1}$")
-    plt.plot(np.power(10,data1[1][0][:]), data1[0][0][:], "r-", label=r"$\alpha=0.001$")
-    plt.plot(np.power(10,data1[1][2][:]), data1[0][2][:], "b-", label=r"$\alpha=0.01$")
-    plt.plot(np.power(10,data1[1][4][:]), data1[0][4][:], "g-", label=r"$\alpha=0.1$")
-    plt.xscale("log")
-    plt.legend()
-    plt.savefig("stop_squ_1.pdf", dpi=150, bbox_inches="tight")
-    #plt.show()
-
-    data1 = time_stop(n2, alp)
-    Tstop.append(data1[2])
-    fig2 = plt.figure()
-    plt.plot(10**data1[2][0]*np.ones(2), np.array([0, max(data1[0][0][ :])]), "r--", label=r"$T_\mathrm{stop}^{0.001}$")
-    plt.plot(10**data1[2][2]*np.ones(2), np.array([0, max(data1[0][2][ :])]), "b--", label=r"$T_\mathrm{stop}^{0.01}$")
-    plt.plot(10**data1[2][4]*np.ones(2), np.array([0, max(data1[0][4][ :])]), "g--", label=r"$T_\mathrm{stop}^{0.1}$")
-    plt.plot(np.power(10,data1[1][0][:]), data1[0][0][:], "r-", label=r"$\alpha=0.001$")
-    plt.plot(np.power(10,data1[1][2][:]), data1[0][2][:], "b-", label=r"$\alpha=0.01$")
-    plt.plot(np.power(10,data1[1][4][:]), data1[0][4][:], "g-", label=r"$\alpha=0.1$")
-    plt.xscale("log")
-    plt.legend()
-    plt.savefig("stop_squ_2.pdf", dpi=150, bbox_inches="tight")
-    #plt.show()
-
-    data1 = time_stop(n3, alp)
-    Tstop.append(data1[2])
-    fig3 = plt.figure()
-    plt.plot(10**data1[2][0]*np.ones(2), np.array([0, max(data1[0][0][ :])]), "r--", label=r"$T_\mathrm{stop}^{0.001}$")
-    plt.plot(10**data1[2][2]*np.ones(2), np.array([0, max(data1[0][2][ :])]), "b--", label=r"$T_\mathrm{stop}^{0.01}$")
-    plt.plot(10**data1[2][4]*np.ones(2), np.array([0, max(data1[0][4][ :])]), "g--", label=r"$T_\mathrm{stop}^{0.1}$")
-    plt.plot(np.power(10,data1[1][0][:]), data1[0][0][:], "r-", label=r"$\alpha=0.001$")
-    plt.plot(np.power(10,data1[1][2][:]), data1[0][2][:], "b-", label=r"$\alpha=0.01$")
-    plt.plot(np.power(10,data1[1][4][:]), data1[0][4][:], "g-", label=r"$\alpha=0.1$")
-    plt.xscale("log")
-    plt.legend()
-    plt.savefig("stop_squ_3.pdf", dpi=150, bbox_inches="tight")
-    #plt.show()
-    """
-
-    """par1 = opt.curve_fit(fit, np.log10(alp), np.array(Tstop[0]))[0]
-    par2 = opt.curve_fit(fit, np.log10(alp), np.array(Tstop[1]))[0]
-
-    t = np.linspace(min(alp), max(alp))
-
-    fig4 = plt.figure(figsize=(10, 5))
-    #plt.plot(t, p(10,fit(np.log10(t), *par1)), "r--", label=r"$\sim \alpha^{%.2f}$" % par1[0])
-    #plt.plot(t, p(10,fit(np.log10(t), *par2)), "b--", label=r"$\sim \alpha^{%.2f}$" % par2[0])
-    #plt.plot(t, p(10,fit(np.log10(t), *par3)), "g--", label=r"$\sim \alpha^{%.2f}$" % par3[0])
-    plt.plot(alp, np.array(Tstop[0]), "ro", label=r"$n_\mathrm{max}=1$")
-    plt.plot(alp, np.array(Tstop[1]), "bo", label=r"$n_\mathrm{max}=2$")
-    plt.plot(alp, np.array(Tstop[2]), "go", label=r"$n_\mathrm{max}=3$")
-    # plt.legend()
-    plt.ylabel(r"${T_\mathrm{stop}^\alpha}$")
-    plt.xlabel(r"${\alpha}$")
-    plt.grid()
-    plt.yscale("log")
-    plt.xscale("log")
-    plt.savefig("stop_squ_fit.pdf", dpi=150, bbox_inches="tight")
-    """
     # ################################################################ FOR n=1 ####################################################################
 
     n1 = ["square_1_0.001.txt", "square_1_0.002.txt", "square_1_0.003.txt", "square_1_0.004.txt", "square_1_0.005.txt", "square_1_0.006.txt", "square_1_0.007.txt", "square_1_0.008.txt", "square_1_0.009.txt", "square_1_0.010.txt",
@@ -325,7 +249,17 @@ if lat == "s":
     Tstop1.append(data1[2])
     t = np.linspace(min(alp[:7]), max(alp[:7]))
 
-    print(p(10, np.array(Tstop1[0])), np.array(Tstop1[0]))
+    n_1 = []
+    n_1.append(Tstop[0])
+    n_1.append(Tstop1[0])
+
+    alpha = []
+    alpha.append(alp)
+    alpha.append(alp2)
+
+    n_1 = list(itertools.chain.from_iterable(n_1))
+    alpha = list(itertools.chain.from_iterable(alpha))
+
     par3 = opt.curve_fit(fit, np.log10(
         alp[:7]), np.log10(np.array(Tstop[0][:7])))[0]
     par4 = opt.curve_fit(fit, np.log10(alp[11:]), np.array(Tstop[0][11:]))[0]
@@ -370,7 +304,6 @@ if lat == "s":
     Tstop1.append(data1[2])
     t = np.linspace(min(alp[:7]), max(alp[:7]))
 
-    print(p(10, np.array(Tstop1[0])), np.array(Tstop1[0]))
     par3 = opt.curve_fit(fit, np.log10(
         alp[:7]), np.log10(np.array(Tstop[0][:7])))[0]
     par4 = opt.curve_fit(fit, np.log10(alp[11:]), np.array(Tstop[0][11:]))[0]
@@ -415,7 +348,10 @@ if lat == "s":
     Tstop1.append(data1[2])
     t = np.linspace(min(alp[:7]), max(alp[:7]))
 
-    print(p(10, np.array(Tstop1[0])), np.array(Tstop1[0]))
+    n3 = []
+    n3.append(Tstop[0])
+    n3.append(Tstop1[0])
+    n3 = list(itertools.chain.from_iterable(n3))
     par3 = opt.curve_fit(fit, np.log10(
         alp[:7]), np.log10(np.array(Tstop[0][:7])))[0]
     par4 = opt.curve_fit(fit, np.log10(alp[11:]), np.array(Tstop[0][11:]))[0]
@@ -436,109 +372,29 @@ if lat == "s":
     plt.xscale("log")
     plt.savefig("stop_squ_fit_3.pdf", dpi=150, bbox_inches="tight")
 
+    # ################################################################ n COMPARISON ####################################################################
 
-# hexagonal
-if lat == "h":
-    """
-    n1 = ["hex_1_0.001.txt", "hex_1_0.005.txt",
-          "hex_1_0.010.txt", "hex_1_0.050.txt", "hex_1_0.100.txt"]
-    n2 = ["hex_2_0.001.txt", "hex_2_0.005.txt",
-          "hex_2_0.010.txt", "hex_2_0.050.txt", "hex_2_0.100.txt"]
-    n3 = ["hex_3_0.001.txt", "hex_3_0.005.txt",
-          "hex_3_0.010.txt", "hex_3_0.050.txt", "hex_3_0.100.txt"]
-    alp = [0.001, 0.005, 0.01, 0.05, 0.1]
+    print(alpha, n_1, n3)
 
-    print("Hexagonal lattice")
-
-    Tstop = []
-
-    data1 = time_stop(n1, alp)
-    Tstop.append(data1[2])
-
-    fig1 = plt.figure()
-    plt.plot(10**data1[2][0]*np.ones(2), np.array([0, max(data1[0]
-                                                          [0][:])]), "r--", label=r"$T_\mathrm{stop}^{0.001}$")
-    plt.plot(10**data1[2][2]*np.ones(2), np.array([0, max(data1[0]
-                                                          [2][:])]), "b--", label=r"$T_\mathrm{stop}^{0.01}$")
-    plt.plot(10**data1[2][4]*np.ones(2), np.array([0, max(data1[0]
-                                                          [4][:])]), "g--", label=r"$T_\mathrm{stop}^{0.1}$")
-    plt.plot(np.power(10, data1[1][0][:]), data1[0]
-             [0][:], "r-", label=r"$\alpha=0.001$")
-    plt.plot(np.power(10, data1[1][2][:]), data1[0]
-             [2][:], "b-", label=r"$\alpha=0.01$")
-    plt.plot(np.power(10, data1[1][4][:]), data1[0]
-             [4][:], "g-", label=r"$\alpha=0.1$")
-    plt.xscale("log")
-    plt.legend()
-    plt.savefig("stop_hex_1.pdf", dpi=150, bbox_inches="tight")
-    # plt.show()
-
-    data1 = time_stop(n2, alp)
-    Tstop.append(data1[2])
-    fig2 = plt.figure()
-    plt.plot(10**data1[2][0]*np.ones(2), np.array([0, max(data1[0]
-                                                          [0][:])]), "r--", label=r"$T_\mathrm{stop}^{0.001}$")
-    plt.plot(10**data1[2][2]*np.ones(2), np.array([0, max(data1[0]
-                                                          [2][:])]), "b--", label=r"$T_\mathrm{stop}^{0.01}$")
-    plt.plot(10**data1[2][4]*np.ones(2), np.array([0, max(data1[0]
-                                                          [4][:])]), "g--", label=r"$T_\mathrm{stop}^{0.1}$")
-    plt.plot(np.power(10, data1[1][0][:]), data1[0]
-             [0][:], "r-", label=r"$\alpha=0.001$")
-    plt.plot(np.power(10, data1[1][2][:]), data1[0]
-             [2][:], "b-", label=r"$\alpha=0.01$")
-    plt.plot(np.power(10, data1[1][4][:]), data1[0]
-             [4][:], "g-", label=r"$\alpha=0.1$")
-    plt.xscale("log")
-    plt.legend()
-    plt.savefig("stop_hex_2.pdf", dpi=150, bbox_inches="tight")
-    # plt.show()
-
-    data1 = time_stop(n3, alp)
-    Tstop.append(data1[2])
-    fig3 = plt.figure()
-    plt.plot(10**data1[2][0]*np.ones(2), np.array([0, max(data1[0]
-                                                          [0][:])]), "r--", label=r"$T_\mathrm{stop}^{0.001}$")
-    plt.plot(10**data1[2][2]*np.ones(2), np.array([0, max(data1[0]
-                                                          [2][:])]), "b--", label=r"$T_\mathrm{stop}^{0.01}$")
-    plt.plot(10**data1[2][4]*np.ones(2), np.array([0, max(data1[0]
-                                                          [4][:])]), "g--", label=r"$T_\mathrm{stop}^{0.1}$")
-    plt.plot(np.power(10, data1[1][0][:]), data1[0]
-             [0][:], "r-", label=r"$\alpha=0.001$")
-    plt.plot(np.power(10, data1[1][2][:]), data1[0]
-             [2][:], "b-", label=r"$\alpha=0.01$")
-    plt.plot(np.power(10, data1[1][4][:]), data1[0]
-             [4][:], "g-", label=r"$\alpha=0.1$")
-    plt.xscale("log")
-    plt.legend()
-    plt.savefig("stop_hex_3.pdf", dpi=150, bbox_inches="tight")
-    # plt.show()
-
-    par1 = opt.curve_fit(fit, np.log10(alp), np.array(Tstop[0]))[0]
-    par2 = opt.curve_fit(fit, np.log10(alp), np.array(Tstop[1]))[0]
-    par3 = opt.curve_fit(fit, np.log10(alp), np.array(Tstop[2]))[0]
-
-    print(par1[0], par2[0], par3[0])
-
-    t = np.linspace(min(alp), max(alp))
-
-    fig4 = plt.figure(figsize=(10, 5))
-    plt.plot(t, p(10, fit(np.log10(t), *par1)), "r--",
-             label=r"$\sim \alpha^{%.2f}$" % par1[0])
-    plt.plot(t, p(10, fit(np.log10(t), *par2)), "b--",
-             label=r"$\sim \alpha^{%.2f}$" % par2[0])
-    plt.plot(t, p(10, fit(np.log10(t), *par3)), "g--",
+    fig5 = plt.figure(figsize=(10, 5))
+    plt.plot(t, p(10, fit(np.log10(t), *par3)), "r--",
              label=r"$\sim \alpha^{%.2f}$" % par3[0])
-    plt.plot(alp, p(10, np.array(Tstop[0])), "ro", label=r"$n_\mathrm{max}=1$")
-    plt.plot(alp, p(10, np.array(Tstop[1])), "bo", label=r"$n_\mathrm{max}=2$")
-    plt.plot(alp, p(10, np.array(Tstop[2])), "go", label=r"$n_\mathrm{max}=3$")
-    # plt.legend()
+    #plt.plot(t1, p(10,fit(np.log10(t1), *par4)), "b--", label=r"$\sim \alpha^{%.2f}$" % par4[0])
+    plt.plot(alpha, n_1, "bx", label=r"$n_\mathrm{max}=1$")
+    plt.plot(alpha, n3, "go", label=r"$n_\mathrm{max}=3$")
+    plt.plot([min(alp), max(alp2)], [1, 1], "-.", label="Random Walk Limit")
+    plt.legend()
     plt.ylabel(r"${T_\mathrm{stop}^\alpha}$")
     plt.xlabel(r"${\alpha}$")
     plt.grid()
     plt.yscale("log")
     plt.xscale("log")
-    plt.savefig("stop_hex_fit.pdf", dpi=150, bbox_inches="tight")
-    """
+    plt.title(r"Low $\rho$")
+    plt.savefig("stop_squ_n_comp.svg", dpi=150, bbox_inches="tight")
+
+
+# hexagonal
+if lat == "h":
     # ################################################################ FOR n=1 ####################################################################
     """
     n1 = ["hex_1_0.001.txt", "hex_1_0.002.txt", "hex_1_0.003.txt", "hex_1_0.004.txt", "hex_1_0.005.txt", "hex_1_0.006.txt", "hex_1_0.007.txt", "hex_1_0.008.txt", "hex_1_0.009.txt", "hex_1_0.010.txt",
@@ -673,3 +529,28 @@ if lat == "h":
     plt.yscale("log")
     plt.xscale("log")
     plt.savefig("stop_hex_fit_3.pdf", dpi=150, bbox_inches="tight")
+
+
+if lat == "e":
+    plt.rcParams.update({'font.size': 20})
+    dat = np.loadtxt("square_3_stoppingtimes.txt", delimiter=" ")
+    dat1 = np.loadtxt("square_1_stoppingtimes.txt", delimiter=" ")
+
+    par = opt.curve_fit(fit2, dat[:5, 0], dat[:5, 1], p0=(1, 1))[0]
+
+    fig = plt.figure(figsize=(10, 5))
+
+    plt.plot(dat[:5, 0], fit2(dat[:5, 0], *par), "r--",
+             label=r"$\sim \alpha^{%.2f}$" % par[0])
+    plt.plot(dat1[:, 0], dat1[:, 1], "bx", label=r"$n_\mathrm{max}=1$")
+    plt.plot(dat[:, 0], dat[:, 1], "go", label=r"$n_\mathrm{max}=3$")
+    plt.plot([dat[0, 0], dat[-1, 0]], [1, 1], "-.", label="Random Walk Limit")
+    plt.ylabel(r"$T_\mathrm{stop}^\alpha$")
+    plt.xlabel(r"$\alpha$")
+    plt.yscale("log")
+    plt.xscale("log")
+    plt.title(r"High $\rho$")
+    plt.legend()
+    plt.grid()
+
+    plt.savefig("test_stop.svg", dpi=200, bbox_inches="tight")
