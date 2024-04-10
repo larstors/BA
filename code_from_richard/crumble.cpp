@@ -94,6 +94,9 @@ class ParticleWriterWID;
 template <typename Engine>
 class ClusterWriter;
 
+template <typename Engine>
+class ParticleWriterDetails;
+
 // new writers for the two new lattices
 template <typename Engine>
 class TriangleParticleWriter;
@@ -114,6 +117,7 @@ class Lattice
   friend class ParticleWriter<Engine>;
   friend class ClusterWriter<Engine>;
   friend class ParticleWriterWID<Engine>;
+  friend class ParticleWriterDetails<Engine>;
 
   static constexpr unsigned n_max = 10; // ! Nicer way of doing this?
 
@@ -4455,6 +4459,53 @@ public:
 };
 
 template <typename Engine>
+class ParticleWriterDetails
+{
+  const Lattice<Engine> &L;
+
+public:
+  ParticleWriterDetails(const Lattice<Engine> &L, ofstream &outfile) : L(L) {}
+
+  // Output pairs (n, p, c) indicating site, number of particles present, and if it is on circumference of cluster
+
+
+  friend std::ostream &operator<<(std::ostream &out, const ParticleWriterDetails &PW)
+  {
+
+    const auto &sites = PW.L.sites; // Save typing
+
+    for (unsigned n = 0; n < sites.size(); ++n)
+    {
+      int c = 0;
+      if (sites[n].present > 0){
+        std::vector<unsigned> nbs(4);
+        unsigned below = 1;
+      for (unsigned d = 0; d < 4; ++d)
+      {
+        unsigned L = PW.L.P.L[0];
+        unsigned above = below * L;
+        // x is the position along dimension d
+        // y is the contribution to the site index from all other dimensions
+        unsigned x = (n / below) % L;
+        unsigned y = (n % below) + (n / above) * above;
+        // Neighbours in the increasing and decreasing directions
+        nbs[2 * d] = y + ((x + 1) % L) * below;
+        nbs[2 * d + 1] = y + ((x + L - 1) % L) * below;
+        below = above;
+      }
+        for (const auto &m : nbs){
+          if (sites[m].present == 0) c = 1;
+        }
+
+        out << n << " " << sites[n].present << " " << c << " ";
+      }
+    }
+
+    return out;
+  }
+};
+
+template <typename Engine>
 class TriangleParticleWriter
 {
   const Triangle_lattice<Engine> &L;
@@ -4479,6 +4530,7 @@ public:
     return out;
   }
 };
+
 
 template <typename Engine>
 class HexagonalParticleWriter
@@ -4548,6 +4600,7 @@ public:
 
 template <typename Engine>
 class ClusterWriter
+
 {
   const Lattice<Engine> &L;
 
@@ -4561,6 +4614,7 @@ public:
     return out;
   }
 };
+
 
 template <typename Engine>
 class ParticleWriterWID
@@ -4707,7 +4761,7 @@ int main(int argc, char *argv[])
   string tumb = "alpha" + alpha_p;
   string dens = "phi" + phi_p;
   string size = "L" + std::to_string(P.L[0]);
-  string path = "./lars_sim/Data/cdf/";
+  string path = "./lars_sim/Data/clustdist/";
   string txtoutput = path + lattice_type + "_" + tumb + "_" + dens + "_" + size + "_" + occ_p + txt;
   string txtoutput_nr = path + lattice_type + "_nr" + "_" + tumb + "_" + dens + "_" + size + "_" + occ_p + txt;
 
@@ -4745,48 +4799,91 @@ int main(int argc, char *argv[])
 
     if (output == "clusters")
     {
+      int sample_count = 0;
+      double w_n = 0;
+      double J = 0;
+      double c_n = 0;
+
+
       if (localaverage == 0)
       {
-        hist_t sumhist;
+        // hist_t sumhist;
         hist_t sumhist_nr;
-        // We sum the histograms over all measurements
-        for (unsigned n = 0; t < burnin + until; ++n)
-        {
-          t = L.run_until(burnin + n * every);
-          hist_t hist = L.cluster_distributions();
-          hist_t hist_nr = L.cluster_distribution_particle_number();
 
-          if (hist.size() > sumhist.size())
+        // for better statistics, we sample from multiple different
+        // iterations of the independent realitsations of the lattice
+        for (unsigned it = 0; it < 30; it++){
+          cout << "Start \n" << endl;
+          // set time to 0
+          double t = 0.0;
+          // initiate new lattice
+          Lattice L(P, rng);
+          // We sum the histograms over all measurements
+          for (unsigned n = 0; t < burnin + until; ++n)
           {
-            hist[std::slice(0, sumhist.size(), 1)] += sumhist;
-            sumhist = std::move(hist);
-          }
-          else
-          {
-            sumhist[std::slice(0, hist.size(), 1)] += hist;
+            t = L.run_until(burnin + n * every);
+            // hist_t hist = L.cluster_distributions();
+            hist_t hist_nr = L.cluster_distribution_particle_number();
+
+            // if (hist.size() > sumhist.size())
+            // {
+            //   hist[std::slice(0, sumhist.size(), 1)] += sumhist;
+            //   sumhist = std::move(hist);
+            // }
+            // else
+            // {
+            //   sumhist[std::slice(0, hist.size(), 1)] += hist;
+            // }
+            // with occ number as well
+
+            if (hist_nr.size() > sumhist_nr.size())
+            {
+              hist_nr[std::slice(0, sumhist_nr.size(), 1)] += sumhist_nr;
+              sumhist_nr = std::move(hist_nr);
+            }
+            else
+            {
+              sumhist_nr[std::slice(0, hist_nr.size(), 1)] += hist_nr;
+            }
+
+            J += L.motility_fraction();
+            c_n += L.perimeter();
+            w_n += L.w_N();
+            sample_count++;
           }
 
-          // with occ number as well
-
-          if (hist_nr.size() > sumhist_nr.size())
-          {
-            hist_nr[std::slice(0, sumhist_nr.size(), 1)] += sumhist_nr;
-            sumhist_nr = std::move(hist_nr);
+          // make example snapshots
+          if (it == 28){
+            ofstream snapshot;
+            string SnapshotName = "./lars_sim/Data/clustdist/snapshot_L"+std::to_string(P.L[0])+"_"+alpha_p+"_"+size+"_"+dens+"_"+occ_p+txt;
+            snapshot.open(SnapshotName);
+            snapshot << ParticleWriterDetails(L, snapshot) << endl;
           }
-          else
-          {
-            sumhist_nr[std::slice(0, hist_nr.size(), 1)] += hist_nr;
-          }
+          cout << "Iteration " << it << " complete \n" << endl;
         }
-        ofstream outfile, outfile_nr;
-        outfile.open(txtoutput);
-        for (const auto &k : sumhist)
-          outfile << k << " ";
-        outfile << endl;
+        // output into file
+        ofstream outfile_nr, outfile_order;
+        // outfile.open(txtoutput);
+        // for (const auto &k : sumhist)
+        //   outfile << k << " ";
+        // outfile << endl;
         outfile_nr.open(txtoutput_nr);
         for (const auto &k : sumhist_nr)
           outfile_nr << k << " ";
         outfile_nr << endl;
+
+        w_n = w_n / double(P.N);
+
+        J = J / sample_count;
+        w_n = w_n / sample_count;
+        c_n = c_n / sample_count;
+
+
+        
+        string OrderPara = "./lars_sim/Data/clustdist/order_L"+std::to_string(P.L[0])+"_"+alpha_p+"_"+size+"_"+dens+"_"+occ_p+txt;
+        outfile_order.open(OrderPara);
+
+        outfile_order << J << " " << " " << c_n << " " << w_n << " " << endl;
       }
       else
       {
