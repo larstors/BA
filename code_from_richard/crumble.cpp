@@ -2686,6 +2686,21 @@ public:
     }
     return x;
   }
+
+  hist_t perimeter_dist()
+  { 
+    hist_t clust_size = cluster_distributions_particle_numbers();
+    vec sv = surface_volume_nr();
+    hist_t dists_nr(clust_size.size());
+
+    for (unsigned k = 0; k < sv.size(); k += 2)
+    {
+        dists_nr[sv[k+1]]++;
+    }
+
+    return dists_nr;
+  }
+
 };
 
 template <typename Engine>
@@ -4320,6 +4335,18 @@ public:
     return second_moment / (first_moment * double(P.N));
   }
 
+  vec perimeter_dist()
+  {
+    vec sv = surface_volume_nr();
+    vec dist;
+    for (unsigned k = 0; k < sv.size(); k += 2)
+    {
+      if (sv[k] > 0) dist.push_back(sv[k+1]);
+    }
+
+    return dist;
+  }
+
   // function for returning w(_N) order parameter (see thesis)
   double w_N()
   {
@@ -4667,6 +4694,7 @@ int main(int argc, char *argv[])
   double localinterval = 10.0;
 
   unsigned details = 0; // for detailed
+  unsigned region = 0; // for region of alpha in analysis, so can run parallel
 
   app.add_option("-o, --output", output, "Output type: snapshots|particles|vacancies|clusters");
   app.add_option("-l, --lattice_type", lattice_type, "Lattice type: square|triangular|hexagonal");
@@ -4677,6 +4705,7 @@ int main(int argc, char *argv[])
   app.add_option("-a,--localaverage", localaverage, "Number of local averages (clusters only; 0=stationary state)");
   app.add_option("-i,--localinterval", localinterval, "Interval between local averages");
   app.add_option("-d,--details", details, "for detailed output do 1, else 0 (default)");
+  app.add_option("-r,--reg", region, "any integer >= 0 to name file");
 
   CLI11_PARSE(app, argc, argv);
 
@@ -4712,6 +4741,10 @@ int main(int argc, char *argv[])
     output = "perimeter"; // (first?) output for perimeter order parameter
   else if (output[0] == 'y')
     output = "correlation"; // data for overlap function, see site-site correlation in thesis // ! this needs a lot of work
+  else if (output[0] == 'k')
+    output = "detailed balance";
+  else if (output[0] == 'q')
+    output = "surface scaling";
   else
     output = "snapshots";
 
@@ -4756,6 +4789,7 @@ int main(int argc, char *argv[])
   occ << std::setprecision(0);
   occ << P.n_max;
   std::string occ_p = occ.str();
+
 
   string txt = ".txt";
   string tumb = "alpha" + alpha_p;
@@ -5822,6 +5856,42 @@ int main(int argc, char *argv[])
         outfile << ParticleWriter(L, outfile) << endl;
       }
     }
+    else if (output == "detailed balance"){
+      ofstream probs;
+      probs.open("./lars_sim/Data/perimeter/square_probs_" + occ_p + ".txt");
+        for (double dens = 0.001; dens < 1.0; dens += .02)
+        {
+          Parameters P_h;
+          P_h.N = unsigned(P.L[0] * P.L[0] * P.n_max * dens);
+          P_h.L = P.L;
+          P_h.n_max = P.n_max;
+          Lattice LB(P_h, rng);
+          t = 0;
+
+          vec_d prob(P.n_max + 1);
+
+          // count for mean vals
+          double count = 0;
+          for (unsigned n = 0; t < burnin + until; ++n)
+          {
+            t = LB.run_until(burnin + n * every);
+            hist_t p = LB.occupation_prob();
+            for (unsigned i = 0; i < P.n_max + 1; i++)
+            {
+              prob[i] += double(p[i]);
+            }
+            count++;
+          }
+
+          probs << dens << " ";
+          for (unsigned i = 0; i < P.n_max + 1; i++)
+          {
+            prob[i] /= double(P.L[0] * P.L[1] * count);
+            probs << prob[i] << " ";
+          }
+          probs << endl;
+        }
+    }
     else
     {
       ofstream outfile;
@@ -5894,7 +5964,6 @@ int main(int argc, char *argv[])
           }
 
           // with occ number as well
-
           if (hist_nr.size() > sumhist_nr.size())
           {
             hist_nr[std::slice(0, sumhist_nr.size(), 1)] += sumhist_nr;
@@ -6013,49 +6082,147 @@ int main(int argc, char *argv[])
     else if (output == "function")
     {
       ofstream outfile;
-      outfile.open("./lars_sim/Data/perimeter/tri_" + occ_p + "test.txt");
+      outfile.open("./lars_sim/ActivePerc/CStransition/NewScaling_"+std::to_string(region) +"_"+ lattice_type + "_" + dens + "_" + size + "_" + occ_p + txt);
+      // outfile.open("./NewScaling_"+ lattice_type + "_" + dens + "_" + size + "_" + occ_p + txt);
+
       // pars.open("./lars_sim/Data/perimeter/tri_pars_"+occ_p+"test.txt");
-      for (double alp = 1e-3; alp <= 100; alp *= 1.8)
+      for (double alp = 0.01 * pow(1.16, 4.0*region); alp <= 1 * pow(1.16, 4.0*(region+1)); alp *= 1.16)
       {
-        Parameters P_h;
-        P_h.N = unsigned(P.L[0] * P.L[0] * P.n_max * 0.579);
-        P_h.alpha[0] = P.alpha[1] = P.alpha[2] = alp;
-        P_h.L = P.L;
-        P_h.n_max = P.n_max;
-        Triangle_lattice LB(P_h, rng);
-        t = 0;
+        // do the evaluation in python for mean and variance (errorbars) for now
+        for (int n_iteration = 0; n_iteration <= 3; n_iteration++){
+          Parameters P_h;
+          P_h.N = P.N;
+          P_h.alpha[0] = P.alpha[1] = P.alpha[2] = alp;
+          P_h.L = P.L;
+          P_h.n_max = P.n_max;
+          Triangle_lattice LB(P_h, rng);
+          t = 0;
 
-        std::cout << P_h.N << endl;
+          std::cout << P_h.N << n_iteration << endl;
 
-        // jamming, max cl size, perimeter, weighted mean cl size
-        double j = 0;
-        double m = 0;
-        double s = 0;
-        double w = 0;
+          // jamming, max cl size, perimeter, weighted mean cl size
+          double j = 0;
+          double m = 0;
+          double s = 0;
+          double w = 0;
 
-        // count for mean vals
-        double count = 0;
-        for (unsigned n = 0; t < burnin + until; ++n)
-        {
-          t = LB.run_until(burnin + n * every);
-          j += LB.motility_fraction();
-          m += LB.max_cluster_size_nr();
-          s += LB.perimeter();
-          w += LB.w_N();
-          count++;
+          // count for mean vals
+          double count = 0;
+          for (unsigned n = 0; t < burnin + until; ++n)
+          {
+            t = LB.run_until(burnin + n * every);
+            j += LB.motility_fraction();
+            m += LB.max_cluster_size_nr();
+            s += LB.perimeter();
+            w += LB.w_N();
+            count++;
+          }
+
+          j = j / count;
+          m = m / count;
+          s = s / count;
+          w = w / count;
+
+          m = m / double(P_h.N);
+          // s = s;
+          w = w / double(P_h.N);
+
+          outfile << alp << " " << j << " " << m << " " << s << " " << w << " ";
+          outfile << endl;
         }
+      }
+    }
+    else if (output == "surface scaling")
+    {
+      ofstream outfile, Distoutfile;
+      outfile.open("./lars_sim/ActivePerc/CStransition/SurfaceScaling_"+ lattice_type + "_" + dens + "_" + size + "_" + occ_p + txt); 
+      Distoutfile.open("./lars_sim/ActivePerc/CStransition/SurfaceDist_"+ lattice_type + "_" + dens + "_" + size + "_" + occ_p + txt);
 
-        j = j / count;
-        m = m / count;
-        s = s / count;
-        w = w / count;
+      for (double rho = 1e-3; rho <= 1; rho *= 1.5)
+      {
+        int N = rho * pow(P.L[0], 2) * P.n_max;
 
-        m = m / double(P_h.N);
-        s = s / double(P_h.N);
-        w = w / double(P_h.N);
+        double t = 0;
+        
+        // We sum the histograms over all measurements
+        // vec dist;
+        // vec dist2;
+        // for (int length = 0; length <= 2 * N; length++){
+        //   dist.push_back(0);
+        //   dist2.push_back(0);
+        // }
+        hist_t part;
+        // do the evaluation in python for mean and variance (errorbars) for now
+        for (int n_iteration = 0; n_iteration <= 3; n_iteration++){
+          Parameters P_h;
+          P_h.N = N;
+          P_h.alpha[0] = P.alpha[1] = P.alpha[2] = P.alpha[0];
+          P_h.L = P.L;
+          P_h.n_max = P.n_max;
+          Triangle_lattice LB(P_h, rng);
+          t = 0;
 
-        outfile << alp << " " << j << " " << m << " " << s << " " << w << " ";
-        outfile << endl;
+          std::cout << P_h.N << " " << n_iteration << endl;
+
+          // jamming, max cl size, perimeter, weighted mean cl size
+          double j = 0;
+          double m = 0;
+          double s = 0;
+          double w = 0;
+
+          // count for mean vals
+          double count = 0;
+          for (unsigned n = 0; t < burnin + until; ++n)
+          {
+            t = LB.run_until(burnin + n * every);
+              // vec hist_nr = TL.surface_volume_nr();
+              hist_t part_nr = LB.cluster_distributions();
+              // for (unsigned k = 0; k < hist_nr.size(); k += 2)
+              //   {
+              //       dist[hist_nr[k]]++;
+              //   }
+              // cout << "start";
+              // for (const auto &k: part_nr){
+              //     cout << k << " ";
+              //   }
+              if (part_nr.size() > part.size())
+              {
+                part_nr[std::slice(0, part.size(), 1)] += part;
+                part = std::move(part_nr);
+              }
+              else
+              {
+                part[std::slice(0, part_nr.size(), 1)] += part_nr;
+              }
+            
+            j += LB.motility_fraction();
+            m += LB.max_cluster_size_nr();
+            s += LB.perimeter();
+            w += LB.w_N();
+            count++;
+          }
+
+          j = j / count;
+          m = m / count;
+          s = s / count;
+          w = w / count;
+
+          m = m / double(P_h.N);
+          // s = s;
+          w = w / double(P_h.N);
+
+          outfile << rho << " " << j << " " << m << " " << s << " " << w << " " << N << " ";
+          outfile << endl;
+        
+        }
+        // for (const auto &k : dist)
+        //   Distoutfile << k << " ";
+        // Distoutfile << endl;
+        for (const auto &k: part){
+          Distoutfile << k << " ";
+          // if (k != 0) cout << k << " ";
+        }
+        Distoutfile << endl;
       }
     }
     else if (output == "stopping time")
@@ -6323,17 +6490,15 @@ int main(int argc, char *argv[])
     else if (output == "lagging")
     {
       ofstream outfile, backward;
-      string name = "./lars_sim/Data/phase/triangular_perc_fhyst_20";
-      string outputname = name + "_" + occ_p + ".txt";
+      string outputname = "./lars_sim/ActivePerc/CStransition/HystF"+ lattice_type + "_" + dens + "_" + size + "_" + occ_p + txt;
       outfile.open(outputname);
-      name = "./lars_sim/Data/phase/triangular_perc_bhyst_20";
-      outputname = name + "_" + occ_p + ".txt";
+      outputname = "./lars_sim/ActivePerc/CStransition/HystB"+ lattice_type + "_" + dens + "_" + size + "_" + occ_p + txt;
       backward.open(outputname);
       // foward hysteresis, i.e. start below critical point and move up
       Triangle_lattice LB(P, rng);
       double tmax = burnin + until;
       unsigned c = 0;
-      for (double al = 0.0875; al < 0.094; al += 0.0001625)
+      for (double al = 0.02; al <= 0.03; al += 0.0005)
       {
         cout << al << endl;
         // introducing new alpha
@@ -6358,7 +6523,7 @@ int main(int argc, char *argv[])
           rel_mass += double(LB.max_cluster_size_nr()) / double(P.N);
           mean += LB.motility_fraction();
           values_per.push_back(LB.perimeter() / double(P.N));
-          s += LB.perimeter() / double(P.N);
+          s += LB.perimeter();
           count++;
           // outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
 
@@ -6413,7 +6578,7 @@ int main(int argc, char *argv[])
       Triangle_lattice LT(P, rng);
       c = 0;
       t = 0;
-      for (double al = 0.094; al > 0.0875; al -= 0.0001625)
+      for (double al = 0.03; al >= 0.02; al -= 0.0005)
       {
         cout << al << endl;
         // introducing new alpha
@@ -6438,7 +6603,7 @@ int main(int argc, char *argv[])
           rel_mass_b += double(LT.max_cluster_size_nr()) / double(P.N);
           mean_b += LT.motility_fraction();
           values_per_b.push_back(LT.perimeter() / double(P.N));
-          s_b += LT.perimeter() / double(P.N);
+          s_b += LT.perimeter();
           count_b++;
           // outfile << t << " " << HL.motility_fraction() << " " << rel_mass << endl;
 
